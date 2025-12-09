@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box, Palette, Aperture, Wand2, Download, CheckCircle, Clock, Layers, Scissors, Shirt, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
@@ -9,6 +9,32 @@ export const ClothingPhotography: React.FC = () => {
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Parallax State
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate normalized mouse position (-1 to 1)
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      setMousePos({ x, y });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -61,7 +87,7 @@ export const ClothingPhotography: React.FC = () => {
     <div className="bg-[#F7F5F3] text-[#111111] font-sans selection:bg-[#E5D7A4] selection:text-black">
       
       {/* SECTION 1: HERO */}
-      <section className="relative pt-32 pb-24 px-6 overflow-hidden min-h-[90vh] flex items-center">
+      <section ref={heroRef} className="relative pt-32 pb-24 px-6 overflow-hidden min-h-[90vh] flex items-center">
         {/* Abstract Background Gradients */}
         <div className="absolute top-0 right-0 w-[60vw] h-[80vh] bg-gradient-to-b from-[#F6E9E4] to-[#EDE7FF] rounded-bl-[200px] opacity-60 -z-10 blur-3xl"></div>
         
@@ -93,17 +119,45 @@ export const ClothingPhotography: React.FC = () => {
             </div>
           </div>
 
-          {/* Hero Collage */}
-          <div className="lg:col-span-7 relative h-[600px] hidden lg:block">
-             <div className="absolute top-0 right-10 w-[300px] aspect-[3/4] shadow-2xl z-20 hover:z-30 transition-all duration-500 hover:-translate-y-4">
-                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" className="w-full h-full object-cover" alt="Fashion Editorial" />
+          {/* Hero Collage with Parallax */}
+          <div className="lg:col-span-7 relative h-[600px] hidden lg:block perspective-[1000px]">
+             
+             {/* Image 1: Main Right (Slower move - Background layer feel) */}
+             <div 
+                className="absolute top-0 right-10 w-[300px] aspect-[3/4] shadow-2xl z-20 transition-transform duration-100 ease-out will-change-transform"
+                style={{ 
+                    transform: `translate3d(${mousePos.x * -20}px, ${mousePos.y * -20 + scrollY * 0.05}px, 0)` 
+                }}
+             >
+                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:shadow-3xl transition-all duration-500 rounded-sm bg-white p-1">
+                   <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" className="w-full h-full object-cover" alt="Fashion Editorial" />
+                </div>
              </div>
-             <div className="absolute top-20 left-10 w-[280px] aspect-[3/4] shadow-xl z-10 hover:z-30 transition-all duration-500 hover:-translate-y-4">
-                <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=2705&auto=format&fit=crop" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" alt="Clothing Texture" />
+
+             {/* Image 2: Top Left (Opposite move - Midground layer) */}
+             <div 
+                className="absolute top-20 left-10 w-[280px] aspect-[3/4] shadow-xl z-10 transition-transform duration-100 ease-out will-change-transform"
+                style={{ 
+                    transform: `translate3d(${mousePos.x * 25}px, ${mousePos.y * 25 + scrollY * 0.12}px, 0)` 
+                }}
+             >
+                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:scale-[1.02] transition-all duration-500 rounded-sm">
+                    <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=2705&auto=format&fit=crop" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" alt="Clothing Texture" />
+                </div>
              </div>
-             <div className="absolute bottom-10 right-1/3 w-[240px] aspect-square shadow-lg z-30 border-8 border-white hover:scale-105 transition-transform duration-500">
-                <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=2864&auto=format&fit=crop" className="w-full h-full object-cover" alt="Detail Shot" />
+
+             {/* Image 3: Bottom Right Detail (Faster move - Foreground layer) */}
+             <div 
+                className="absolute bottom-10 right-1/3 w-[240px] aspect-square shadow-lg z-30 transition-transform duration-100 ease-out will-change-transform"
+                 style={{ 
+                    transform: `translate3d(${mousePos.x * -40}px, ${mousePos.y * -40 + scrollY * -0.08}px, 0)` 
+                }}
+             >
+                <div className="w-full h-full overflow-hidden border-8 border-white hover:scale-105 transition-transform duration-500 rounded-sm">
+                    <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=2864&auto=format&fit=crop" className="w-full h-full object-cover" alt="Detail Shot" />
+                </div>
              </div>
+
           </div>
         </div>
       </section>
