@@ -12,6 +12,8 @@ import { CreativeStillLife } from './pages/CreativeStillLife';
 import { VideoProduction } from './pages/VideoProduction';
 import { InstagramServices } from './pages/InstagramServices';
 import { Dashboard } from './pages/Dashboard';
+import { ShotList } from './pages/ShotList';
+import { Products } from './pages/Products';
 import { NotFound } from './pages/NotFound';
 
 export const Router: React.FC = () => {
@@ -32,6 +34,8 @@ export const Router: React.FC = () => {
       {/* Dashboard Routes wrapped in Dashboard Layout */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="shotlist" element={<ShotList />} />
+        <Route path="products" element={<Products />} />
       </Route>
 
       {/* Fallback Route */}
