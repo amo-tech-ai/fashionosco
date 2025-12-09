@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
-import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box } from 'lucide-react';
+import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box, Palette, Aperture, Wand2, Download, CheckCircle, Clock, Layers, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const ProductPhotography: React.FC = () => {
@@ -65,6 +65,155 @@ export const ProductPhotography: React.FC = () => {
           <div className="relative group animate-in zoom-in-95 duration-1000">
              <div className="absolute inset-0 bg-rich-black/10 group-hover:bg-transparent transition-colors z-10"></div>
              <img src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=2786&auto=format&fit=crop" className="w-full h-[600px] object-cover grayscale group-hover:grayscale-0 transition-all duration-700 ease-in-out" alt="Studio Equipment" />
+          </div>
+        </div>
+      </section>
+
+      {/* NEW SECTION: PRODUCTION PROCESS (Cinematic Flowchart) */}
+      <section className="py-32 px-6 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-purple-100/30 rounded-full blur-[100px] animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-[600px] h-[600px] bg-blue-50/40 rounded-full blur-[120px]" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        <div className="max-w-[1440px] mx-auto relative z-10">
+          <div className="text-center mb-24 space-y-4">
+            <span className="text-xs font-bold tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 animate-in fade-in slide-in-from-bottom-4 duration-700">Seamless Workflow</span>
+            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-rich-black animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">Our Production Process</h2>
+            <p className="max-w-2xl mx-auto text-lg text-gray-500 font-light leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+              From intake to final delivery, our streamlined editorial pipeline ensures consistent quality and rapid turnaround for brands of all sizes.
+            </p>
+          </div>
+
+          <div className="relative">
+            {/* Desktop Connector Line (SVG) */}
+            <div className="hidden lg:block absolute top-[60px] left-0 w-full h-[100px] pointer-events-none z-0">
+               <svg className="w-full h-full overflow-visible">
+                 <defs>
+                   <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                     <stop offset="0%" stopColor="#E9D5FF" stopOpacity="0.2" />
+                     <stop offset="50%" stopColor="#A855F7" stopOpacity="0.8" />
+                     <stop offset="100%" stopColor="#E9D5FF" stopOpacity="0.2" />
+                   </linearGradient>
+                   <filter id="glow">
+                     <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                     <feMerge>
+                       <feMergeNode in="coloredBlur"/>
+                       <feMergeNode in="SourceGraphic"/>
+                     </feMerge>
+                   </filter>
+                 </defs>
+                 {/* Main Path */}
+                 <path 
+                   d="M 100,50 C 250,50 350,50 450,50 S 650,50 750,50 S 950,50 1050,50 S 1250,50 1340,50" 
+                   fill="none" 
+                   stroke="url(#flowGradient)" 
+                   strokeWidth="2" 
+                   strokeLinecap="round"
+                   filter="url(#glow)"
+                   className="opacity-50"
+                 />
+                 {/* Animated Dot */}
+                 <circle r="4" fill="#A855F7">
+                   <animateMotion 
+                     dur="6s" 
+                     repeatCount="indefinite" 
+                     path="M 100,50 C 250,50 350,50 450,50 S 650,50 750,50 S 950,50 1050,50 S 1250,50 1340,50" 
+                   />
+                 </circle>
+               </svg>
+            </div>
+
+            {/* Steps Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-4 relative z-10">
+              {[
+                { icon: Box, title: "Intake", desc: "Logistics & Prep" },
+                { icon: Palette, title: "Direction", desc: "Creative Brief" },
+                { icon: Aperture, title: "Setup", desc: "Lighting & Set" },
+                { icon: Camera, title: "Shooting", desc: "Capture Phase" },
+                { icon: Wand2, title: "Retouch", desc: "Post-Production" },
+                { icon: Download, title: "Delivery", desc: "Final Export" }
+              ].map((step, idx) => (
+                <div 
+                  key={idx} 
+                  className="group flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-8 fill-mode-forwards"
+                  style={{ animationDelay: `${idx * 150}ms` }}
+                >
+                  {/* Card */}
+                  <div className="w-full aspect-square max-w-[180px] bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-purple-100 hover:-translate-y-2 transition-all duration-500 flex flex-col items-center justify-center p-6 relative group-hover:bg-white/80">
+                    <div className={`
+                      w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3
+                      bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-purple-50 group-hover:to-blue-50 text-gray-600 group-hover:text-purple-600
+                    `}>
+                      <step.icon size={26} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="font-serif text-lg font-medium mb-1 group-hover:text-purple-900 transition-colors">{step.title}</h3>
+                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold group-hover:text-purple-400 transition-colors">{step.desc}</p>
+                    
+                    {/* Hover Glow Effect */}
+                    <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-hover:ring-purple-100 transition-all duration-500"></div>
+                  </div>
+                  
+                  {/* Mobile Connector */}
+                  {idx < 5 && <div className="lg:hidden h-8 w-0.5 bg-gradient-to-b from-gray-300 to-transparent my-2"></div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* KPI / Metrics Panel */}
+          <div className="mt-20">
+            <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-8 lg:p-12 shadow-2xl">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-200/50">
+                  
+                  {/* Metric 1 */}
+                  <div className="flex flex-col items-center justify-center px-4 animate-in fade-in zoom-in-95 duration-700 delay-500">
+                     <div className="w-16 h-16 relative flex items-center justify-center mb-4">
+                        <svg className="w-full h-full transform -rotate-90">
+                           <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="none" className="text-gray-100" />
+                           <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="none" className="text-purple-500" strokeDasharray="175" strokeDashoffset="5" strokeLinecap="round" />
+                        </svg>
+                        <CheckCircle className="absolute w-6 h-6 text-purple-600" />
+                     </div>
+                     <div className="text-3xl font-serif font-medium mb-1">99.8%</div>
+                     <div className="text-xs uppercase tracking-widest text-gray-500">Quality Acceptance</div>
+                  </div>
+
+                  {/* Metric 2 */}
+                  <div className="flex flex-col items-center justify-center px-4 pt-8 md:pt-0 animate-in fade-in zoom-in-95 duration-700 delay-600">
+                     <div className="w-16 h-16 flex items-center justify-center mb-4 bg-blue-50 rounded-full text-blue-600">
+                        <Clock size={28} />
+                     </div>
+                     <div className="text-3xl font-serif font-medium mb-1">24h</div>
+                     <div className="text-xs uppercase tracking-widest text-gray-500">Turnaround Time</div>
+                  </div>
+
+                  {/* Metric 3 */}
+                  <div className="flex flex-col items-center justify-center px-4 pt-8 md:pt-0 animate-in fade-in zoom-in-95 duration-700 delay-700">
+                     <div className="w-16 h-16 flex items-center justify-center mb-4">
+                        <div className="flex gap-1 items-end h-10">
+                           <div className="w-2 h-4 bg-gray-200 rounded-sm"></div>
+                           <div className="w-2 h-6 bg-gray-300 rounded-sm"></div>
+                           <div className="w-2 h-8 bg-purple-400 rounded-sm"></div>
+                           <div className="w-2 h-10 bg-purple-600 rounded-sm animate-pulse"></div>
+                        </div>
+                     </div>
+                     <div className="text-3xl font-serif font-medium mb-1">100%</div>
+                     <div className="text-xs uppercase tracking-widest text-gray-500">Brand Consistency</div>
+                  </div>
+
+                  {/* Metric 4 */}
+                  <div className="flex flex-col items-center justify-center px-4 pt-8 md:pt-0 animate-in fade-in zoom-in-95 duration-700 delay-800">
+                     <div className="w-16 h-16 flex items-center justify-center mb-4 bg-green-50 rounded-full text-green-600">
+                        <Layers size={28} />
+                     </div>
+                     <div className="text-3xl font-serif font-medium mb-1">4K+</div>
+                     <div className="text-xs uppercase tracking-widest text-gray-500">Asset Resolution</div>
+                  </div>
+
+               </div>
+            </div>
           </div>
         </div>
       </section>

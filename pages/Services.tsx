@@ -13,7 +13,7 @@ export const Services: React.FC = () => {
     { icon: Monitor, title: "Web Design", desc: "Identity & UX", link: "/services" },
     { icon: Camera, title: "Photography", desc: "Campaign & Editorial", link: "/services/product-photography" },
     { icon: Video, title: "Video Production", desc: "Commercial & Reels", link: "/services" },
-    { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings", link: "/services" },
+    { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings", link: "/services/ecommerce" },
     { icon: Instagram, title: "Social Media", desc: "Strategy & Content", link: "/services" },
     { icon: Sparkles, title: "AI Creative", desc: "Enhancement & GenAI", link: "/services" },
   ];
@@ -135,12 +135,28 @@ export const Services: React.FC = () => {
                  <p className="text-gray-500 leading-relaxed text-lg mb-8">
                     From high-concept editorial shoots to high-volume e-commerce, our studios in Paris and NYC capture the essence of your brand.
                  </p>
-                 <ul className="space-y-4 mb-10">
-                    {['Editorial & Advertising Campaigns', 'On-Model Lookbooks', 'Product & Still Life', 'Casting & Location Scouting'].map(item => (
-                       <li key={item} className="flex items-center text-sm font-medium"><div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3"></div>{item}</li>
-                    ))}
-                 </ul>
-                 <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/product-photography')}>Book a Shoot</Button>
+                 <div className="space-y-3 mb-10">
+                    <div 
+                      onClick={() => navigate('/services/product-photography')}
+                      className="flex items-center p-4 border border-gray-100 rounded-sm hover:border-purple-200 cursor-pointer transition-colors group"
+                    >
+                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="font-bold text-sm">Product Photography</span>
+                      <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div 
+                      onClick={() => navigate('/services/clothing-photography')}
+                      className="flex items-center p-4 border border-gray-100 rounded-sm hover:border-purple-200 cursor-pointer transition-colors group"
+                    >
+                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="font-bold text-sm">Clothing Photography</span>
+                      <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                 </div>
+                 <div className="flex gap-4">
+                   <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/product-photography')}>Book Product Shoot</Button>
+                   <Button variant={ButtonVariant.GHOST} onClick={() => navigate('/services/clothing-photography')}>View Clothing &rarr;</Button>
+                 </div>
               </div>
               <div className="relative">
                  <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50"></div>
@@ -196,7 +212,7 @@ export const Services: React.FC = () => {
                        <li key={item} className="flex items-center text-sm font-medium"><div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-3"></div>{item}</li>
                     ))}
                  </ul>
-                 <Button variant={ButtonVariant.SECONDARY}>Audit Your Store</Button>
+                 <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/ecommerce')}>View Ecommerce Packages</Button>
               </div>
               <div className="relative">
                  <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2899&auto=format&fit=crop" className="w-full h-[600px] object-cover rounded-sm shadow-2xl relative z-10" />

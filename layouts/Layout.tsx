@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { NavItem } from '../types';
 import { Button } from '../components/Button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 
 const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
 export const Layout: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isServicesHovered, setIsServicesHovered] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white">
@@ -30,13 +31,45 @@ export const Layout: React.FC = () => {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-8 lg:space-x-12">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.href && item.href !== '/';
+              const isActive = location.pathname.startsWith(item.href) && item.href !== '/';
+              
+              if (item.label === 'Services') {
+                 return (
+                    <div 
+                       key={item.label} 
+                       className="relative group h-20 flex items-center"
+                       onMouseEnter={() => setIsServicesHovered(true)}
+                       onMouseLeave={() => setIsServicesHovered(false)}
+                    >
+                       <Link
+                          to={item.href}
+                          className={`flex items-center text-xs font-medium uppercase tracking-widest hover:text-gray-600 transition-colors ${
+                             isActive ? 'text-black border-b border-black pb-1' : 'text-gray-500'
+                          }`}
+                       >
+                          {item.label}
+                          <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+                       </Link>
+                       
+                       {/* Dropdown Menu */}
+                       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-64 bg-white border border-gray-100 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <div className="py-2">
+                             <Link to="/services" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">All Services</Link>
+                             <Link to="/services/product-photography" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Product Photography</Link>
+                             <Link to="/services/clothing-photography" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Clothing Photography</Link>
+                             <Link to="/services/ecommerce" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Ecommerce Photography</Link>
+                          </div>
+                       </div>
+                    </div>
+                 );
+              }
+
               return (
                 <Link
                   key={item.label}
                   to={item.href}
                   className={`text-xs font-medium uppercase tracking-widest hover:text-gray-600 transition-colors ${
-                    isActive ? 'text-black border-b border-black pb-1' : 'text-gray-500'
+                    location.pathname === item.href && item.href !== '/' ? 'text-black border-b border-black pb-1' : 'text-gray-500'
                   }`}
                 >
                   {item.label}
@@ -66,22 +99,30 @@ export const Layout: React.FC = () => {
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 bg-white z-40 flex flex-col pt-24 px-6 md:hidden animate-in slide-in-from-top-10 duration-200">
+          <div className="fixed inset-0 bg-white z-40 flex flex-col pt-24 px-6 md:hidden animate-in slide-in-from-top-10 duration-200 overflow-y-auto">
              <nav className="flex flex-col space-y-6">
                 {navItems.map((item) => (
-                   <Link
-                     key={item.label}
-                     to={item.href}
-                     onClick={() => setIsMobileMenuOpen(false)}
-                     className="text-2xl font-serif font-medium border-b border-gray-100 pb-4"
-                   >
-                      {item.label}
-                   </Link>
+                   <div key={item.label}>
+                      <Link
+                        to={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-2xl font-serif font-medium border-b border-gray-100 pb-4 block"
+                      >
+                         {item.label}
+                      </Link>
+                      {item.label === 'Services' && (
+                         <div className="pl-6 pt-4 space-y-4 flex flex-col">
+                            <Link to="/services/product-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Product Photography</Link>
+                            <Link to="/services/clothing-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Clothing Photography</Link>
+                            <Link to="/services/ecommerce" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Ecommerce Photography</Link>
+                         </div>
+                      )}
+                   </div>
                 ))}
                 <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif font-medium border-b border-gray-100 pb-4">
                    Log In
                 </Link>
-                <div className="pt-4">
+                <div className="pt-4 pb-12">
                    <Button className="w-full justify-center" onClick={() => {
                       setIsMobileMenuOpen(false);
                       // Navigate would happen here via link usually, wrapping in Link component
@@ -133,9 +174,10 @@ export const Layout: React.FC = () => {
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Services</h4>
                <ul className="space-y-4 text-sm text-gray-500">
                   <li><Link to="/services" className="hover:text-black">Web Design</Link></li>
-                  <li><Link to="/services/product-photography" className="hover:text-black font-medium text-black">Photography</Link></li>
+                  <li><Link to="/services/product-photography" className="hover:text-black">Product Photography</Link></li>
+                  <li><Link to="/services/clothing-photography" className="hover:text-black">Clothing Photography</Link></li>
+                  <li><Link to="/services/ecommerce" className="hover:text-black font-medium text-black">Ecommerce Photography</Link></li>
                   <li><Link to="/services" className="hover:text-black">Video Production</Link></li>
-                  <li><Link to="/services" className="hover:text-black">E-Commerce</Link></li>
                   <li><Link to="/services" className="hover:text-black">Social Media</Link></li>
                   <li><Link to="/services" className="hover:text-black">AI Creative</Link></li>
                </ul>
