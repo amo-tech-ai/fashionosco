@@ -1,7 +1,7 @@
 
 import { Shot, GenerateShotListParams } from '../../types/ai';
 
-const SUPABASE_FUNCTION_URL = (import.meta as any).env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
+const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
 
 // Dynamic Mock Data Generator for Demo Mode
 const generateMockShots = (params: GenerateShotListParams): Shot[] => {
@@ -57,7 +57,7 @@ const generateMockShots = (params: GenerateShotListParams): Shot[] => {
 
 export const generateShotList = async (params: GenerateShotListParams): Promise<Shot[]> => {
   try {
-    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     // Fallback to Demo Mode if no backend connection
     if (!anonKey) {

@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Sparkles, Layers, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Sparkles, Layers, Loader2, RefreshCw, AlertCircle, Edit2, Save, Trash2, ArrowUpCircle, MinusCircle, ArrowDownCircle, GripVertical } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
 import { Shot } from '../../../types/ai';
 
@@ -10,16 +10,34 @@ export const DeliverablesStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingShotId, setEditingShotId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ name: string; description: string }>({ name: '', description: '' });
+  
+  // DnD State
+  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
+
+  // Persist shots to local storage for ShotList page retrieval
+  useEffect(() => {
+    if (state.shotList.length > 0) {
+      localStorage.setItem('latest_wizard_shots', JSON.stringify(state.shotList));
+    }
+  }, [state.shotList]);
 
   const handleGenerateShotList = async () => {
     setIsGenerating(true);
     setError(null);
     try {
+       // Incorporate AI Analysis if available for richer generation
+       let derivedVibe = state.vibe || 'editorial';
+       if (state.aiAnalysis) {
+          derivedVibe += `. Style keywords: ${state.aiAnalysis.keywords.join(', ')}. Lighting: ${state.aiAnalysis.lightingStyle}`;
+       }
+
        const shots = await generateShotList({
           shootType: state.shootType || 'custom',
           numberOfItems: state.numberOfItems,
-          vibe: state.vibe || 'editorial',
-          referenceBrands: state.referenceBrands || 'Standard',
+          vibe: derivedVibe,
+          referenceBrands: state.referenceBrands || (state.aiAnalysis?.similarBrands?.join(', ') || 'Standard'),
           turnaround: state.turnaround
        });
        updateField('shotList', shots);
@@ -28,6 +46,65 @@ export const DeliverablesStep: React.FC = () => {
     } finally {
        setIsGenerating(false);
     }
+  };
+
+  const handleEditClick = (shot: Shot) => {
+    setEditingShotId(shot.id);
+    setEditForm({ name: shot.name, description: shot.description });
+  };
+
+  const handleSaveEdit = (id: string) => {
+    const updatedList = state.shotList.map(s => 
+      s.id === id ? { ...s, name: editForm.name, description: editForm.description } : s
+    );
+    updateField('shotList', updatedList);
+    setEditingShotId(null);
+  };
+
+  const cyclePriority = (id: string, current: string) => {
+    const priorities: Shot['priority'][] = ['High', 'Medium', 'Low'];
+    const currentIndex = priorities.indexOf(current as Shot['priority']);
+    const nextPriority = priorities[(currentIndex + 1) % priorities.length];
+    
+    const updatedList = state.shotList.map(s => 
+      s.id === id ? { ...s, priority: nextPriority } : s
+    );
+    updateField('shotList', updatedList);
+  };
+
+  const deleteShot = (id: string) => {
+    const updatedList = state.shotList.filter(s => s.id !== id);
+    updateField('shotList', updatedList);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Transparent drag image or default
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === index) return;
+    
+    // Optional: Add logic here for live reordering visual feedback if desired
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedItemIndex === null) return;
+
+    const items = [...state.shotList];
+    const draggedItem = items[draggedItemIndex];
+    
+    // Remove from old index
+    items.splice(draggedItemIndex, 1);
+    // Insert at new index
+    items.splice(targetIndex, 0, draggedItem);
+    
+    updateField('shotList', items);
+    setDraggedItemIndex(null);
   };
 
   return (
@@ -88,14 +165,12 @@ export const DeliverablesStep: React.FC = () => {
                   </div>
                   <span className="text-xs font-bold uppercase tracking-widest">AI Shot List Builder</span>
                </div>
-               {state.shotList.length === 0 && (
-                  <Button onClick={handleGenerateShotList} isLoading={isGenerating} className="text-xs h-8 px-3">
-                     Generate List
-                  </Button>
-               )}
+               <Button onClick={handleGenerateShotList} isLoading={isGenerating} className="text-xs h-8 px-3">
+                  {state.shotList.length > 0 ? 'Regenerate List' : (state.aiAnalysis ? 'Generate from Analysis' : 'Generate List')}
+               </Button>
             </div>
 
-            <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden relative min-h-[300px] z-10">
+            <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden relative min-h-[300px] z-10 flex flex-col">
                {isGenerating && (
                   <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
                      <Loader2 className="animate-spin text-black mb-3 w-8 h-8" />
@@ -107,26 +182,79 @@ export const DeliverablesStep: React.FC = () => {
                   <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
                      <Layers size={32} className="mb-4 opacity-50" />
                      <p className="text-xs max-w-[200px] leading-relaxed">
-                        Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your creative direction.
+                        {state.aiAnalysis 
+                           ? "Gemini understands your moodboard. Click generate to create a tailored shot list."
+                           : "Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your details."}
                      </p>
                   </div>
                ) : (
-                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[350px] p-2 custom-scrollbar">
+                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[400px] p-2 custom-scrollbar">
                      {state.shotList.map((shot: Shot, idx: number) => (
-                        <div key={idx} className="p-4 hover:bg-gray-50 rounded-lg transition-colors group animate-in slide-in-from-bottom-2" style={{ animationDelay: `${idx * 50}ms` }}>
-                           <div className="flex justify-between items-start mb-1">
-                              <span className="font-bold text-sm text-gray-900">{shot.name}</span>
-                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                 shot.priority === 'High' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'
-                              }`}>
-                                 {shot.priority}
-                              </span>
-                           </div>
-                           <p className="text-xs text-gray-500 leading-relaxed mb-2">{shot.description}</p>
-                           <div className="flex gap-2 flex-wrap">
-                              <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.angle}</span>
-                              <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.lighting}</span>
-                           </div>
+                        <div 
+                           key={shot.id} 
+                           draggable
+                           onDragStart={(e) => handleDragStart(e, idx)}
+                           onDragOver={(e) => handleDragOver(e, idx)}
+                           onDrop={(e) => handleDrop(e, idx)}
+                           className={`p-4 hover:bg-gray-50 rounded-lg transition-colors group animate-in slide-in-from-bottom-2 ${draggedItemIndex === idx ? 'opacity-50 border-2 border-dashed border-gray-300' : ''}`}
+                           style={{ animationDelay: `${idx * 50}ms`, cursor: 'grab' }}
+                        >
+                           {editingShotId === shot.id ? (
+                              <div className="space-y-3">
+                                 <input 
+                                    type="text" 
+                                    value={editForm.name} 
+                                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                                    className="w-full text-sm font-bold border-b border-gray-300 focus:border-black outline-none pb-1 bg-transparent"
+                                 />
+                                 <textarea 
+                                    value={editForm.description} 
+                                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                                    className="w-full text-xs text-gray-600 border border-gray-200 rounded p-2 focus:border-black outline-none bg-white"
+                                    rows={2}
+                                 />
+                                 <div className="flex gap-2 justify-end">
+                                    <button onClick={() => setEditingShotId(null)} className="text-xs text-gray-500 hover:text-black">Cancel</button>
+                                    <button onClick={() => handleSaveEdit(shot.id)} className="text-xs font-bold text-green-600 flex items-center gap-1"><Save size={12} /> Save</button>
+                                 </div>
+                              </div>
+                           ) : (
+                              <>
+                                 <div className="flex justify-between items-start mb-1">
+                                    <div className="flex items-center gap-2">
+                                       <GripVertical size={14} className="text-gray-300 cursor-grab" />
+                                       <span className="font-bold text-sm text-gray-900">{shot.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                       <button 
+                                          onClick={() => cyclePriority(shot.id, shot.priority)}
+                                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full cursor-pointer select-none flex items-center gap-1 ${
+                                             shot.priority === 'High' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 
+                                             shot.priority === 'Medium' ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' :
+                                             'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                          }`}
+                                          title="Click to toggle priority"
+                                       >
+                                          {shot.priority}
+                                          {shot.priority === 'High' && <ArrowUpCircle size={10} />}
+                                          {shot.priority === 'Medium' && <MinusCircle size={10} />}
+                                          {shot.priority === 'Low' && <ArrowDownCircle size={10} />}
+                                       </button>
+                                       <button onClick={() => handleEditClick(shot)} className="text-gray-300 hover:text-black transition-colors opacity-0 group-hover:opacity-100">
+                                          <Edit2 size={12} />
+                                       </button>
+                                       <button onClick={() => deleteShot(shot.id)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                          <Trash2 size={12} />
+                                       </button>
+                                    </div>
+                                 </div>
+                                 <p className="text-xs text-gray-500 leading-relaxed mb-2 ml-6 cursor-pointer hover:text-gray-800" onClick={() => handleEditClick(shot)}>{shot.description}</p>
+                                 <div className="flex gap-2 flex-wrap ml-6">
+                                    <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.angle}</span>
+                                    <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.lighting}</span>
+                                 </div>
+                              </>
+                           )}
                         </div>
                      ))}
                   </div>
@@ -136,9 +264,7 @@ export const DeliverablesStep: React.FC = () => {
             {state.shotList.length > 0 && (
                <div className="mt-4 flex justify-between items-center px-2 relative z-10">
                   <span className="text-xs text-gray-400">{state.shotList.length} Shots Generated</span>
-                  <button onClick={handleGenerateShotList} className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-gray-900 hover:text-purple-600 transition-colors">
-                     <RefreshCw size={12} /> Regenerate
-                  </button>
+                  <span className="text-[10px] text-gray-300">Drag to reorder</span>
                </div>
             )}
             

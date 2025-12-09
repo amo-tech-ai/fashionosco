@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@0.1.1";
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@0.5.0";
 
 declare const Deno: any;
 
@@ -10,7 +10,6 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -35,39 +34,44 @@ serve(async (req: Request) => {
             type: Type.OBJECT,
             properties: {
               id: { type: Type.STRING },
-              name: { type: Type.STRING, description: "Short title of the shot" },
-              description: { type: Type.STRING, description: "Detailed creative direction" },
-              angle: { type: Type.STRING, description: "Camera angle (e.g., Low Angle, Macro)" },
-              lighting: { type: Type.STRING, description: "Lighting setup (e.g., Soft Window, Hard Flash)" },
+              name: { type: Type.STRING, description: "Short, punchy title of the shot (e.g. 'Hero Walking')" },
+              description: { type: Type.STRING, description: "Detailed visual direction including focus and mood" },
+              angle: { type: Type.STRING, description: "Specific camera angle (e.g. Low Angle, Overhead, Macro)" },
+              lighting: { type: Type.STRING, description: "Lighting setup (e.g. Soft Window, Hard Flash, Chiaroscuro)" },
               props: { type: Type.STRING, description: "Required props or set elements" },
               priority: { type: Type.STRING, enum: ["High", "Medium", "Low"] }
             },
             required: ["id", "name", "description", "angle", "lighting", "priority"]
           }
         }
-      }
+      },
+      required: ["shots"]
     };
 
     const prompt = `
-      You are an expert Creative Director. Generate a shot list for a ${shootType} shoot.
+      You are a world-class Fashion Creative Director. 
+      Generate a shot list for a ${shootType} shoot.
       
       Parameters:
-      - Items: ${numberOfItems}
-      - Vibe: ${vibe}
-      - References: ${referenceBrands}
+      - Item Count: ${numberOfItems}
+      - Vibe/Aesthetic: ${vibe}
+      - Brand References: ${referenceBrands}
       
-      Create a cohesive story. Mix "Safe" commercial shots with "Editorial" creative angles.
-      Limit to ${Math.min(numberOfItems + 3, 10)} key shots.
+      Instructions:
+      1. Create a cohesive visual story.
+      2. Mix commercial "safe" shots with high-impact "editorial" angles.
+      3. Limit to ${Math.min(numberOfItems + 3, 15)} key shots.
+      4. Ensure lighting and props match the requested vibe.
     `;
 
-    // Using Gemini 3 Pro Preview with Thinking Config and Structured Output
+    // Using Gemini 3 Pro with Thinking Config
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        thinkingConfig: { thinkingBudget: 1024 } // Enable thinking for better creative planning
+        thinkingConfig: { thinkingBudget: 1024 }
       }
     });
 

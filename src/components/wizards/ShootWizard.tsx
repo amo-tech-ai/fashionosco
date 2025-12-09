@@ -10,6 +10,7 @@ import { AddOnsStep } from './steps/AddOnsStep';
 import { ReviewConfirmStep } from './steps/ReviewConfirmStep';
 import { SidebarSummary } from './SidebarSummary';
 import { ProgressBar } from './ProgressBar';
+import { OnboardingOverlay } from './OnboardingOverlay';
 
 export const ShootWizard: React.FC = () => {
   const { state } = useShootWizard();
@@ -28,7 +29,8 @@ export const ShootWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-20 pb-20">
+    <div className="min-h-screen bg-white pt-32 pb-20">
+      <OnboardingOverlay />
       <ProgressBar />
       
       <main className="max-w-[1440px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 pt-12">

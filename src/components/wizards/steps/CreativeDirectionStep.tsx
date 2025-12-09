@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Upload, Sparkles, Loader2, CheckCircle2, Search } from 'lucide-react';
+import { Upload, Sparkles, Loader2, CheckCircle2, Search, ExternalLink, Palette, Sun, Box, Feather, Eye, Zap, Image as ImageIcon, Crop } from 'lucide-react';
 import { analyzeMoodBoard } from '../../../services/ai/moodBoard';
 import { VibeType } from '../../../types/wizard';
 
@@ -37,6 +37,15 @@ export const CreativeDirectionStep: React.FC = () => {
         }
       }
     }
+  };
+
+  // Helper to get icon for keyword
+  const getKeywordIcon = (keyword: string) => {
+     const k = keyword.toLowerCase();
+     if (k.includes('minimal')) return <Feather size={10} />;
+     if (k.includes('bold') || k.includes('contrast')) return <Zap size={10} />;
+     if (k.includes('nature') || k.includes('organic')) return <Sun size={10} />;
+     return <Eye size={10} />;
   };
 
   return (
@@ -76,7 +85,7 @@ export const CreativeDirectionStep: React.FC = () => {
                ) : (
                  <>
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400 group-hover:scale-110 transition-transform">
-                        <Upload size={24} />
+                        <ImageIcon size={24} />
                     </div>
                     <h3 className="font-bold text-sm text-gray-900">Upload Reference Images</h3>
                     <p className="text-xs text-gray-500 mt-2 max-w-xs">Drag and drop or click to browse. (JPG, PNG)</p>
@@ -107,7 +116,7 @@ export const CreativeDirectionStep: React.FC = () => {
          </div>
 
          {/* AI Analysis Result */}
-         <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-xl p-6 relative overflow-hidden flex flex-col h-full min-h-[300px]">
+         <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-xl p-6 relative overflow-hidden flex flex-col h-full min-h-[400px]">
             <div className="flex items-center gap-2 mb-6">
                <Sparkles className="text-purple-600" size={20} />
                <span className="text-xs font-bold uppercase tracking-widest text-purple-800">Gemini Vision Analysis</span>
@@ -126,45 +135,75 @@ export const CreativeDirectionStep: React.FC = () => {
                </div>
             ) : (
                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 flex-1 overflow-y-auto custom-scrollbar">
-                  <div>
-                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-3">Detected Palette</h4>
-                     <div className="flex gap-2">
+                  
+                  {/* Suggestion - Prominent */}
+                  <div className="bg-gradient-to-r from-white to-purple-50 p-6 rounded-lg border border-purple-200 shadow-sm relative">
+                     <div className="absolute -top-3 -left-2 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">AI SUGGESTION</div>
+                     <p className="text-sm font-medium text-purple-900 leading-relaxed italic">
+                        "{state.aiAnalysis.suggestion}"
+                     </p>
+                  </div>
+
+                  {/* New Prominent Style Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2 text-purple-600">
+                           <Sun size={16} />
+                           <h4 className="text-xs font-bold uppercase tracking-widest">Lighting</h4>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium leading-snug">{state.aiAnalysis.lightingStyle}</p>
+                     </div>
+                     <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2 text-purple-600">
+                           <Crop size={16} />
+                           <h4 className="text-xs font-bold uppercase tracking-widest">Composition</h4>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium leading-snug">{state.aiAnalysis.compositionStyle || "Balanced & Centered"}</p>
+                     </div>
+                  </div>
+
+                  {/* Palette */}
+                  <div className="bg-white/50 p-4 rounded-lg border border-purple-100/50">
+                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-3 flex items-center gap-2"><Palette size={12}/> Detected Palette</h4>
+                     <div className="flex gap-3">
                         {state.aiAnalysis.colors.map((c: string, i: number) => (
-                           <div key={i} className="w-10 h-10 rounded-full shadow-sm border border-white/50 ring-1 ring-black/5 hover:scale-110 transition-transform" style={{ backgroundColor: c }} title={c}></div>
+                           <div key={i} className="group relative">
+                              <div className="w-12 h-12 rounded-full shadow-sm border-2 border-white ring-1 ring-black/5 hover:scale-110 transition-transform cursor-help" style={{ backgroundColor: c }}></div>
+                              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-gray-500 opacity-0 group-hover:opacity-100 bg-white px-1 rounded shadow-sm whitespace-nowrap z-10">{c}</span>
+                           </div>
                         ))}
                      </div>
                   </div>
                   
+                  {/* Keywords */}
                   <div>
                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-3">Aesthetic Profile</h4>
                      <div className="flex gap-2 flex-wrap">
                         {state.aiAnalysis.keywords.map((k: string, i: number) => (
-                           <span key={i} className="px-2.5 py-1 bg-white border border-purple-100 rounded-md text-xs font-medium text-purple-900 shadow-sm">{k}</span>
+                           <span key={i} className="px-3 py-1.5 bg-white border border-purple-100 rounded-md text-xs font-medium text-purple-900 shadow-sm flex items-center gap-1.5">
+                              {getKeywordIcon(k)}
+                              {k}
+                           </span>
                         ))}
                      </div>
                   </div>
                   
-                  <div className="bg-white/60 p-5 rounded-lg border border-purple-100 shadow-sm">
-                     <p className="text-sm text-purple-900 italic leading-relaxed">"{state.aiAnalysis.suggestion}"</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                     <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Lighting</h4>
-                        <p className="text-xs text-gray-600">{state.aiAnalysis.lightingStyle}</p>
-                     </div>
-                     <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Props</h4>
-                        <p className="text-xs text-gray-600">{state.aiAnalysis.recommendedProps?.join(', ') || 'Minimalist'}</p>
-                     </div>
-                  </div>
-                  
+                  {/* Brand Refs */}
                   {state.aiAnalysis.similarBrands && state.aiAnalysis.similarBrands.length > 0 && (
                      <div>
                         <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2 flex items-center gap-1"><Search size={10}/> Brand References</h4>
                         <div className="flex gap-2 flex-wrap">
                            {state.aiAnalysis.similarBrands.map((b: string, i: number) => (
-                              <span key={i} className="px-2 py-1 bg-purple-50 text-purple-800 rounded text-[10px] font-bold border border-purple-100">{b}</span>
+                              <a 
+                                 key={i} 
+                                 href={`https://www.google.com/search?q=${encodeURIComponent(b + " fashion brand aesthetic")}`}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="px-3 py-1.5 bg-purple-50 text-purple-800 rounded text-xs font-bold border border-purple-200 hover:bg-purple-100 hover:border-purple-300 transition-colors flex items-center gap-1 group"
+                              >
+                                 {b}
+                                 <ExternalLink size={10} className="opacity-50 group-hover:opacity-100" />
+                              </a>
                            ))}
                         </div>
                      </div>

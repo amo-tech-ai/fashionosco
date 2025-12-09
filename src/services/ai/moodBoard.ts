@@ -1,7 +1,7 @@
 
 import { MoodBoardAnalysis } from '../../types/ai';
 
-const SUPABASE_FUNCTION_URL = (import.meta as any).env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
+const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
 
 // Demo Mock Data
 const MOCK_ANALYSIS: MoodBoardAnalysis = {
@@ -16,7 +16,7 @@ const MOCK_ANALYSIS: MoodBoardAnalysis = {
 
 export const analyzeMoodBoard = async (files: File[]): Promise<MoodBoardAnalysis> => {
   try {
-    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     if (!anonKey) {
       console.log('✨ Demo Mode: Analyzing mood board (Mock)');

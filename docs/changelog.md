@@ -1,6 +1,23 @@
 
 # Changelog
 
+## [1.5.0] - 2025-05-25
+### Production Readiness & Integration
+- **Dashboard Integration**: Added "Book a Shoot" direct link to the Dashboard sidebar, seamlessly connecting the user workspace with the booking wizard.
+- **Workflow Persistence**: Implemented local storage saving for AI-generated shot lists, allowing users to import drafts directly into the Shot List management tool.
+- **AI UI Enhancements**: 
+  - Added "Onboarding Overlay" to introduce new users to AI features.
+  - Refined "Vision Analysis" UI with clickable brand links and clear palette displays.
+  - Added "Shot List" editing and priority cycling.
+- **Pricing Engine**: Completed dynamic pricing logic including add-ons (Video, Stylist) and turnaround time multipliers (Rush/Extended).
+
+## [1.4.0] - 2025-05-24
+### AI Integration (Gemini 3 Pro)
+- **Shoot Wizard AI**: Implemented `gemini-3-pro-preview` for intelligent production planning.
+- **Vision Analysis**: Added `CreativeDirectionStep` which analyzes uploaded moodboards to extract color palettes, lighting styles, and brand references using Gemini Vision + Google Search Grounding.
+- **Shot List Builder**: Added `DeliverablesStep` which uses Gemini Thinking Config to reason about creative direction and generate structured, prioritized shot lists.
+- **Robust Fallbacks**: Implemented high-fidelity "Demo Mode" in frontend services to ensure wizard functionality even without a live Supabase backend connection.
+
 ## [1.3.0] - 2025-05-23
 ### New Features
 - **Instagram Services Page**: Launched `/services/instagram`, a premium editorial page for social media content.

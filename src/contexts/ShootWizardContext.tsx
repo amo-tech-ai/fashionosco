@@ -36,7 +36,8 @@ type Action =
   | { type: 'SET_FIELD'; field: keyof ShootWizardState; value: any }
   | { type: 'NEXT_STEP' }
   | { type: 'PREV_STEP' }
-  | { type: 'SET_TOTAL'; price: number; deposit: number };
+  | { type: 'SET_TOTAL'; price: number; deposit: number }
+  | { type: 'RESET_WIZARD' };
 
 // Reducer
 const reducer = (state: ShootWizardState, action: Action): ShootWizardState => {
@@ -49,6 +50,8 @@ const reducer = (state: ShootWizardState, action: Action): ShootWizardState => {
       return { ...state, step: Math.max(state.step - 1, 1) };
     case 'SET_TOTAL':
       return { ...state, totalPrice: action.price, deposit: action.deposit };
+    case 'RESET_WIZARD':
+      return initialState;
     default:
       return state;
   }
@@ -66,8 +69,7 @@ const calculatePrice = (state: ShootWizardState) => {
   // 2. Shoot Type Base Adjustment
   const typeConfig = SHOOT_TYPES.find(t => t.id === state.shootType);
   if (typeConfig) {
-      // Just an example adjustment, usually baseRates cover it, 
-      // but let's say Video adds 500 flat on top of day rate
+      // Just an example adjustment
       if (state.shootType === 'video') total += 500;
   }
 
@@ -94,6 +96,24 @@ const calculatePrice = (state: ShootWizardState) => {
   return Math.round(total);
 };
 
+// Helper: Load state from localStorage
+const loadState = (): ShootWizardState => {
+  try {
+    const saved = localStorage.getItem('wizard_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Restore Date objects if they were stringified
+      if (parsed.date) parsed.date = new Date(parsed.date);
+      // Reset File objects (moodBoardImages) as they cannot be persisted in localStorage
+      parsed.moodBoardImages = [];
+      return { ...initialState, ...parsed };
+    }
+  } catch(e) {
+    console.warn("Failed to load wizard state", e);
+  }
+  return initialState;
+};
+
 // Context Creation
 const ShootWizardContext = createContext<{
   state: ShootWizardState;
@@ -101,16 +121,24 @@ const ShootWizardContext = createContext<{
   updateField: (field: keyof ShootWizardState, value: any) => void;
   nextStep: () => void;
   prevStep: () => void;
+  resetWizard: () => void;
 } | undefined>(undefined);
 
 export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // Initialize with loadState to check for persisted data
+  const [state, dispatch] = useReducer(reducer, initialState, loadState);
+
+  // Persistence Effect
+  useEffect(() => {
+    // Separate out fields that shouldn't or can't be persisted (like File objects)
+    const { moodBoardImages, ...persistableState } = state;
+    localStorage.setItem('wizard_state', JSON.stringify(persistableState));
+  }, [state]);
 
   // Auto-recalculate price on state change
   useEffect(() => {
     const price = calculatePrice(state);
     const deposit = Math.round(price * 0.5); // 50% deposit
-    // Only dispatch if changed to avoid loop
     if (price !== state.totalPrice) {
         dispatch({ type: 'SET_TOTAL', price, deposit });
     }
@@ -122,7 +150,7 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
     state.hairMakeup, 
     state.videoAddOn, 
     state.retouchingLevel, 
-    state.finalImagesCount,
+    state.finalImagesCount, 
     state.turnaround,
     state.usageRights
   ]);
@@ -133,9 +161,14 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const nextStep = () => dispatch({ type: 'NEXT_STEP' });
   const prevStep = () => dispatch({ type: 'PREV_STEP' });
+  
+  const resetWizard = () => {
+    localStorage.removeItem('wizard_state');
+    dispatch({ type: 'RESET_WIZARD' });
+  };
 
   return (
-    <ShootWizardContext.Provider value={{ state, dispatch, updateField, nextStep, prevStep }}>
+    <ShootWizardContext.Provider value={{ state, dispatch, updateField, nextStep, prevStep, resetWizard }}>
       {children}
     </ShootWizardContext.Provider>
   );
