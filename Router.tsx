@@ -8,6 +8,7 @@ import { ProductPhotography } from './pages/ProductPhotography';
 import { ClothingPhotography } from './pages/ClothingPhotography';
 import { EcommercePhotography } from './pages/EcommercePhotography';
 import { CreativeStillLife } from './pages/CreativeStillLife';
+import { VideoProduction } from './pages/VideoProduction';
 import { Dashboard } from './pages/Dashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -22,6 +23,7 @@ export const Router: React.FC = () => {
         <Route path="/services/clothing-photography" element={<ClothingPhotography />} />
         <Route path="/services/ecommerce" element={<EcommercePhotography />} />
         <Route path="/services/creative-still-life" element={<CreativeStillLife />} />
+        <Route path="/services/video-production" element={<VideoProduction />} />
       </Route>
 
       {/* Dashboard Routes wrapped in Dashboard Layout */}

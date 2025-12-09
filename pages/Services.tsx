@@ -13,7 +13,7 @@ export const Services: React.FC = () => {
   const servicesList = [
     { icon: Monitor, title: "Web Design", desc: "Identity & UX", link: "/services" },
     { icon: Camera, title: "Photography", desc: "Campaign & Editorial", link: "/services/product-photography" },
-    { icon: Video, title: "Video Production", desc: "Commercial & Reels", link: "/services" },
+    { icon: Video, title: "Video Production", desc: "Commercial & Reels", link: "/services/video-production" },
     { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings", link: "/services/ecommerce" },
     { icon: Instagram, title: "Social Media", desc: "Strategy & Content", link: "/services" },
     { icon: Sparkles, title: "AI Creative", desc: "Enhancement & GenAI", link: "/services" },
@@ -177,9 +177,9 @@ export const Services: React.FC = () => {
         {/* Block 3: Video Production */}
         <section className="py-24 px-6 bg-gray-50">
            <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-              <div className="order-2 lg:order-1 relative group cursor-pointer">
+              <div className="order-2 lg:order-1 relative group cursor-pointer" onClick={() => navigate('/services/video-production')}>
                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors z-20 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm">
+                    <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
                        <Play className="w-8 h-8 ml-1" />
                     </div>
                  </div>
@@ -199,7 +199,7 @@ export const Services: React.FC = () => {
                        <li key={item} className="flex items-center text-sm font-medium"><div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-3"></div>{item}</li>
                     ))}
                  </ul>
-                 <Button>View Showreel</Button>
+                 <Button onClick={() => navigate('/services/video-production')}>View Showreel</Button>
               </div>
            </div>
         </section>
