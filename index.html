@@ -71,6 +71,16 @@
          0% { transform: translateY(0); }
          100% { transform: translateY(-50%); }
       }
+      
+      @keyframes pulse-scale {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+
+      @keyframes loading-bar {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
     </style>
   <script type="importmap">
 {

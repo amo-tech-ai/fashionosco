@@ -38,16 +38,16 @@ export const InstagramHero: React.FC = () => {
       currentMouseY += (targetMouseY - currentMouseY) * ease;
 
       if (backRef.current) {
-        // Back layer: Slow scroll, subtle mouse movement
-        backRef.current.style.transform = `translate3d(${currentMouseX * -10}px, ${currentScrollY * 0.05 + currentMouseY * -10}px, 0) rotate(-2deg)`;
+        // Back layer: Subtle scroll, very subtle inverse mouse
+        backRef.current.style.transform = `translate3d(${currentMouseX * -8}px, ${currentScrollY * 0.04 + currentMouseY * -8}px, 0) rotate(-1deg)`;
       }
       if (midRef.current) {
-        // Mid layer: Medium scroll, moderate mouse movement
-        midRef.current.style.transform = `translate3d(${currentMouseX * -20}px, ${currentScrollY * -0.03 + currentMouseY * -20}px, 0) rotate(3deg)`;
+        // Mid layer: Moderate scroll, moderate inverse mouse
+        midRef.current.style.transform = `translate3d(${currentMouseX * -15}px, ${currentScrollY * -0.02 + currentMouseY * -15}px, 0) rotate(2deg)`;
       }
       if (frontRef.current) {
-        // Front layer: Fast scroll, strong mouse movement for depth
-        frontRef.current.style.transform = `translate3d(${currentMouseX * -30}px, ${currentScrollY * 0.08 + currentMouseY * -30}px, 0)`;
+        // Front layer: Stronger scroll, distinct inverse mouse for depth
+        frontRef.current.style.transform = `translate3d(${currentMouseX * -22}px, ${currentScrollY * 0.06 + currentMouseY * -22}px, 0)`;
       }
 
       animationFrameId = requestAnimationFrame(updateParallax);
@@ -128,7 +128,7 @@ export const InstagramHero: React.FC = () => {
           >
              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2864&auto=format&fit=crop" className="w-full h-full object-cover opacity-90" alt="Reel" />
              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/30 animate-pulse">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/30 animate-[pulse-scale_3s_ease-in-out_infinite]">
                    <Play className="w-5 h-5 text-white fill-white ml-0.5" />
                 </div>
              </div>

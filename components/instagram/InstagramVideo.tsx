@@ -35,7 +35,7 @@ export const InstagramVideo: React.FC = () => {
           const distance = Math.abs(viewportCenter - cardCenter);
 
           // Threshold for "active" state
-          if (distance < minDistance && distance < 400) { 
+          if (distance < minDistance && distance < 450) { 
              minDistance = distance;
              closestIndex = idx;
           }
@@ -84,28 +84,28 @@ export const InstagramVideo: React.FC = () => {
                 return (
                   <div 
                      key={idx} 
-                     className={`video-card relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer transition-all duration-700 ease-out group ${isActive ? 'scale-100 opacity-100 ring-2 ring-purple-500/50 shadow-2xl shadow-purple-900/20' : 'scale-95 opacity-60 grayscale hover:grayscale-0'}`}
+                     className={`video-card relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer transition-all duration-700 ease-out group ${isActive ? 'scale-100 opacity-100 ring-1 ring-purple-500/50 shadow-2xl shadow-purple-900/30' : 'scale-95 opacity-50 grayscale hover:grayscale-0'}`}
                   >
-                     <img src={vid.img} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[1.5s]" alt={vid.title} />
+                     <img src={vid.img} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt={vid.title} />
                      
                      {/* Gradient Overlay */}
-                     <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-80'}`}></div>
+                     <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-80'}`}></div>
                      
                      {/* Play Button - Pulsing when active */}
-                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className={`w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border transition-all duration-500 ${isActive ? 'scale-110 border-white/60 animate-[pulse_2s_infinite]' : 'scale-90 opacity-80 border-white/30'}`}>
+                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className={`w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border transition-all duration-700 ${isActive ? 'scale-110 border-white/80 animate-[pulse-scale_2s_ease-in-out_infinite]' : 'scale-90 opacity-60 border-white/20'}`}>
                            <Play className="w-6 h-6 text-white fill-white ml-1" />
                         </div>
                      </div>
 
                      {/* Active Video Card Overlay - Glass Panel */}
-                     <div className={`absolute bottom-6 left-6 right-6 transition-all duration-700 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-50'}`}>
-                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg">
+                     <div className={`absolute bottom-6 left-6 right-6 transition-all duration-700 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg shadow-lg">
                            <h3 className="font-bold text-lg mb-1">{vid.title}</h3>
                            <p className="text-xs text-gray-300 uppercase tracking-widest">{vid.sub}</p>
                            {isActive && (
                               <div className="h-0.5 bg-white/20 mt-3 rounded-full overflow-hidden">
-                                 <div className="h-full bg-white w-1/3 animate-[loading_4s_ease-in-out_infinite]"></div>
+                                 <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-1/2 animate-[loading-bar_3s_ease-in-out_infinite]"></div>
                               </div>
                            )}
                         </div>
