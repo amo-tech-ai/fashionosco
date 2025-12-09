@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './layouts/Layout';
@@ -9,6 +10,7 @@ import { ClothingPhotography } from './pages/ClothingPhotography';
 import { EcommercePhotography } from './pages/EcommercePhotography';
 import { CreativeStillLife } from './pages/CreativeStillLife';
 import { VideoProduction } from './pages/VideoProduction';
+import { InstagramServices } from './pages/InstagramServices';
 import { Dashboard } from './pages/Dashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -24,6 +26,7 @@ export const Router: React.FC = () => {
         <Route path="/services/ecommerce" element={<EcommercePhotography />} />
         <Route path="/services/creative-still-life" element={<CreativeStillLife />} />
         <Route path="/services/video-production" element={<VideoProduction />} />
+        <Route path="/services/instagram" element={<InstagramServices />} />
       </Route>
 
       {/* Dashboard Routes wrapped in Dashboard Layout */}

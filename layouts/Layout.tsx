@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { NavItem } from '../types';
@@ -60,6 +61,7 @@ export const Layout: React.FC = () => {
                              <Link to="/services/ecommerce" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Ecommerce Photography</Link>
                              <Link to="/services/creative-still-life" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Creative Still Life</Link>
                              <Link to="/services/video-production" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Video Production</Link>
+                             <Link to="/services/instagram" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Instagram Services</Link>
                           </div>
                        </div>
                     </div>
@@ -119,6 +121,7 @@ export const Layout: React.FC = () => {
                             <Link to="/services/ecommerce" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Ecommerce Photography</Link>
                             <Link to="/services/creative-still-life" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Creative Still Life</Link>
                             <Link to="/services/video-production" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Video Production</Link>
+                            <Link to="/services/instagram" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Instagram Services</Link>
                          </div>
                       )}
                    </div>
@@ -180,7 +183,7 @@ export const Layout: React.FC = () => {
                   <li><Link to="/services/ecommerce" className="hover:text-black transition-colors">Ecommerce Photography</Link></li>
                   <li><Link to="/services/creative-still-life" className="hover:text-black transition-colors">Creative Still Life</Link></li>
                   <li><Link to="/services/video-production" className="hover:text-black transition-colors">Video Production</Link></li>
-                  <li><Link to="/services" className="hover:text-black transition-colors">Social Media</Link></li>
+                  <li><Link to="/services/instagram" className="hover:text-black transition-colors">Instagram Services</Link></li>
                   <li><Link to="/services" className="hover:text-black transition-colors">AI Creative</Link></li>
                </ul>
             </div>
