@@ -4,6 +4,7 @@ import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
 import { Sparkles, Layers, Loader2, RefreshCw } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
+import { Shot } from '../../../types/ai';
 
 export const DeliverablesStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
@@ -111,7 +112,7 @@ export const DeliverablesStep: React.FC = () => {
                   </div>
                ) : (
                   <div className="divide-y divide-gray-100 overflow-y-auto max-h-[350px] p-2">
-                     {state.shotList.map((shot: any, idx: number) => (
+                     {state.shotList.map((shot: Shot, idx: number) => (
                         <div key={idx} className="p-4 hover:bg-gray-50 rounded-lg transition-colors group animate-in slide-in-from-bottom-2" style={{ animationDelay: `${idx * 50}ms` }}>
                            <div className="flex justify-between items-start mb-1">
                               <span className="font-bold text-sm text-gray-900">{shot.name}</span>

@@ -1,4 +1,6 @@
 
+import { Shot, MoodBoardAnalysis } from './ai';
+
 export type ShootType = "campaign" | "product" | "runway" | "lookbook" | "video" | "custom";
 export type LocationType = "studio" | "on-location" | "client-venue";
 export type VibeType = "minimalist" | "editorial" | "bold" | "dark" | "natural";
@@ -34,8 +36,8 @@ export interface ShootWizardState {
   totalPrice: number;
   deposit: number;
   // AI Generated Data
-  shotList: any[]; // Defined in AI module later
-  aiAnalysis: any | null;
+  shotList: Shot[];
+  aiAnalysis: MoodBoardAnalysis | null;
 }
 
 export const SHOOT_TYPES = [

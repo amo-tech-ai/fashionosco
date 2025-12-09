@@ -7,7 +7,6 @@ const SUPABASE_FUNCTION_URL = (import.meta as any).env.VITE_SUPABASE_FUNCTION_UR
 const generateMockShots = (params: GenerateShotListParams): Shot[] => {
   const count = Math.min(params.numberOfItems, 8); // Generate up to 8 preview shots
   const vibe = params.vibe || 'editorial';
-  const type = params.shootType || 'campaign';
   
   const templates = [
     {

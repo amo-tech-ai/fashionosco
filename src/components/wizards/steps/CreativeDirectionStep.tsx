@@ -2,8 +2,9 @@
 import React, { useState, useRef } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Upload, Sparkles, Loader2, X, CheckCircle2 } from 'lucide-react';
+import { Upload, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 import { analyzeMoodBoard } from '../../../services/ai/moodBoard';
+import { VibeType } from '../../../types/wizard';
 
 export const CreativeDirectionStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
@@ -25,7 +26,7 @@ export const CreativeDirectionStep: React.FC = () => {
           // Auto-select vibe if high confidence match found
           const suggestedVibe = analysis.keywords[0]?.toLowerCase();
           if (['minimalist', 'editorial', 'bold', 'dark', 'natural'].includes(suggestedVibe)) {
-              updateField('vibe', suggestedVibe);
+              updateField('vibe', suggestedVibe as VibeType);
           }
         } catch (err) {
           console.error(err);
@@ -89,7 +90,7 @@ export const CreativeDirectionStep: React.FC = () => {
                   {['minimalist', 'editorial', 'bold', 'dark', 'natural'].map((vibe) => (
                      <button
                         key={vibe}
-                        onClick={() => updateField('vibe', vibe)}
+                        onClick={() => updateField('vibe', vibe as VibeType)}
                         className={`px-4 py-2 rounded-full text-xs font-medium border transition-all ${
                            state.vibe === vibe 
                            ? 'bg-black text-white border-black' 
@@ -155,6 +156,13 @@ export const CreativeDirectionStep: React.FC = () => {
                         <p className="text-xs text-gray-600">{state.aiAnalysis.recommendedProps?.join(', ') || 'Minimalist'}</p>
                      </div>
                   </div>
+                  
+                  {state.aiAnalysis.similarBrands && state.aiAnalysis.similarBrands.length > 0 && (
+                     <div>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Brand References</h4>
+                        <p className="text-xs text-gray-600">{state.aiAnalysis.similarBrands.join(', ')}</p>
+                     </div>
+                  )}
                   
                   <div className="pt-2 flex items-center text-xs text-green-600 font-medium">
                      <CheckCircle2 size={14} className="mr-1" />
