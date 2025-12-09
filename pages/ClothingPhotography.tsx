@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../components/Button';
-import { ButtonVariant } from '../types';
-import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box, Palette, Aperture, Wand2, Download, CheckCircle, Clock, Layers, Scissors, Shirt, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
+import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box, Palette, Aperture, Wand2, Download, Layers, Scissors, Shirt, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const ClothingPhotography: React.FC = () => {
@@ -30,9 +29,25 @@ export const ClothingPhotography: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouseMove);
 
+    // Scroll Observer for Animations
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    const elements = document.querySelectorAll('.reveal-on-scroll');
+    elements.forEach((el) => observer.observe(el));
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
+      observer.disconnect();
     };
   }, []);
 
@@ -85,7 +100,18 @@ export const ClothingPhotography: React.FC = () => {
 
   return (
     <div className="bg-[#F7F5F3] text-[#111111] font-sans selection:bg-[#E5D7A4] selection:text-black">
-      
+      <style>{`
+        .reveal-on-scroll {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-on-scroll.is-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
+
       {/* SECTION 1: HERO */}
       <section ref={heroRef} className="relative pt-32 pb-24 px-6 overflow-hidden min-h-[90vh] flex items-center">
         {/* Abstract Background Gradients */}
@@ -122,38 +148,41 @@ export const ClothingPhotography: React.FC = () => {
           {/* Hero Collage with Parallax */}
           <div className="lg:col-span-7 relative h-[600px] hidden lg:block perspective-[1000px]">
              
-             {/* Image 1: Main Right (Slower move - Background layer feel) */}
+             {/* Image 1: Main Right (Background layer) */}
              <div 
-                className="absolute top-0 right-10 w-[300px] aspect-[3/4] shadow-2xl z-20 transition-transform duration-100 ease-out will-change-transform"
+                className="absolute top-0 right-10 w-[300px] aspect-[3/4] shadow-2xl z-20 will-change-transform"
                 style={{ 
-                    transform: `translate3d(${mousePos.x * -20}px, ${mousePos.y * -20 + scrollY * 0.05}px, 0)` 
+                    transform: `translate3d(${mousePos.x * -12}px, ${mousePos.y * -12 + scrollY * 0.05}px, 0)`,
+                    transition: 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)'
                 }}
              >
-                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:shadow-3xl transition-all duration-500 rounded-sm bg-white p-1">
+                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:shadow-3xl transition-all duration-700 rounded-sm bg-white p-1">
                    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" className="w-full h-full object-cover" alt="Fashion Editorial" />
                 </div>
              </div>
 
-             {/* Image 2: Top Left (Opposite move - Midground layer) */}
+             {/* Image 2: Top Left (Midground layer) */}
              <div 
-                className="absolute top-20 left-10 w-[280px] aspect-[3/4] shadow-xl z-10 transition-transform duration-100 ease-out will-change-transform"
+                className="absolute top-20 left-10 w-[280px] aspect-[3/4] shadow-xl z-10 will-change-transform"
                 style={{ 
-                    transform: `translate3d(${mousePos.x * 25}px, ${mousePos.y * 25 + scrollY * 0.12}px, 0)` 
+                    transform: `translate3d(${mousePos.x * -20}px, ${mousePos.y * -20 + scrollY * 0.12}px, 0)`,
+                    transition: 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)'
                 }}
              >
-                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:scale-[1.02] transition-all duration-500 rounded-sm">
+                <div className="w-full h-full overflow-hidden hover:-translate-y-4 hover:scale-[1.02] transition-all duration-700 rounded-sm">
                     <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=2705&auto=format&fit=crop" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" alt="Clothing Texture" />
                 </div>
              </div>
 
-             {/* Image 3: Bottom Right Detail (Faster move - Foreground layer) */}
+             {/* Image 3: Bottom Right Detail (Foreground layer) */}
              <div 
-                className="absolute bottom-10 right-1/3 w-[240px] aspect-square shadow-lg z-30 transition-transform duration-100 ease-out will-change-transform"
+                className="absolute bottom-10 right-1/3 w-[240px] aspect-square shadow-lg z-30 will-change-transform"
                  style={{ 
-                    transform: `translate3d(${mousePos.x * -40}px, ${mousePos.y * -40 + scrollY * -0.08}px, 0)` 
+                    transform: `translate3d(${mousePos.x * -35}px, ${mousePos.y * -35 + scrollY * -0.08}px, 0)`,
+                    transition: 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)'
                 }}
              >
-                <div className="w-full h-full overflow-hidden border-8 border-white hover:scale-105 transition-transform duration-500 rounded-sm">
+                <div className="w-full h-full overflow-hidden border-8 border-white hover:scale-105 transition-transform duration-700 rounded-sm">
                     <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=2864&auto=format&fit=crop" className="w-full h-full object-cover" alt="Detail Shot" />
                 </div>
              </div>
@@ -163,7 +192,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 2: BRAND TRUST */}
-      <section className="py-24 px-6 bg-white border-t border-gray-100">
+      <section className="py-24 px-6 bg-white border-t border-gray-100 reveal-on-scroll">
         <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
            <div className="space-y-6">
               <span className="text-xs font-bold tracking-[0.2em] uppercase text-[#E5D7A4]">Heritage & Expertise</span>
@@ -187,10 +216,10 @@ export const ClothingPhotography: React.FC = () => {
         <div className="max-w-[1440px] mx-auto space-y-24">
            
            {/* 1. Ghost Mannequin */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group">
-              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-[100ms] fill-mode-forwards">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group reveal-on-scroll" style={{ transitionDelay: '100ms' }}>
+              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out cursor-pointer">
                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
-                 <img src="https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Ghost Mannequin" />
+                 <img src="https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt="Ghost Mannequin" />
               </div>
               <div className="order-1 lg:order-2 space-y-6">
                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
@@ -201,13 +230,15 @@ export const ClothingPhotography: React.FC = () => {
                     Invisible (ghost) mannequin photography creates the effect of a garment being worn by an invisible model. Each item is carefully styled and shot on a mannequin, which is then digitally removed in post-production – all included in all our rates.
                  </p>
                  <div className="pt-4">
-                    <button className="text-xs font-bold uppercase tracking-widest border-b border-black pb-1 hover:text-gray-600 transition-colors">View Examples</button>
+                    <button className="text-xs font-bold uppercase tracking-widest border-b border-black pb-1 hover:text-gray-600 transition-colors flex items-center group/btn">
+                       View Examples <ArrowRight className="w-3 h-3 ml-2 opacity-0 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
+                    </button>
                  </div>
               </div>
            </div>
 
            {/* 2. Clothing Flats */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group reveal-on-scroll" style={{ transitionDelay: '200ms' }}>
               <div className="space-y-6">
                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                     <Layers className="w-6 h-6 text-gray-800" strokeWidth={1} />
@@ -217,15 +248,15 @@ export const ClothingPhotography: React.FC = () => {
                     An alternative method to invisible mannequin photography is to style your garments flat. This can be done by hanging them, which allows for natural movement to illustrate the fit of a garment (whether a loose or slim fit, for example), or on a tabletop, for a creaseless, sharp finish or controlled movement.
                  </p>
               </div>
-              <div className="relative overflow-hidden rounded-sm shadow-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-[200ms] fill-mode-forwards">
-                 <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Clothing Flats" />
+              <div className="relative overflow-hidden rounded-sm shadow-xl hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out cursor-pointer">
+                 <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt="Clothing Flats" />
               </div>
            </div>
 
            {/* 3. Apparel Still Life */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group">
-              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-[300ms] fill-mode-forwards">
-                 <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Still Life" />
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group reveal-on-scroll" style={{ transitionDelay: '300ms' }}>
+              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out cursor-pointer">
+                 <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2940&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt="Still Life" />
               </div>
               <div className="order-1 lg:order-2 space-y-6">
                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
@@ -239,7 +270,7 @@ export const ClothingPhotography: React.FC = () => {
            </div>
 
            {/* 4. Details */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group reveal-on-scroll" style={{ transitionDelay: '400ms' }}>
               <div className="space-y-6">
                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                     <Aperture className="w-6 h-6 text-gray-800" strokeWidth={1} />
@@ -249,15 +280,15 @@ export const ClothingPhotography: React.FC = () => {
                     If you are looking to really sell your collection to customers, detail shots are an essential part of your catalogue shots. Displaying a cropped, close up section of each garment, detail shots brilliantly capture features of the clothes. This could include buttons, inside pockets, fastenings and texture.
                  </p>
               </div>
-              <div className="relative overflow-hidden rounded-sm shadow-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-[400ms] fill-mode-forwards">
-                 <img src="https://images.unsplash.com/photo-1620799140408-ed5341cd2431?q=80&w=3072&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Detail Shot" />
+              <div className="relative overflow-hidden rounded-sm shadow-xl hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out cursor-pointer">
+                 <img src="https://images.unsplash.com/photo-1620799140408-ed5341cd2431?q=80&w=3072&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt="Detail Shot" />
               </div>
            </div>
 
             {/* 5. Accessories */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group">
-              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-[500ms] fill-mode-forwards">
-                 <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=2835&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-1000" alt="Accessories" />
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center group reveal-on-scroll" style={{ transitionDelay: '500ms' }}>
+              <div className="order-2 lg:order-1 relative overflow-hidden rounded-sm shadow-xl hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out cursor-pointer">
+                 <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=2835&auto=format&fit=crop" className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[1.5s]" alt="Accessories" />
               </div>
               <div className="order-1 lg:order-2 space-y-6">
                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
@@ -274,7 +305,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 4: WHY CHOOSE US */}
-      <section className="py-32 px-6 bg-white">
+      <section className="py-32 px-6 bg-white reveal-on-scroll">
          <div className="max-w-[1440px] mx-auto">
             <h2 className="font-serif text-4xl md:text-5xl mb-16 text-center">Why Choose Us.</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -297,7 +328,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 5: FEATURED IMAGE BLOCK */}
-      <section className="relative h-[80vh] flex items-center justify-center overflow-hidden bg-gray-900 group">
+      <section className="relative h-[80vh] flex items-center justify-center overflow-hidden bg-gray-900 group reveal-on-scroll">
          {/* Parallax Background */}
          <div className="absolute inset-0 bg-fixed bg-center bg-cover scale-105 group-hover:scale-110 transition-transform duration-[3s]" 
               style={{ backgroundImage: "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2940&auto=format&fit=crop')" }}>
@@ -325,7 +356,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 6: TESTIMONIALS */}
-      <section className="py-24 px-6 bg-[#F6E9E4]">
+      <section className="py-24 px-6 bg-[#F6E9E4] reveal-on-scroll">
          <div className="max-w-4xl mx-auto text-center">
             <h2 className="font-serif text-3xl md:text-4xl leading-normal mb-8 text-gray-800 italic">
                "Top-notch studio with a brilliant owner and attentive team who we have a great relationship with and who always makes us feel very welcome and fulfil all our production requirements on our many and varied shoots. I would recommend them to anyone looking to do a photoshoot in London."
@@ -338,7 +369,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 7: PROCESS FLOWCHART */}
-      <section className="py-32 px-6 bg-gradient-to-b from-white to-gray-50 overflow-hidden relative">
+      <section className="py-32 px-6 bg-gradient-to-b from-white to-gray-50 overflow-hidden relative reveal-on-scroll">
          <div className="max-w-[1440px] mx-auto relative z-10">
             <div className="text-center mb-20">
                <span className="text-xs font-bold tracking-widest uppercase text-purple-500 mb-2 block">Our Workflow</span>
@@ -371,7 +402,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 8: FAQ ACCORDION */}
-      <section className="py-32 px-6 bg-white max-w-[1000px] mx-auto">
+      <section className="py-32 px-6 bg-white max-w-[1000px] mx-auto reveal-on-scroll">
          <h2 className="font-serif text-4xl mb-12 text-center">Our Clothing Ghost Mannequin & Flats FAQs</h2>
          <div className="space-y-4">
             {faqs.map((faq, index) => (
@@ -396,7 +427,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 9: LOGO STRIP */}
-      <section className="py-20 px-6 bg-white border-t border-gray-100">
+      <section className="py-20 px-6 bg-white border-t border-gray-100 reveal-on-scroll">
          <div className="max-w-[1440px] mx-auto">
             <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale">
                {/* Using text placeholders for brands to avoid broken image links, styled to look like logos */}
@@ -411,7 +442,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 10: INVISIBLE MANNEQUIN HERO */}
-      <section className="py-32 px-6 bg-[#111111] text-white relative overflow-hidden">
+      <section className="py-32 px-6 bg-[#111111] text-white relative overflow-hidden reveal-on-scroll">
          <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2874&auto=format&fit=crop')] bg-cover bg-center"></div>
          <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-[#111111]"></div>
          
@@ -436,7 +467,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 11: BEHIND THE SCENES GRID */}
-      <section className="py-24 px-6 bg-[#F7F5F3]">
+      <section className="py-24 px-6 bg-[#F7F5F3] reveal-on-scroll">
          <div className="max-w-[1440px] mx-auto">
             <div className="flex justify-between items-end mb-12">
                <h2 className="font-serif text-3xl">Behind the Scenes.</h2>
@@ -461,7 +492,7 @@ export const ClothingPhotography: React.FC = () => {
       </section>
 
       {/* SECTION 12: FINAL CTA */}
-      <section className="py-32 px-6 bg-[#111111] text-white text-center" id="contact">
+      <section className="py-32 px-6 bg-[#111111] text-white text-center reveal-on-scroll" id="contact">
          <div className="max-w-2xl mx-auto space-y-8">
             <h2 className="font-serif text-5xl md:text-6xl">Ready to Start?</h2>
             <p className="text-gray-400 font-light text-lg">
