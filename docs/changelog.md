@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2025-05-22
+### Production Polish
+- **Dashboard Redesign**: Upgraded `pages/Dashboard.tsx` from generic layout to a premium, on-brand interface using Serif fonts and clean spacing.
+- **Product Photography Navigation**: Fixed the "Request a Quote" anchor link in `pages/ProductPhotography.tsx` to use smooth scrolling, eliminating page reloads.
+- **Mobile Navigation Refinement**: Enhanced `layouts/Layout.tsx` mobile menu with clearer hierarchy, "Book a Shoot" CTA, and active state indicators for sub-services.
+- **Service Linking**: Updated `pages/Services.tsx` category cards to link directly to the newly implemented specific service pages (Clothing, Ecommerce, Creative Still Life).
+
 ## [1.1.0] - 2025-05-21
 ### Major Updates
 - **Services Page Redesign**: Complete overhaul of `pages/Services.tsx` to align with the 6-category Premium Editorial Specification.

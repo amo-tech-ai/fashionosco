@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { NavItem } from '../types';
 import { Button } from '../components/Button';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
 
 const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
@@ -20,7 +20,7 @@ export const Layout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white">
       {/* Editorial Header */}
-      <header className="fixed w-full top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100 transition-all duration-300">
+      <header className="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 transition-all duration-300">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
           
           {/* Logo */}
@@ -31,7 +31,7 @@ export const Layout: React.FC = () => {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-8 lg:space-x-12">
             {navItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.href) && item.href !== '/';
+              const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href));
               
               if (item.label === 'Services') {
                  return (
@@ -54,10 +54,11 @@ export const Layout: React.FC = () => {
                        {/* Dropdown Menu */}
                        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-64 bg-white border border-gray-100 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                           <div className="py-2">
-                             <Link to="/services" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">All Services</Link>
+                             <Link to="/services" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors border-b border-gray-50">All Services</Link>
                              <Link to="/services/product-photography" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Product Photography</Link>
                              <Link to="/services/clothing-photography" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Clothing Photography</Link>
                              <Link to="/services/ecommerce" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Ecommerce Photography</Link>
+                             <Link to="/services/creative-still-life" className="block px-6 py-3 text-xs uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-black transition-colors">Creative Still Life</Link>
                           </div>
                        </div>
                     </div>
@@ -69,7 +70,7 @@ export const Layout: React.FC = () => {
                   key={item.label}
                   to={item.href}
                   className={`text-xs font-medium uppercase tracking-widest hover:text-gray-600 transition-colors ${
-                    location.pathname === item.href && item.href !== '/' ? 'text-black border-b border-black pb-1' : 'text-gray-500'
+                    isActive ? 'text-black border-b border-black pb-1' : 'text-gray-500'
                   }`}
                 >
                   {item.label}
@@ -89,7 +90,7 @@ export const Layout: React.FC = () => {
              
              {/* Mobile Menu Toggle */}
              <button 
-                className="md:hidden p-2 z-50 relative"
+                className="md:hidden p-2 z-50 relative text-black"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
              >
                 {isMobileMenuOpen ? <X /> : <Menu />}
@@ -106,29 +107,27 @@ export const Layout: React.FC = () => {
                       <Link
                         to={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-2xl font-serif font-medium border-b border-gray-100 pb-4 block"
+                        className="text-3xl font-serif font-medium border-b border-gray-100 pb-4 block hover:text-gray-600 transition-colors"
                       >
                          {item.label}
                       </Link>
                       {item.label === 'Services' && (
-                         <div className="pl-6 pt-4 space-y-4 flex flex-col">
-                            <Link to="/services/product-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Product Photography</Link>
-                            <Link to="/services/clothing-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Clothing Photography</Link>
-                            <Link to="/services/ecommerce" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-500">Ecommerce Photography</Link>
+                         <div className="pl-4 pt-4 space-y-4 flex flex-col border-l border-gray-100 ml-2">
+                            <Link to="/services/product-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black flex items-center">Product Photography <ArrowRight className="w-3 h-3 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" /></Link>
+                            <Link to="/services/clothing-photography" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Clothing Photography</Link>
+                            <Link to="/services/ecommerce" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Ecommerce Photography</Link>
+                            <Link to="/services/creative-still-life" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black">Creative Still Life</Link>
                          </div>
                       )}
                    </div>
                 ))}
-                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif font-medium border-b border-gray-100 pb-4">
+                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif font-medium border-b border-gray-100 pb-4 block">
                    Log In
                 </Link>
-                <div className="pt-4 pb-12">
-                   <Button className="w-full justify-center" onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      // Navigate would happen here via link usually, wrapping in Link component
-                   }}>
-                      <Link to="/services" className="w-full h-full flex items-center justify-center">Book a Shoot</Link>
-                   </Button>
+                <div className="pt-8 pb-12">
+                   <Link to="/services" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full justify-center py-4 text-sm">Book a Shoot</Button>
+                   </Link>
                 </div>
              </nav>
           </div>
@@ -152,7 +151,7 @@ export const Layout: React.FC = () => {
               <div className="flex space-x-4">
                  {/* Social Placeholders */}
                  {[1,2,3,4].map(i => (
-                    <div key={i} className="w-8 h-8 border border-gray-200 flex items-center justify-center hover:bg-black hover:text-white transition-colors cursor-pointer text-xs">
+                    <div key={i} className="w-8 h-8 border border-gray-200 flex items-center justify-center hover:bg-black hover:text-white transition-colors cursor-pointer text-xs rounded-full">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                  ))}
@@ -162,34 +161,35 @@ export const Layout: React.FC = () => {
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Explore</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                  <li><Link to="/" className="hover:text-black">Home</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Services</Link></li>
-                  <li><Link to="/" className="hover:text-black">Directory</Link></li>
-                  <li><Link to="/" className="hover:text-black">Events</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Portfolio</Link></li>
+                  <li><Link to="/" className="hover:text-black transition-colors">Home</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">Services</Link></li>
+                  <li><Link to="/" className="hover:text-black transition-colors">Directory</Link></li>
+                  <li><Link to="/" className="hover:text-black transition-colors">Events</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">Portfolio</Link></li>
                </ul>
             </div>
 
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Services</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                  <li><Link to="/services" className="hover:text-black">Web Design</Link></li>
-                  <li><Link to="/services/product-photography" className="hover:text-black">Product Photography</Link></li>
-                  <li><Link to="/services/clothing-photography" className="hover:text-black">Clothing Photography</Link></li>
-                  <li><Link to="/services/ecommerce" className="hover:text-black font-medium text-black">Ecommerce Photography</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Video Production</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Social Media</Link></li>
-                  <li><Link to="/services" className="hover:text-black">AI Creative</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">Web Design</Link></li>
+                  <li><Link to="/services/product-photography" className="hover:text-black transition-colors">Product Photography</Link></li>
+                  <li><Link to="/services/clothing-photography" className="hover:text-black transition-colors">Clothing Photography</Link></li>
+                  <li><Link to="/services/ecommerce" className="hover:text-black transition-colors">Ecommerce Photography</Link></li>
+                  <li><Link to="/services/creative-still-life" className="hover:text-black transition-colors">Creative Still Life</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">Video Production</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">Social Media</Link></li>
+                  <li><Link to="/services" className="hover:text-black transition-colors">AI Creative</Link></li>
                </ul>
             </div>
 
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">For Creators</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                  <li><Link to="/dashboard" className="hover:text-black">Create Event</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black">Dashboard</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black">Join Directory</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black">Contact</Link></li>
+                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Create Event</Link></li>
+                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Dashboard</Link></li>
+                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Join Directory</Link></li>
+                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Contact</Link></li>
                </ul>
             </div>
           </div>
@@ -197,8 +197,8 @@ export const Layout: React.FC = () => {
           <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
             <p>&copy; 2025 FashionOS. All rights reserved.</p>
             <div className="space-x-6 mt-4 md:mt-0">
-               <a href="#" className="hover:text-black">Privacy Policy</a>
-               <a href="#" className="hover:text-black">Terms of Service</a>
+               <a href="#" className="hover:text-black transition-colors">Privacy Policy</a>
+               <a href="#" className="hover:text-black transition-colors">Terms of Service</a>
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ export const Services: React.FC = () => {
   const navigate = useNavigate();
 
   // 1. Defined Service Categories (6 items)
+  // Updated links to point to the actual new pages
   const servicesList = [
     { icon: Monitor, title: "Web Design", desc: "Identity & UX", link: "/services" },
     { icon: Camera, title: "Photography", desc: "Campaign & Editorial", link: "/services/product-photography" },
@@ -152,10 +153,18 @@ export const Services: React.FC = () => {
                       <span className="font-bold text-sm">Clothing Photography</span>
                       <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
+                    <div 
+                      onClick={() => navigate('/services/creative-still-life')}
+                      className="flex items-center p-4 border border-gray-100 rounded-sm hover:border-purple-200 cursor-pointer transition-colors group"
+                    >
+                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="font-bold text-sm">Creative Still Life</span>
+                      <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                  </div>
                  <div className="flex gap-4">
                    <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/product-photography')}>Book Product Shoot</Button>
-                   <Button variant={ButtonVariant.GHOST} onClick={() => navigate('/services/clothing-photography')}>View Clothing &rarr;</Button>
+                   <Button variant={ButtonVariant.GHOST} onClick={() => navigate('/services/creative-still-life')}>View Still Life &rarr;</Button>
                  </div>
               </div>
               <div className="relative">

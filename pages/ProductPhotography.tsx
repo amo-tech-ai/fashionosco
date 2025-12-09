@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
-import { ArrowRight, Star, Camera, Zap, BarChart, Smartphone, Play, Image as ImageIcon, Box, Palette, Aperture, Wand2, Download, CheckCircle, Clock, Layers, TrendingUp } from 'lucide-react';
+import { Box, Palette, Aperture, Camera, Wand2, Download, CheckCircle, Clock, Layers, Zap, Star, BarChart, Smartphone, ImageIcon, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const ProductPhotography: React.FC = () => {
   const navigate = useNavigate();
 
+  const scrollToContact = () => {
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="bg-white text-rich-black">
+    <div className="bg-white text-rich-black font-sans selection:bg-black selection:text-white">
       
       {/* SECTION 1: HERO */}
       <section className="bg-gradient-to-b from-off-white to-soft-cream pt-32 pb-24 px-6 overflow-hidden">
@@ -27,7 +31,7 @@ export const ProductPhotography: React.FC = () => {
               </p>
             </div>
             <div className="pt-4">
-              <Button onClick={() => window.location.href = '#contact'}>Request a Quote</Button>
+              <Button onClick={scrollToContact}>Request a Quote</Button>
             </div>
           </div>
 
@@ -277,7 +281,7 @@ export const ProductPhotography: React.FC = () => {
                  If you require clean, high-end catalogue images for online, print, or PR purposes, consider trying our e-commerce photography service. High-quality images are not a luxury but a necessity when it comes to driving online sales. Therefore, it's crucial to select a studio that consistently delivers top-notch images — and that's exactly what we do.
               </p>
               <div>
-                 <Button>Ecommerce Photography</Button>
+                 <Button onClick={() => navigate('/services/ecommerce')}>Ecommerce Photography</Button>
               </div>
            </div>
         </div>
@@ -294,12 +298,10 @@ export const ProductPhotography: React.FC = () => {
                I've been using Blend Studios for the past 6 years and have only ever found them to be friendly, professional and experts in creating the perfect product shots
             </h3>
             <div className="flex items-center justify-center space-x-12">
-               <ArrowRight className="rotate-180 text-charcoal hover:text-white cursor-pointer transition-colors" />
                <div>
                   <p className="text-sm font-bold uppercase tracking-widest text-white">Alan Solomon</p>
                   <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Alban Cycle Bags</p>
                </div>
-               <ArrowRight className="text-charcoal hover:text-white cursor-pointer transition-colors" />
             </div>
          </div>
       </section>
@@ -376,7 +378,7 @@ export const ProductPhotography: React.FC = () => {
                  <p>At Blend, we have years of experience in creative product photography. Our lighting expertise, professional studio equipment and masterful creative direction mean your images will be delivered to a consistently high standard.</p>
                  <p>Our still life photography service gives you the freedom to style your products however you like, with the option of incorporating props and interesting backgrounds.</p>
               </div>
-              <Button>Jump to Still Life</Button>
+              <Button onClick={() => navigate('/services/creative-still-life')}>Jump to Still Life</Button>
            </div>
            <div className="relative">
               <div className="grid grid-cols-2 gap-4">

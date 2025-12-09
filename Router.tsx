@@ -7,6 +7,7 @@ import { Services } from './pages/Services';
 import { ProductPhotography } from './pages/ProductPhotography';
 import { ClothingPhotography } from './pages/ClothingPhotography';
 import { EcommercePhotography } from './pages/EcommercePhotography';
+import { CreativeStillLife } from './pages/CreativeStillLife';
 import { Dashboard } from './pages/Dashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -20,6 +21,7 @@ export const Router: React.FC = () => {
         <Route path="/services/product-photography" element={<ProductPhotography />} />
         <Route path="/services/clothing-photography" element={<ClothingPhotography />} />
         <Route path="/services/ecommerce" element={<EcommercePhotography />} />
+        <Route path="/services/creative-still-life" element={<CreativeStillLife />} />
       </Route>
 
       {/* Dashboard Routes wrapped in Dashboard Layout */}
