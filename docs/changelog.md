@@ -1,4 +1,20 @@
+
 # Changelog
+
+## [1.3.0] - 2025-05-23
+### New Features
+- **Instagram Services Page**: Launched `/services/instagram`, a premium editorial page for social media content.
+  - Features high-performance scroll animations, parallax hero, and vertical video spotlight sections.
+  - Implemented glassmorphism UI and count-up stats.
+- **Global Animation System**: Consolidated animation styles into `index.html`.
+  - Added `.reveal-on-scroll` utility class for standardized 0.8s cubic-bezier entrances.
+  - Added `@keyframes moveUp` for infinite scroll simulations.
+
+### Enhancements
+- **Performance**: 
+  - Refactored `InstagramHero` and `ClothingHero` to use `requestAnimationFrame` with Linear Interpolation (Lerp) for smoother, decoupled parallax effects.
+  - Optimized `InstagramVideo` scroll detection to prevent main-thread blocking.
+- **Codebase Cleanliness**: Removed redundant `<style>` blocks from individual page components.
 
 ## [1.2.0] - 2025-05-22
 ### Production Polish

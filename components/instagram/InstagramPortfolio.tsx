@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ArrowUpRight } from 'lucide-react';
 
 export const InstagramPortfolio: React.FC = () => {
   const images = [
@@ -18,18 +17,21 @@ export const InstagramPortfolio: React.FC = () => {
     <section className="py-32 px-6 bg-white reveal-on-scroll" id="portfolio">
        <div className="max-w-[1440px] mx-auto">
           <div className="text-center mb-16">
-             <h2 className="font-serif text-4xl md:text-5xl mb-4">See the Results.</h2>
+             <h2 className="font-serif text-4xl md:text-5xl mb-4 text-primary">See the Results.</h2>
              <p className="text-gray-500 font-light">Recent work for fashion and lifestyle brands.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 portfolio-grid">
              {images.map((src, i) => (
                 <div key={i} className="group relative aspect-[4/5] overflow-hidden rounded-lg cursor-pointer bg-gray-100">
-                   <img src={src} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out" loading="lazy" />
-                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                         <ArrowUpRight className="w-5 h-5 text-black" />
-                      </div>
+                   {/* Image with Zoom */}
+                   <img src={src} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" alt="Portfolio Work" />
+                   
+                   {/* Overlay with Button */}
+                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                      <button className="bg-white text-black px-6 py-3 text-xs font-bold uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 hover:bg-gray-100 shadow-xl">
+                         View Project
+                      </button>
                    </div>
                 </div>
              ))}

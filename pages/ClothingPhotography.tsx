@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '../components/Button';
 import { ClothingHero } from '../components/clothing/ClothingHero';
@@ -41,19 +42,7 @@ export const ClothingPhotography: React.FC = () => {
 
   return (
     <div className="bg-[#F7F5F3] text-[#111111] font-sans selection:bg-[#E5D7A4] selection:text-black">
-      <style>{`
-        .reveal-on-scroll {
-          opacity: 0;
-          transform: translateY(40px);
-          transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-          will-change: opacity, transform;
-        }
-        .reveal-on-scroll.is-visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      `}</style>
-
+      
       {/* SECTION 1: HERO */}
       <ClothingHero onContactClick={scrollToContact} />
 

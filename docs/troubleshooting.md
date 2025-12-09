@@ -1,3 +1,4 @@
+
 # Troubleshooting Guide
 
 ## Common Issues
@@ -23,3 +24,17 @@
 **Symptom:** Clicking the hamburger icon does nothing.
 **Solution:**
 - Ensure `Layout.tsx` has been updated with the `useState` logic for `isMobileMenuOpen`. (Fixed in v1.0.1).
+
+### 5. Parallax or Scroll Animation Jitter
+**Symptom:** Hero sections or scroll-reveal elements feel laggy.
+**Solution:**
+- The app uses `requestAnimationFrame` for parallax. Ensure you are not running CPU-intensive tasks on the main thread.
+- If elements pop in without animation, check if `index.html` contains the `.reveal-on-scroll` CSS class definition.
+- Verify `IntersectionObserver` is supported in the browser (standard in modern browsers).
+
+### 6. App Failed to Load (Blank Screen)
+**Symptom:** White screen on startup.
+**Solution:**
+- Check console for "Module not found" errors. This usually means a file path in an `import` statement is incorrect.
+- Ensure all new components (e.g., `InstagramHero`) are exported as named exports: `export const InstagramHero` and imported with curly braces: `import { InstagramHero }`.
+- Verify `Router.tsx` includes all necessary imports for the defined routes.

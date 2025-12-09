@@ -23,6 +23,13 @@
               primary: '#000000',
               secondary: '#ffffff',
               accent: '#f4f4f5', // Zinc-100
+              // Luxury Neutral Palette
+              'soft-cream': '#F7F3EF',
+              'rich-black': '#0A0A0A',
+              'charcoal': '#373737',
+              'warm-beige': '#E8DED4',
+              'gold-accent': '#C8A96A',
+              'off-white': '#FCFBFA',
             },
             backgroundImage: {
               'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -45,6 +52,24 @@
       .hide-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
+      }
+
+      /* Global Scroll Reveal Animation */
+      .reveal-on-scroll {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        will-change: opacity, transform;
+      }
+      .reveal-on-scroll.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      /* Global Keyframes */
+      @keyframes moveUp {
+         0% { transform: translateY(0); }
+         100% { transform: translateY(-50%); }
       }
     </style>
   <script type="importmap">

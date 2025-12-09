@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShoppingBag, ArrowUpRight } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 export const InstagramShop: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ export const InstagramShop: React.FC = () => {
              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
                 <ShoppingBag className="w-8 h-8 text-black" strokeWidth={1.5} />
              </div>
-             <h2 className="font-serif text-4xl md:text-5xl leading-tight">
+             <h2 className="font-serif text-4xl md:text-5xl leading-tight text-primary">
                 Content That Fuels <br/>
                 Instagram Shops.
              </h2>
@@ -58,7 +58,7 @@ export const InstagramShop: React.FC = () => {
                    <div className="grid grid-cols-2 gap-1 p-1 animate-[moveUp_10s_linear_infinite]">
                       {[1,2,3,4,5,6,7,8].map((i) => (
                          <div key={i} className="aspect-square bg-gray-100 relative group">
-                            <img src={`https://images.unsplash.com/photo-${i % 2 === 0 ? '1515886657613-9f3515b0c78f' : '1523381210434-271e8be1f52b'}?q=80&w=400&auto=format&fit=crop`} className="w-full h-full object-cover" />
+                            <img src={`https://images.unsplash.com/photo-${i % 2 === 0 ? '1515886657613-9f3515b0c78f' : '1523381210434-271e8be1f52b'}?q=80&w=400&auto=format&fit=crop`} className="w-full h-full object-cover" alt="Shop Item" />
                             <div className="absolute top-2 right-2 bg-white/90 p-1 rounded-sm shadow-sm">
                                <ShoppingBag size={10} />
                             </div>
@@ -78,13 +78,6 @@ export const InstagramShop: React.FC = () => {
              </div>
           </div>
        </div>
-
-       <style>{`
-          @keyframes moveUp {
-             0% { transform: translateY(0); }
-             100% { transform: translateY(-50%); }
-          }
-       `}</style>
     </section>
   );
 };

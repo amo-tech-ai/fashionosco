@@ -22,7 +22,7 @@ export const InstagramFormats: React.FC = () => {
     <section className="py-24 px-6 bg-white border-b border-gray-100 reveal-on-scroll">
        <div className="max-w-[1440px] mx-auto text-center space-y-12">
           
-          <h2 className="font-serif text-3xl">Built for Every Format.</h2>
+          <h2 className="font-serif text-3xl text-primary">Built for Every Format.</h2>
 
           {/* Format Pills */}
           <div className="flex flex-wrap justify-center gap-4">

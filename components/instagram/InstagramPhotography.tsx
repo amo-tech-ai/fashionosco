@@ -12,21 +12,25 @@ export const InstagramPhotography: React.FC = () => {
   ];
 
   return (
-    <section className="py-32 px-6 bg-[#FDFCFB] reveal-on-scroll">
+    <section className="py-32 px-6 bg-[#FDFCFB]">
       <div className="max-w-[1440px] mx-auto">
-         <div className="mb-16">
-            <h2 className="font-serif text-4xl mb-4">Instagram Photography</h2>
+         <div className="mb-16 reveal-on-scroll">
+            <h2 className="font-serif text-4xl mb-4 text-primary">Instagram Photography</h2>
             <p className="text-gray-500 font-light">Stunning stills designed for the grid.</p>
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cards.map((card, idx) => (
-               <div key={idx} className="group bg-white p-4 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer border border-gray-100/50">
+               <div 
+                  key={idx} 
+                  className="group bg-white p-4 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer border border-gray-100/50 reveal-on-scroll"
+                  style={{ transitionDelay: `${idx * 100}ms` }}
+               >
                   <div className="aspect-square rounded-xl overflow-hidden mb-6 bg-gray-100">
                      <img src={card.img} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out" alt={card.title} />
                   </div>
                   <div className="px-2 pb-2">
-                     <h3 className="font-serif text-xl mb-1 group-hover:text-purple-900 transition-colors">{card.title}</h3>
+                     <h3 className="font-serif text-xl mb-1 group-hover:text-purple-900 transition-colors text-primary">{card.title}</h3>
                      <p className="text-sm text-gray-400 font-light">{card.desc}</p>
                   </div>
                </div>

@@ -13,7 +13,7 @@ export const InstagramTestimonial: React.FC = () => {
              </h3>
              <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-gray-300 rounded-full mb-3 overflow-hidden">
-                   <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" />
+                   <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" alt="Avatar" />
                 </div>
                 <p className="font-bold text-sm tracking-widest uppercase text-black">Elena R.</p>
                 <p className="text-gray-500 text-xs uppercase tracking-widest">Founder, The Modern Edit</p>

@@ -7,7 +7,7 @@ export const InstagramContact: React.FC = () => {
     <section className="py-32 px-6 bg-white" id="contact">
        <div className="max-w-xl mx-auto bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100 reveal-on-scroll">
           <div className="text-center mb-10">
-             <h2 className="font-serif text-4xl mb-2">Let's Create Content That Sells.</h2>
+             <h2 className="font-serif text-4xl mb-2 text-primary">Let's Create Content That Sells.</h2>
              <p className="text-gray-500 font-light">Tell us about your brand and goals.</p>
           </div>
 

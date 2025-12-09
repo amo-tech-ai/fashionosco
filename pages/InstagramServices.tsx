@@ -38,19 +38,6 @@ export const InstagramServices: React.FC = () => {
 
   return (
     <div className="bg-white text-gray-900 font-sans selection:bg-black selection:text-white overflow-x-hidden">
-      <style>{`
-        .reveal-on-scroll {
-          opacity: 0;
-          transform: translateY(30px);
-          transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-          will-change: opacity, transform;
-        }
-        .reveal-on-scroll.is-visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      `}</style>
-
       <InstagramHero />
       <InstagramValue />
       <InstagramPhotography />
@@ -61,7 +48,6 @@ export const InstagramServices: React.FC = () => {
       <InstagramFeatures />
       <InstagramTestimonial />
       <InstagramContact />
-      
     </div>
   );
 };

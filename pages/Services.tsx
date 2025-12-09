@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
@@ -15,7 +16,7 @@ export const Services: React.FC = () => {
     { icon: Camera, title: "Photography", desc: "Campaign & Editorial", link: "/services/product-photography" },
     { icon: Video, title: "Video Production", desc: "Commercial & Reels", link: "/services/video-production" },
     { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings", link: "/services/ecommerce" },
-    { icon: Instagram, title: "Social Media", desc: "Strategy & Content", link: "/services" },
+    { icon: Instagram, title: "Social Media", desc: "Strategy & Content", link: "/services/instagram" },
     { icon: Sparkles, title: "AI Creative", desc: "Enhancement & GenAI", link: "/services" },
   ];
 
@@ -232,8 +233,8 @@ export const Services: React.FC = () => {
         {/* Block 5: Social Media */}
         <section className="py-24 px-6 bg-gray-50">
            <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-              <div className="order-2 lg:order-1 relative">
-                 <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2874&auto=format&fit=crop" className="w-full h-[600px] object-cover rounded-sm shadow-2xl relative z-10" />
+              <div className="order-2 lg:order-1 relative cursor-pointer" onClick={() => navigate('/services/instagram')}>
+                 <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2874&auto=format&fit=crop" className="w-full h-[600px] object-cover rounded-sm shadow-2xl relative z-10 hover:brightness-90 transition-all" />
               </div>
               <div className="order-1 lg:order-2">
                  <div className="w-12 h-12 bg-pink-50 rounded-full flex items-center justify-center text-pink-600 mb-6">
@@ -249,7 +250,7 @@ export const Services: React.FC = () => {
                        <li key={item} className="flex items-center text-sm font-medium"><div className="w-1.5 h-1.5 bg-pink-500 rounded-full mr-3"></div>{item}</li>
                     ))}
                  </ul>
-                 <Button>Start Growing</Button>
+                 <Button onClick={() => navigate('/services/instagram')}>Start Growing</Button>
               </div>
            </div>
         </section>
