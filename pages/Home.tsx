@@ -2,20 +2,27 @@ import React from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Camera, Scissors, ShoppingBag, Video, Play, Star, MapPin, Search, Calendar, Wand2, Share2 } from 'lucide-react';
+import { ArrowRight, Camera, Scissors, ShoppingBag, Video, Play, Star, Search, Calendar, Wand2, Share2, Upload, Layers, Download, Bot, Type, Clapperboard, Sparkles } from 'lucide-react';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 bg-white">
       
       {/* 1. HERO SECTION */}
-      <section className="relative pt-12 pb-24 md:pt-24 md:pb-32 px-6">
-        <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <section className="relative pt-12 pb-24 md:pt-24 md:pb-32 px-6 overflow-hidden">
+        {/* Film Grain Texture Overlay */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
+        
+        {/* Abstract Floating Shapes */}
+        <div className="absolute top-20 left-10 w-64 h-64 border border-gray-200 rounded-full opacity-20 animate-[spin_10s_linear_infinite] pointer-events-none"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 border border-gray-100 rounded-full opacity-30 pointer-events-none"></div>
+
+        <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
           
           {/* Left: Text */}
-          <div className="lg:col-span-5 space-y-8 relative z-10">
+          <div className="lg:col-span-5 space-y-8 relative z-10 animate-in slide-in-from-bottom-10 duration-1000">
             <span className="text-xs font-bold tracking-widest uppercase text-gray-500">FashionOS Studio</span>
             <h1 className="font-serif text-5xl md:text-7xl leading-[1.1] font-medium text-black">
               Exceptional fashion imagery. <br />
@@ -35,16 +42,16 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Editorial Collage */}
-          <div className="lg:col-span-7 relative h-[600px] hidden md:block">
-             <div className="absolute top-0 right-0 w-2/3 h-4/5 overflow-hidden rounded-sm shadow-xl hover:shadow-2xl transition-shadow duration-500">
-               <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2788&auto=format&fit=crop" alt="Fashion Editorial" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+          {/* Right: Editorial Collage with Entry Animation */}
+          <div className="lg:col-span-7 relative h-[600px] hidden md:block animate-in fade-in duration-1000 delay-300">
+             <div className="absolute top-0 right-0 w-2/3 h-4/5 overflow-hidden rounded-sm shadow-xl hover:shadow-2xl transition-shadow duration-500 group">
+               <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2788&auto=format&fit=crop" alt="Fashion Editorial" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]" />
              </div>
-             <div className="absolute bottom-0 left-12 w-1/2 h-3/5 overflow-hidden rounded-sm shadow-xl z-20 border-4 border-white">
-               <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=2946&auto=format&fit=crop" alt="Runway Model" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+             <div className="absolute bottom-0 left-12 w-1/2 h-3/5 overflow-hidden rounded-sm shadow-xl z-20 border-4 border-white group">
+               <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=2946&auto=format&fit=crop" alt="Runway Model" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]" />
              </div>
-             <div className="absolute top-20 left-0 w-1/3 h-1/3 overflow-hidden rounded-sm shadow-lg z-10 grayscale hover:grayscale-0 transition-all duration-500">
-                <img src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?q=80&w=2940&auto=format&fit=crop" alt="Fashion Detail" className="w-full h-full object-cover" />
+             <div className="absolute top-20 left-0 w-1/3 h-1/3 overflow-hidden rounded-sm shadow-lg z-10 grayscale hover:grayscale-0 transition-all duration-500 group">
+                <img src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?q=80&w=2940&auto=format&fit=crop" alt="Fashion Detail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]" />
              </div>
           </div>
         </div>
@@ -64,34 +71,34 @@ export const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              {/* Card 1 */}
              <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4">
+                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4 shadow-md group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-500 rounded-sm">
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                  <img src="https://images.unsplash.com/photo-1529139574466-a302d2053990?q=80&w=2788&auto=format&fit=crop" alt="Summer Editorial" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" />
+                  <img src="https://images.unsplash.com/photo-1529139574466-a302d2053990?q=80&w=2788&auto=format&fit=crop" alt="Summer Editorial" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000 ease-out" />
                   <div className="absolute bottom-6 left-6 z-20 text-white">
-                     <p className="text-xs font-bold uppercase tracking-widest mb-1">Campaign</p>
-                     <h3 className="font-serif text-2xl">Summer Editorial '25</h3>
+                     <p className="text-xs font-bold uppercase tracking-widest mb-1 opacity-80">Campaign</p>
+                     <h3 className="font-serif text-2xl drop-shadow-md">Summer Editorial '25</h3>
                   </div>
                 </div>
              </div>
              {/* Card 2 */}
              <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4">
-                  <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2940&auto=format&fit=crop" alt="Milan Fashion Week" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" />
+                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4 shadow-md group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-500 rounded-sm">
+                  <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2940&auto=format&fit=crop" alt="Milan Fashion Week" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000 ease-out" />
                   <div className="absolute bottom-6 left-6 z-20 text-white drop-shadow-md">
-                     <p className="text-xs font-bold uppercase tracking-widest mb-1">Runway</p>
-                     <h3 className="font-serif text-2xl">Milan Fashion Week</h3>
+                     <p className="text-xs font-bold uppercase tracking-widest mb-1 opacity-80">Runway</p>
+                     <h3 className="font-serif text-2xl drop-shadow-md">Milan Fashion Week</h3>
                   </div>
                 </div>
              </div>
              {/* Card 3 */}
              <div className="group cursor-pointer">
-                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4">
-                  <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2940&auto=format&fit=crop" alt="Lookbook" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" />
+                <div className="relative aspect-[3/4] overflow-hidden bg-gray-200 mb-4 shadow-md group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-500 rounded-sm">
+                  <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2940&auto=format&fit=crop" alt="Lookbook" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000 ease-out" />
                   <div className="absolute bottom-6 left-6 z-20 text-white drop-shadow-md">
-                     <p className="text-xs font-bold uppercase tracking-widest mb-1">Lookbook</p>
-                     <h3 className="font-serif text-2xl">Urban Streetwear</h3>
+                     <p className="text-xs font-bold uppercase tracking-widest mb-1 opacity-80">Lookbook</p>
+                     <h3 className="font-serif text-2xl drop-shadow-md">Urban Streetwear</h3>
                   </div>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                      <ArrowRight className="w-5 h-5 text-black" />
                   </div>
                 </div>
@@ -367,70 +374,67 @@ export const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* 10. USER JOURNEY FLOW */}
-      <section className="py-32 px-6 bg-slate-50 relative overflow-hidden">
-        {/* Background Decor */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-           <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-purple-100 rounded-full blur-[120px] opacity-40 -translate-y-1/2 animate-pulse"></div>
-           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-100 rounded-full blur-[120px] opacity-40 animate-pulse" style={{ animationDelay: '2s' }}></div>
+      {/* 10. ULTRA-PREMIUM USER JOURNEY FLOW (Refined) */}
+      <section className="py-32 px-6 relative overflow-hidden bg-slate-50">
+        {/* Soft Ambient Background */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+           <div className="absolute top-1/4 left-1/3 w-[800px] h-[800px] bg-purple-100 rounded-full blur-[120px] opacity-60 mix-blend-multiply animate-pulse"></div>
+           <div className="absolute bottom-1/4 right-1/3 w-[600px] h-[600px] bg-blue-100 rounded-full blur-[100px] opacity-50 mix-blend-multiply" style={{ animationDelay: '3s' }}></div>
         </div>
 
         <div className="max-w-[1440px] mx-auto relative z-10">
-          <div className="text-center mb-20">
-            <span className="text-xs font-bold tracking-widest uppercase text-purple-600 mb-2 block">The Workflow</span>
-            <h2 className="font-serif text-4xl md:text-5xl font-medium mb-6">From Concept to Campaign.</h2>
+          <div className="text-center mb-24">
+            <span className="text-xs font-bold tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-3 block">Seamless Creation</span>
+            <h2 className="font-serif text-4xl md:text-6xl font-medium mb-6">The FashionOS <br/>Ecosystem.</h2>
             <p className="text-gray-500 max-w-2xl mx-auto text-lg font-light">
-               A seamless, AI-integrated pathway to produce high-fidelity fashion assets at scale.
+               A unified workflow connecting world-class talent with next-generation AI tools.
             </p>
           </div>
 
           <div className="relative">
-            {/* Connecting Line (Desktop) */}
-            <div className="hidden lg:block absolute top-10 left-[10%] w-[80%] h-0.5 z-0">
-               {/* Base Line */}
-               <div className="w-full h-full bg-gray-200"></div>
-               {/* Animated Progress Line */}
-               <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 to-blue-500 w-full origin-left animate-[grow_3s_ease-out_infinite]"></div>
-            </div>
-            
+            {/* Animated Connector Line (SVG) */}
+            <svg className="absolute top-[80px] left-0 w-full h-20 hidden lg:block z-0 pointer-events-none overflow-visible">
+               <defs>
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                     <stop offset="0%" stopColor="#e9d5ff" stopOpacity="0" />
+                     <stop offset="50%" stopColor="#a855f7" />
+                     <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                  </linearGradient>
+               </defs>
+               <path d="M 0,40 Q 250,90 500,40 T 1000,40 T 1500,40" fill="none" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="10 10" className="animate-[dash_30s_linear_infinite]" />
+            </svg>
             <style>{`
-               @keyframes grow {
-                  0% { transform: scaleX(0); opacity: 1; }
-                  50% { transform: scaleX(1); opacity: 1; }
-                  100% { transform: scaleX(1); opacity: 0; }
+               @keyframes dash {
+                  to { stroke-dashoffset: -1000; }
                }
             `}</style>
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
               {[
-                { icon: Search, title: "Browse", sub: "Curated Talent", desc: "Filter by style & rating." },
-                { icon: Calendar, title: "Book", sub: "Direct Scheduling", desc: "Secure creatives instantly." },
-                { icon: Camera, title: "Capture", sub: "Production", desc: "Shoot with digital tools." },
-                { icon: Wand2, title: "Enhance", sub: "AI Processing", desc: "Auto-grade & retouch." },
-                { icon: Share2, title: "Publish", sub: "Global Reach", desc: "Export for all channels." }
+                { icon: Search, title: "Browse", desc: "Curated Talent", color: "from-pink-500 to-rose-500" },
+                { icon: Calendar, title: "Book", desc: "Direct Scheduling", color: "from-rose-500 to-orange-500" },
+                { icon: Camera, title: "Produce", desc: "Digital Capture", color: "from-orange-500 to-amber-500" },
+                { icon: Wand2, title: "Enhance", desc: "AI Processing", color: "from-purple-600 to-indigo-600", glow: true },
+                { icon: Share2, title: "Publish", desc: "Global Reach", color: "from-blue-500 to-cyan-500" }
               ].map((step, idx) => (
-                <div key={idx} className="group flex flex-col items-center text-center relative">
-                  {/* Icon Circle */}
-                  <div className="w-20 h-20 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center shadow-sm mb-8 group-hover:border-black group-hover:scale-110 transition-all duration-300 relative z-10">
-                     <step.icon className="w-8 h-8 text-gray-400 group-hover:text-black transition-colors duration-300" strokeWidth={1.5} />
-                     <div className="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-                        {idx + 1}
-                     </div>
-                  </div>
-                  
-                  {/* Content Card */}
-                  <div className="bg-white p-6 w-full rounded-sm border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                     <h3 className="font-serif text-xl mb-1 group-hover:text-purple-600 transition-colors">{step.title}</h3>
-                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">{step.sub}</p>
-                     <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                  
-                  {/* Mobile Arrow */}
-                  {idx < 4 && (
-                     <div className="md:hidden my-4 text-gray-300">
-                        <ArrowRight className="w-5 h-5 rotate-90" />
-                     </div>
-                  )}
+                <div key={idx} className="group relative flex flex-col items-center">
+                   {/* 3D Glassmorphic Card */}
+                   <div className={`w-full aspect-[4/5] bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl flex flex-col items-center justify-center p-6 transition-all duration-500 hover:-translate-y-4 hover:shadow-2xl hover:bg-white/60 ${step.glow ? 'ring-2 ring-purple-300 shadow-purple-200' : ''}`}>
+                      
+                      {/* Icon Container with Gradient */}
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shadow-lg mb-8 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+                         <step.icon size={28} strokeWidth={1.5} />
+                      </div>
+                      
+                      <h3 className="font-serif text-xl font-medium mb-2">{step.title}</h3>
+                      <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">{step.desc}</p>
+                      
+                      {/* Step Number */}
+                      <div className="absolute top-4 right-4 text-xs font-bold text-gray-300">0{idx + 1}</div>
+                   </div>
+                   
+                   {/* Mobile connector */}
+                   {idx < 4 && <div className="md:hidden h-8 w-0.5 bg-gray-300 my-2"></div>}
                 </div>
               ))}
             </div>
@@ -438,7 +442,100 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 11. BEHIND THE SCENES */}
+      {/* 11. AI SERVICES (New Section) */}
+      <section className="py-24 px-6 bg-white">
+         <div className="max-w-[1440px] mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16">
+               <div>
+                  <span className="text-xs font-bold tracking-widest uppercase text-purple-600 mb-2 block">Intelligence</span>
+                  <h2 className="font-serif text-4xl md:text-5xl font-medium">FashionOS AI Suite</h2>
+               </div>
+               <p className="text-gray-500 max-w-sm mt-4 md:mt-0">
+                  Proprietary tools designed to accelerate creative direction and post-production.
+               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               {[
+                  { icon: Sparkles, title: "Photo Enhancer", desc: "Upscale & retouch in seconds." },
+                  { icon: Bot, title: "Creative Assistant", desc: "Generate concepts & moodboards." },
+                  { icon: Type, title: "Caption Generator", desc: "SEO-optimized social copy." },
+                  { icon: Clapperboard, title: "Storyboard Builder", desc: "Visualize video flows instantly." }
+               ].map((tool, i) => (
+                  <div key={i} className="group relative p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:border-transparent transition-all overflow-hidden">
+                     {/* Gradient Border Effect on Hover */}
+                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+                     <div className="absolute inset-0 border-2 border-transparent group-hover:border-purple-100 rounded-2xl pointer-events-none transition-colors"></div>
+                     
+                     <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-black mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10">
+                        <tool.icon size={24} strokeWidth={1} />
+                     </div>
+                     <h3 className="font-bold text-lg mb-2 relative z-10">{tool.title}</h3>
+                     <p className="text-sm text-gray-500 leading-relaxed relative z-10">{tool.desc}</p>
+                     
+                     {/* Decorative abstract shape */}
+                     <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-purple-100 rounded-full blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500"></div>
+                  </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* 12. AI WORKFLOW DIAGRAM (New Section) */}
+      <section className="py-24 px-6 bg-slate-900 text-white">
+         <div className="max-w-[1440px] mx-auto">
+            <div className="text-center mb-16">
+               <h2 className="font-serif text-3xl md:text-4xl mb-6">AI Processing Pipeline</h2>
+               <p className="text-slate-400">Automated enhancement at enterprise scale.</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
+               {/* Step 1 */}
+               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                     <Upload size={20} className="text-blue-400" />
+                  </div>
+                  <h4 className="font-bold text-sm">Upload RAW</h4>
+               </div>
+
+               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
+               <div className="md:hidden h-8 w-px bg-slate-700"></div>
+
+               {/* Step 2 */}
+               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-purple-500/10 animate-pulse"></div>
+                  <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center mb-4 relative z-10">
+                     <Wand2 size={20} className="text-purple-400" />
+                  </div>
+                  <h4 className="font-bold text-sm relative z-10">AI Enhance</h4>
+               </div>
+
+               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
+               <div className="md:hidden h-8 w-px bg-slate-700"></div>
+
+               {/* Step 3 */}
+               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                     <Layers size={20} className="text-pink-400" />
+                  </div>
+                  <h4 className="font-bold text-sm">Apply Style</h4>
+               </div>
+
+               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
+               <div className="md:hidden h-8 w-px bg-slate-700"></div>
+
+               {/* Step 4 */}
+               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                     <Download size={20} className="text-green-400" />
+                  </div>
+                  <h4 className="font-bold text-sm">Export HD</h4>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      {/* 13. BEHIND THE SCENES */}
       <section className="relative h-[80vh] bg-fixed bg-cover bg-center flex items-center justify-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2942&auto=format&fit=crop')" }}>
          <div className="absolute inset-0 bg-black/40"></div>
          <div className="relative z-10 text-center text-white">
@@ -453,7 +550,7 @@ export const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* 12. CTA / FOOTER PREVIEW */}
+      {/* 14. CTA */}
       <section className="bg-gray-100 py-32 px-6">
          <div className="max-w-4xl mx-auto bg-white p-12 md:p-20 shadow-2xl relative overflow-hidden">
              {/* Decorative */}
