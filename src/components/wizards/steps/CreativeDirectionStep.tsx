@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Upload, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
+import { Upload, Sparkles, Loader2, CheckCircle2, Search } from 'lucide-react';
 import { analyzeMoodBoard } from '../../../services/ai/moodBoard';
 import { VibeType } from '../../../types/wizard';
 
@@ -16,7 +16,7 @@ export const CreativeDirectionStep: React.FC = () => {
       const files = Array.from(e.target.files);
       updateField('moodBoardImages', [...state.moodBoardImages, ...files]);
       
-      // Auto-analyze after first upload for demo fluidity
+      // Auto-analyze after first upload
       if (!state.aiAnalysis) {
         setIsAnalyzing(true);
         try {
@@ -24,9 +24,11 @@ export const CreativeDirectionStep: React.FC = () => {
           updateField('aiAnalysis', analysis);
           
           // Auto-select vibe if high confidence match found
-          const suggestedVibe = analysis.keywords[0]?.toLowerCase();
-          if (['minimalist', 'editorial', 'bold', 'dark', 'natural'].includes(suggestedVibe)) {
-              updateField('vibe', suggestedVibe as VibeType);
+          if (analysis.keywords && analysis.keywords.length > 0) {
+             const firstKeyword = analysis.keywords[0].toLowerCase();
+             const validVibes = ['minimalist', 'editorial', 'bold', 'dark', 'natural'];
+             const match = validVibes.find(v => firstKeyword.includes(v));
+             if (match) updateField('vibe', match as VibeType);
           }
         } catch (err) {
           console.error(err);
@@ -159,8 +161,12 @@ export const CreativeDirectionStep: React.FC = () => {
                   
                   {state.aiAnalysis.similarBrands && state.aiAnalysis.similarBrands.length > 0 && (
                      <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Brand References</h4>
-                        <p className="text-xs text-gray-600">{state.aiAnalysis.similarBrands.join(', ')}</p>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2 flex items-center gap-1"><Search size={10}/> Brand References</h4>
+                        <div className="flex gap-2 flex-wrap">
+                           {state.aiAnalysis.similarBrands.map((b: string, i: number) => (
+                              <span key={i} className="px-2 py-1 bg-purple-50 text-purple-800 rounded text-[10px] font-bold border border-purple-100">{b}</span>
+                           ))}
+                        </div>
                      </div>
                   )}
                   
@@ -175,7 +181,7 @@ export const CreativeDirectionStep: React.FC = () => {
 
       <div className="flex justify-between pt-8 border-t border-gray-100">
         <Button variant="secondary" onClick={prevStep}>Back</Button>
-        <Button onClick={nextStep} disabled={!state.vibe}>Continue</Button>
+        <Button onClick={nextStep} disabled={!state.vibe && !state.aiAnalysis}>Continue</Button>
       </div>
     </div>
   );

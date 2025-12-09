@@ -11,19 +11,19 @@ const generateMockShots = (params: GenerateShotListParams): Shot[] => {
   const templates = [
     {
       name: "Hero Shot",
-      desc: (v: string) => `Full body capture with ${v} movement. Emphasize silhouette and fabric drape.`,
+      desc: (v: string) => `Full body capture with ${v} movement. Emphasize silhouette and fabric drape against a neutral void.`,
       angle: "Low Angle / Wide",
       priority: 'High'
     },
     {
       name: "Detail Focus",
-      desc: (v: string) => `Macro shot of hardware/texture elements. ${v} lighting to highlight material quality.`,
+      desc: (v: string) => `Macro shot of hardware/texture elements. ${v} lighting to highlight material quality and stitching.`,
       angle: "Macro / 45-degree",
       priority: 'Medium'
     },
     {
       name: "Lifestyle Context",
-      desc: (v: string) => `Product in use/motion. Background blurred to maintain focus on subject. ${v} energy.`,
+      desc: (v: string) => `Product in use/motion. Background blurred to maintain focus on subject. ${v} energy with dynamic posing.`,
       angle: "Eye Level",
       priority: 'High'
     },
@@ -57,21 +57,19 @@ const generateMockShots = (params: GenerateShotListParams): Shot[] => {
 
 export const generateShotList = async (params: GenerateShotListParams): Promise<Shot[]> => {
   try {
-    // Check if we are in a live environment with API configured
-    // For this preview environment, we default to mock if no key is present
-    const hasKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
     
-    if (!hasKey) {
+    // Fallback to Demo Mode if no backend connection
+    if (!anonKey) {
       console.log('✨ Demo Mode: Generating intelligent mock shot list');
-      // Simulate network delay
-      return new Promise(resolve => setTimeout(() => resolve(generateMockShots(params)), 1500));
+      return new Promise(resolve => setTimeout(() => resolve(generateMockShots(params)), 2000));
     }
 
     const response = await fetch(`${SUPABASE_FUNCTION_URL}/generate-shot-list`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(import.meta as any).env.VITE_SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${anonKey}`,
       },
       body: JSON.stringify(params),
     });
@@ -81,10 +79,9 @@ export const generateShotList = async (params: GenerateShotListParams): Promise<
     }
 
     const data = await response.json();
-    return data.shots;
+    return data.shots || [];
   } catch (error) {
     console.warn('AI Service Fallback:', error);
-    // Graceful fallback to mock data ensures UI never breaks
     return generateMockShots(params);
   }
 };

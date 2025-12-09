@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Sparkles, Layers, Loader2, RefreshCw } from 'lucide-react';
+import { Sparkles, Layers, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
 import { Shot } from '../../../types/ai';
 
@@ -99,7 +99,7 @@ export const DeliverablesStep: React.FC = () => {
                {isGenerating && (
                   <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
                      <Loader2 className="animate-spin text-black mb-3 w-8 h-8" />
-                     <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Gemini Thinking...</p>
+                     <p className="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">Gemini Thinking...</p>
                   </div>
                )}
                
@@ -111,7 +111,7 @@ export const DeliverablesStep: React.FC = () => {
                      </p>
                   </div>
                ) : (
-                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[350px] p-2">
+                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[350px] p-2 custom-scrollbar">
                      {state.shotList.map((shot: Shot, idx: number) => (
                         <div key={idx} className="p-4 hover:bg-gray-50 rounded-lg transition-colors group animate-in slide-in-from-bottom-2" style={{ animationDelay: `${idx * 50}ms` }}>
                            <div className="flex justify-between items-start mb-1">
@@ -123,7 +123,7 @@ export const DeliverablesStep: React.FC = () => {
                               </span>
                            </div>
                            <p className="text-xs text-gray-500 leading-relaxed mb-2">{shot.description}</p>
-                           <div className="flex gap-2">
+                           <div className="flex gap-2 flex-wrap">
                               <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.angle}</span>
                               <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.lighting}</span>
                            </div>
@@ -142,7 +142,12 @@ export const DeliverablesStep: React.FC = () => {
                </div>
             )}
             
-            {error && <p className="text-xs text-red-500 mt-2 text-center relative z-10">{error}</p>}
+            {error && (
+               <div className="flex items-center gap-2 mt-2 text-xs text-red-500 justify-center relative z-10">
+                  <AlertCircle size={14} />
+                  <span>{error}</span>
+               </div>
+            )}
             
             {/* Background Decoration */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50 z-0"></div>

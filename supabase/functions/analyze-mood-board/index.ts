@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@0.1.1";
+import { GoogleGenAI } from "https://esm.sh/@google/genai@0.1.1";
 
 declare const Deno: any;
 
@@ -32,24 +32,25 @@ serve(async (req: Request) => {
       }
     }));
 
-    const responseSchema = {
-      type: Type.OBJECT,
-      properties: {
-        colors: { type: Type.ARRAY, items: { type: Type.STRING } },
-        keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-        lightingStyle: { type: Type.STRING },
-        compositionStyle: { type: Type.STRING },
-        suggestion: { type: Type.STRING },
-        similarBrands: { type: Type.ARRAY, items: { type: Type.STRING } },
-        recommendedProps: { type: Type.ARRAY, items: { type: Type.STRING } }
-      }
-    };
-
+    // Prompt engineering to request JSON structure without using responseSchema
+    // (responseSchema is not supported when using tools like googleSearch)
     const prompt = `
       Analyze these moodboard images to extract the aesthetic direction.
       Identify dominant colors (hex codes), style keywords, lighting, and composition.
       
       Use Google Search to identify 3 *real* brands that share this specific aesthetic for the 'similarBrands' field.
+      
+      Return a VALID JSON object with this exact structure:
+      {
+        "colors": ["#hex", ...],
+        "keywords": ["string", ...],
+        "lightingStyle": "string",
+        "compositionStyle": "string",
+        "suggestion": "string",
+        "similarBrands": ["string", ...],
+        "recommendedProps": ["string", ...]
+      }
+      Do not include markdown formatting or backticks. Just the raw JSON string.
     `;
 
     const response = await ai.models.generateContent({
@@ -58,14 +59,15 @@ serve(async (req: Request) => {
         parts: [...imageParts, { text: prompt }]
       },
       config: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
         tools: [{ googleSearch: {} }] // Enable Grounding to find real brands
       }
     });
 
-    const text = response.text;
+    let text = response.text;
     if (!text) throw new Error("No response from AI");
+
+    // Clean up markdown if present
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     const analysis = JSON.parse(text);
 

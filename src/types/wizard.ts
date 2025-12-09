@@ -19,9 +19,9 @@ export interface ShootWizardState {
   location: LocationType;
   date: Date | null;
   timeSlot: string | null;
-  moodBoardImages: File[]; // In a real app, these would be URLs after upload
+  moodBoardImages: File[]; 
   vibe: VibeType | null;
-  referenceBrands: string; // comma separated
+  referenceBrands: string; 
   modelNeeded: boolean;
   modelSelection: ModelSelectionType | null;
   stylingNeeded: StylingType | null;

@@ -390,9 +390,6 @@ export const Home: React.FC = () => {
             <p className="text-gray-500 max-w-2xl mx-auto text-lg font-light">
                A unified workflow connecting world-class talent with next-generation AI tools.
             </p>
-            <div className="pt-8">
-               <Button onClick={() => navigate('/shoot-wizard')} className="bg-black text-white hover:bg-gray-800 border-none px-8 py-4">Start Your Project</Button>
-            </div>
           </div>
 
           <div className="relative">

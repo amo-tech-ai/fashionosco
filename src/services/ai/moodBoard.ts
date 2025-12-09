@@ -16,12 +16,11 @@ const MOCK_ANALYSIS: MoodBoardAnalysis = {
 
 export const analyzeMoodBoard = async (files: File[]): Promise<MoodBoardAnalysis> => {
   try {
-    // Check for demo environment
-    const hasKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
-    if (!hasKey) {
+    if (!anonKey) {
       console.log('✨ Demo Mode: Analyzing mood board (Mock)');
-      return new Promise(resolve => setTimeout(() => resolve(MOCK_ANALYSIS), 2000));
+      return new Promise(resolve => setTimeout(() => resolve(MOCK_ANALYSIS), 2500));
     }
 
     // Convert files to base64 for transport
@@ -31,7 +30,7 @@ export const analyzeMoodBoard = async (files: File[]): Promise<MoodBoardAnalysis
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(import.meta as any).env.VITE_SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${anonKey}`,
       },
       body: JSON.stringify({ images }),
     });
