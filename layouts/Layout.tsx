@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { NavItem } from '../types';
 import { Button } from '../components/Button';
+import { Menu, X } from 'lucide-react';
 
 const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
-  { label: 'Directory', href: '/services' }, // Placeholder route
-  { label: 'Marketplace', href: '/services' }, // Placeholder route
-  { label: 'BTS', href: '/dashboard' },
+  { label: 'Directory', href: '/' }, // Directory section is on Home
+  { label: 'Marketplace', href: '/' }, // Marketplace section is on Home
+  { label: 'BTS', href: '/' }, // Behind the Scenes section is on Home
 ];
 
 export const Layout: React.FC = () => {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white">
@@ -48,15 +50,48 @@ export const Layout: React.FC = () => {
              <Link to="/dashboard" className="hidden md:block text-xs uppercase tracking-widest font-semibold hover:text-gray-600">
                 Log In
              </Link>
-             <Button className="hidden md:inline-flex py-2 px-4 text-[10px]">Book a Shoot</Button>
+             <Link to="/services">
+                <Button className="hidden md:inline-flex py-2 px-4 text-[10px]">Book a Shoot</Button>
+             </Link>
              
-             {/* Mobile Menu Toggle (Visual Only) */}
-             <button className="md:hidden p-2">
-                <div className="w-6 h-0.5 bg-black mb-1.5"></div>
-                <div className="w-6 h-0.5 bg-black"></div>
+             {/* Mobile Menu Toggle */}
+             <button 
+                className="md:hidden p-2 z-50 relative"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+             >
+                {isMobileMenuOpen ? <X /> : <Menu />}
              </button>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 bg-white z-40 flex flex-col pt-24 px-6 md:hidden animate-in slide-in-from-top-10 duration-200">
+             <nav className="flex flex-col space-y-6">
+                {navItems.map((item) => (
+                   <Link
+                     key={item.label}
+                     to={item.href}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     className="text-2xl font-serif font-medium border-b border-gray-100 pb-4"
+                   >
+                      {item.label}
+                   </Link>
+                ))}
+                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif font-medium border-b border-gray-100 pb-4">
+                   Log In
+                </Link>
+                <div className="pt-4">
+                   <Button className="w-full justify-center" onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      // Navigate would happen here via link usually, wrapping in Link component
+                   }}>
+                      <Link to="/services" className="w-full h-full flex items-center justify-center">Book a Shoot</Link>
+                   </Button>
+                </div>
+             </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -88,8 +123,8 @@ export const Layout: React.FC = () => {
                <ul className="space-y-4 text-sm text-gray-500">
                   <li><Link to="/" className="hover:text-black">Home</Link></li>
                   <li><Link to="/services" className="hover:text-black">Services</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Directory</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Events</Link></li>
+                  <li><Link to="/" className="hover:text-black">Directory</Link></li>
+                  <li><Link to="/" className="hover:text-black">Events</Link></li>
                   <li><Link to="/services" className="hover:text-black">Portfolio</Link></li>
                </ul>
             </div>
@@ -97,11 +132,12 @@ export const Layout: React.FC = () => {
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Services</h4>
                <ul className="space-y-4 text-sm text-gray-500">
+                  <li><Link to="/services" className="hover:text-black">Web Design</Link></li>
                   <li><Link to="/services" className="hover:text-black">Photography</Link></li>
                   <li><Link to="/services" className="hover:text-black">Video Production</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Web Design</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Ecommerce</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Social Media Marketing</Link></li>
+                  <li><Link to="/services" className="hover:text-black">E-Commerce</Link></li>
+                  <li><Link to="/services" className="hover:text-black">Social Media</Link></li>
+                  <li><Link to="/services" className="hover:text-black">AI Creative</Link></li>
                </ul>
             </div>
 
