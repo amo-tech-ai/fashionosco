@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
-import { Play, ArrowRight, Package, Monitor, Smartphone, RefreshCcw, MessageCircle, Layers, Film, Camera, CheckCircle, Instagram, Facebook, Youtube, Globe, Tv, Zap } from 'lucide-react';
+import { Play, ArrowRight, Package as PackageIcon, Monitor, Smartphone, RefreshCcw, MessageCircle, Layers, Film, Camera, CheckCircle, Instagram, Facebook, Youtube, Globe, Tv, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const VideoProduction: React.FC = () => {
@@ -16,7 +16,7 @@ export const VideoProduction: React.FC = () => {
 
   const videoTypes = [
     { title: "Product Overview", icon: Film, desc: "Showcase features, materials, and fit in high definition 4K." },
-    { title: "Unboxing Experience", icon: Package, desc: "Capture the excitement of packaging and first impressions." },
+    { title: "Unboxing Experience", icon: PackageIcon, desc: "Capture the excitement of packaging and first impressions." },
     { title: "How-To / Setup", icon: Layers, desc: "Step-by-step guides that reduce support tickets." },
     { title: "Brand Explainer", icon: Monitor, desc: "Convey your mission and values in 60 seconds or less." },
     { title: "Lifestyle Story", icon: Camera, desc: "Products in action: real world context and emotion." },

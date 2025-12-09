@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
-import { ArrowRight, Star, Camera, Video, ShoppingBag, Watch, Shirt, Minus, Plus, Play, Image as ImageIcon, CheckCircle, Package, Zap, Layers } from 'lucide-react';
+import { ArrowRight, Star, Camera, Video, ShoppingBag, Watch, Shirt, Minus, Plus, Play, Image as ImageIcon, CheckCircle, Zap, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const EcommercePhotography: React.FC = () => {
