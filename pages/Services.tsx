@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { Camera, Video, ShoppingBag, Instagram, Monitor, Sparkles, ArrowRight, Check, Play, Globe, Cpu, PenTool, Layout as LayoutIcon, MessageSquare } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const Services: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
+  const navigate = useNavigate();
 
   // 1. Defined Service Categories (6 items)
   const servicesList = [
-    { icon: Monitor, title: "Web Design", desc: "Identity & UX" },
-    { icon: Camera, title: "Photography", desc: "Campaign & Editorial" },
-    { icon: Video, title: "Video Production", desc: "Commercial & Reels" },
-    { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings" },
-    { icon: Instagram, title: "Social Media", desc: "Strategy & Content" },
-    { icon: Sparkles, title: "AI Creative", desc: "Enhancement & GenAI" },
+    { icon: Monitor, title: "Web Design", desc: "Identity & UX", link: "/services" },
+    { icon: Camera, title: "Photography", desc: "Campaign & Editorial", link: "/services/product-photography" },
+    { icon: Video, title: "Video Production", desc: "Commercial & Reels", link: "/services" },
+    { icon: ShoppingBag, title: "E-Commerce", desc: "CRO & Listings", link: "/services" },
+    { icon: Instagram, title: "Social Media", desc: "Strategy & Content", link: "/services" },
+    { icon: Sparkles, title: "AI Creative", desc: "Enhancement & GenAI", link: "/services" },
   ];
 
   const portfolioItems = [
@@ -76,7 +78,11 @@ export const Services: React.FC = () => {
         <div className="max-w-[1440px] mx-auto">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
              {servicesList.map((s, i) => (
-               <div key={i} className="group p-8 border border-gray-100 rounded-lg bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+               <div 
+                  key={i} 
+                  onClick={() => navigate(s.link)}
+                  className="group p-8 border border-gray-100 rounded-lg bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+               >
                  <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-6 group-hover:bg-black group-hover:text-white transition-colors">
                    <s.icon size={20} />
                  </div>
@@ -134,7 +140,7 @@ export const Services: React.FC = () => {
                        <li key={item} className="flex items-center text-sm font-medium"><div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3"></div>{item}</li>
                     ))}
                  </ul>
-                 <Button variant={ButtonVariant.SECONDARY}>Book a Shoot</Button>
+                 <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/product-photography')}>Book a Shoot</Button>
               </div>
               <div className="relative">
                  <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50"></div>

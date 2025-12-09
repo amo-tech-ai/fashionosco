@@ -133,7 +133,7 @@ export const Layout: React.FC = () => {
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Services</h4>
                <ul className="space-y-4 text-sm text-gray-500">
                   <li><Link to="/services" className="hover:text-black">Web Design</Link></li>
-                  <li><Link to="/services" className="hover:text-black">Photography</Link></li>
+                  <li><Link to="/services/product-photography" className="hover:text-black font-medium text-black">Photography</Link></li>
                   <li><Link to="/services" className="hover:text-black">Video Production</Link></li>
                   <li><Link to="/services" className="hover:text-black">E-Commerce</Link></li>
                   <li><Link to="/services" className="hover:text-black">Social Media</Link></li>

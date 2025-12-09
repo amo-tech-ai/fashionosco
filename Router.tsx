@@ -4,6 +4,7 @@ import { Layout } from './layouts/Layout';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Home } from './pages/Home';
 import { Services } from './pages/Services';
+import { ProductPhotography } from './pages/ProductPhotography';
 import { Dashboard } from './pages/Dashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -14,6 +15,7 @@ export const Router: React.FC = () => {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/services/product-photography" element={<ProductPhotography />} />
       </Route>
 
       {/* Dashboard Routes wrapped in Dashboard Layout */}
