@@ -18,18 +18,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Check active session on load
+    // 1. Initial Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Realtime Auth Listener (Handles Sign In, Sign Out, Token Refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
+      
+      // If we just signed in, we might want to check if the user has a profile row
+      // The `useUserProfile` hook handles the fetching, but we ensure state is settled here.
+      setIsLoading(false); 
     });
 
     return () => subscription.unsubscribe();
@@ -37,7 +40,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    localStorage.clear(); // Clear local demo data on logout
+    localStorage.removeItem('auth_session'); // Clear demo flag
+    localStorage.removeItem('user_profile'); // Clear cached profile
+    setUser(null);
+    setSession(null);
   };
 
   return (

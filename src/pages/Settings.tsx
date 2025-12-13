@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { User, Bell, Lock, Building, CreditCard, Save, RefreshCcw, Upload, X } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { compressBase64Image, fileToBase64 } from '../utils/fileHelpers';
+import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
   const { addToast } = useToast();
@@ -22,27 +22,32 @@ export const Settings: React.FC = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsLoading(true);
-    // Simulate network delay for realism
-    setTimeout(() => {
-      saveProfile(formData);
-      setIsLoading(false);
+    try {
+      await saveProfile(formData);
       addToast("Profile settings updated successfully", "success");
-    }, 800);
+    } catch (e) {
+      addToast("Failed to save settings", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       try {
-        // Convert to base64 and compress to avoid huge localStorage usage
-        const base64 = await fileToBase64(file);
-        const compressed = await compressBase64Image(base64, 200, 0.7); // Small avatar size
-        setFormData(prev => ({ ...prev, avatarUrl: compressed }));
-        addToast("Avatar updated (Don't forget to save)", "info");
+        const publicUrl = await StorageService.uploadFile(file, 'avatars');
+        if (publicUrl) {
+            setFormData(prev => ({ ...prev, avatarUrl: publicUrl }));
+            addToast("Avatar uploaded. Click Save to confirm.", "info");
+        } else {
+            throw new Error("Upload returned no URL");
+        }
       } catch (err) {
-        addToast("Failed to process image", "error");
+        console.error(err);
+        addToast("Failed to upload image. Ensure you are logged in.", "error");
       }
     }
   };
@@ -52,7 +57,7 @@ export const Settings: React.FC = () => {
   };
 
   const handleResetDemo = () => {
-    if (confirm("Are you sure? This will delete all booking drafts, gallery selections, and generated data.")) {
+    if (confirm("Are you sure? This will delete all local data.")) {
         localStorage.clear();
         window.location.reload();
     }
@@ -182,7 +187,7 @@ export const Settings: React.FC = () => {
                 onClick={handleResetDemo}
                 className="text-red-500 text-xs font-bold uppercase tracking-widest hover:text-red-700 flex items-center gap-2"
               >
-                <RefreshCcw size={14} /> Reset Demo Data
+                <RefreshCcw size={14} /> Clear Local Cache
               </button>
               
               <Button onClick={handleSave} isLoading={isLoading} className="w-full sm:w-auto">

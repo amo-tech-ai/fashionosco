@@ -6,8 +6,9 @@ import { Button } from '../../Button';
 import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers, FileText } from 'lucide-react';
 import { useToast } from '../../ToastProvider';
 import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
-import { filesToBase64Strings, compressBase64Image } from '../../../utils/fileHelpers';
 import { CampaignService, Campaign } from '../../../services/data/campaigns';
+import { StorageService } from '../../../services/storage';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const ReviewConfirmStep: React.FC = () => {
   const { state, prevStep, resetWizard } = useShootWizard();
@@ -15,51 +16,75 @@ export const ReviewConfirmStep: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async () => {
+    if (!user) {
+        addToast("Please log in to book a shoot.", "error");
+        navigate('/login', { state: { returnTo: '/shoot-wizard' } });
+        return;
+    }
+
     setIsSubmitting(true);
     
     try {
-        // 1. Process Images for Persistence
-        let savedImages: string[] = [];
+        // 1. Process Images via Storage Service (if any new files are present)
+        let savedImageUrls: string[] = [];
         if (state.moodBoardImages.length > 0) {
-            // Compress heavily for LocalStorage (max 4 images, low quality)
-            const filesToSave = state.moodBoardImages.slice(0, 4);
-            const rawBase64s = await filesToBase64Strings(filesToSave);
-            savedImages = await Promise.all(rawBase64s.map(img => compressBase64Image(img, 600)));
+            // Check if items are actually Files or strings (URLs)
+            const filesToUpload = state.moodBoardImages.filter(img => img instanceof File) as File[];
+            const existingUrls = state.moodBoardImages.filter(img => typeof img === 'string') as unknown as string[];
+            
+            if (filesToUpload.length > 0) {
+               const newUrls = await StorageService.uploadFiles(
+                   filesToUpload, 
+                   'moodboards', 
+                   user.id
+               );
+               savedImageUrls = [...existingUrls, ...newUrls];
+            } else {
+               savedImageUrls = existingUrls;
+            }
         }
 
-        // 2. Prepare Booking Data
-        // Create full campaign object
+        // 2. Prepare Data State (Swap File objects for URLs)
+        const campaignData = {
+            ...state,
+            moodBoardImages: savedImageUrls 
+        };
+
+        // 3. Prepare Campaign Object
         const newCampaign: Campaign = {
             id: `SHOOT-${Date.now().toString().slice(-6)}`,
             type: 'shoot',
             title: `${state.shootType ? state.shootType.charAt(0).toUpperCase() + state.shootType.slice(1) : 'Custom'} Shoot`,
-            status: 'Pre-Production',
-            client: 'FashionOS User',
+            status: 'Planning', // 'Planning' maps to 'planning' in DB service
+            client: user.email || 'FashionOS User',
             date: state.date ? state.date.toISOString() : null,
             progress: 15,
-            thumbnail: savedImages[0] || undefined,
-            data: {
-                ...state,
-                moodBoardImages: savedImages // Store processed strings, not Files
-            },
+            data: campaignData,
+            totalPrice: state.totalPrice, // Pass directly for service to map to total_price column
+            location: state.location,
             createdAt: new Date().toISOString(),
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            user_id: user.id
         };
 
-        // 3. Save via Service
-        CampaignService.save(newCampaign);
+        // 4. Save via Service
+        const saved = await CampaignService.save(newCampaign);
         
-        // 4. Simulate Network & Cleanup
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 5. Set Active Campaign immediately so dashboard shows it
+        if (saved && saved.id) {
+            localStorage.setItem('active_campaign_id', saved.id);
+        }
+        
         localStorage.removeItem('wizard_state');
         setIsSuccess(true);
         addToast("Booking request submitted successfully!", "success");
 
     } catch (error) {
         console.error("Booking failed", error);
-        addToast("Failed to submit booking. Storage quota may be full.", "error");
+        addToast("Failed to submit booking. Please try again.", "error");
     } finally {
         setIsSubmitting(false);
     }
@@ -192,7 +217,9 @@ export const ReviewConfirmStep: React.FC = () => {
 
       <div className="flex justify-between pt-8 border-t border-gray-100">
         <Button variant="secondary" onClick={prevStep}>Back</Button>
-        <Button onClick={handleSubmit} isLoading={isSubmitting} className="px-8">Pay Deposit & Book</Button>
+        <Button onClick={handleSubmit} isLoading={isSubmitting} className="px-8">
+            {user ? 'Pay Deposit & Book' : 'Log In to Book'}
+        </Button>
       </div>
     </div>
   );

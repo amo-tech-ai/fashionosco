@@ -1,6 +1,18 @@
 
 # Changelog
 
+## [2.0.0] - 2025-05-26
+### Full Stack Integration & Launch Readiness
+- **Backend Architecture**: Fully migrated from local storage prototypes to Supabase (PostgreSQL + Edge Functions).
+- **Active Campaign System**: Implemented `ActiveCampaignContext` to sync Dashboard, Shot List, and Gallery views to the selected project in the database.
+- **Realtime Collaboration**: Enabled Supabase Realtime subscriptions for campaign updates.
+- **Event Management**: Launched `EventWizard` and `EventReviewStep` with DB persistence for booking runway shows/parties.
+- **Asset Pipeline**:
+  - Added Drag-and-Drop upload for Client Gallery.
+  - Implemented commenting and status tagging (Select/Reject) stored in DB.
+- **Directory**: Connected Talent Directory to live `stakeholders` table.
+- **PDF Generation**: Robust Call Sheet generator now handles both "Draft" (Wizard) and "Active" (Dashboard) data structures.
+
 ## [1.5.0] - 2025-05-25
 ### Production Readiness & Integration
 - **Dashboard Integration**: Added "Book a Shoot" direct link to the Dashboard sidebar, seamlessly connecting the user workspace with the booking wizard.

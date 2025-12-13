@@ -11,6 +11,8 @@ export interface Campaign {
   progress: number;
   thumbnail?: string;
   data: any; // Full wizard state
+  totalPrice?: number;
+  location?: string;
   createdAt: string;
   lastUpdated: string;
   user_id?: string;
@@ -19,121 +21,199 @@ export interface Campaign {
 const STORAGE_KEY = 'fashionos_campaigns';
 
 export const CampaignService = {
-  // Hybrid Fetch: Try DB first, fallback to Local
+  // Fetch all campaigns for the logged-in user
   getAll: async (): Promise<Campaign[]> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // Authenticated: Fetch from DB
+        // Authenticated: Fetch from DB (RLS will filter by client_id automatically)
         const { data, error } = await supabase
-          .from('shoots') // Assuming 'shoots' table maps to campaigns for now
+          .from('shoots') 
           .select('*')
           .order('created_at', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase fetch error:', error);
+          throw error;
+        }
         
-        // Map DB fields to Campaign Interface if necessary
+        // Map DB fields to Campaign Interface
         return data.map((item: any) => ({
            id: item.id,
-           type: item.shoot_type || 'shoot',
+           type: (item.shoot_type as 'shoot' | 'event') || 'shoot',
            title: item.title || 'Untitled Shoot',
-           status: item.status || 'Planning',
-           client: 'FashionOS User',
+           status: mapDbStatusToUi(item.status),
+           client: 'FashionOS User', // In a real app, join with profiles table
            date: item.booking_date,
-           progress: 25,
-           data: item.brief_data || {},
+           location: item.location,
+           totalPrice: item.total_price,
+           progress: calculateProgress(item.status),
+           data: item.brief_data || {}, // The full JSON blob from the wizard
+           thumbnail: item.brief_data?.moodBoardImages?.[0] || undefined,
            createdAt: item.created_at,
-           lastUpdated: item.updated_at
+           lastUpdated: item.updated_at,
+           user_id: item.client_id
         }));
       }
     } catch (e) {
-      console.warn("Offline or Demo Mode: Using LocalStorage");
+      console.warn("Offline/Demo Mode or Fetch Error: Using LocalStorage fallback", e);
     }
 
-    // Fallback
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    // Fallback for Demo/Offline
+    const localData = localStorage.getItem(STORAGE_KEY);
+    return localData ? JSON.parse(localData) : [];
   },
 
-  save: async (campaign: Campaign): Promise<void> => {
+  // Save or Update a campaign
+  save: async (campaign: Campaign): Promise<Campaign | null> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
-        // Prepare payload for Supabase 'shoots' table
         const payload = {
            title: campaign.title,
            shoot_type: campaign.type,
-           status: campaign.status.toLowerCase(),
+           status: campaign.status.toLowerCase().replace(' ', '_'), 
            booking_date: campaign.date,
-           brief_data: campaign.data,
+           location: campaign.data.location || campaign.location,
+           total_price: campaign.totalPrice || campaign.data.totalPrice,
+           deposit_amount: campaign.data.deposit,
+           deposit_paid: true, 
+           brief_data: campaign.data, 
+           client_id: session.user.id,
            updated_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
-          .from('shoots')
-          .upsert(payload, { onConflict: 'id' }); // Note: Need real ID handling
+        const isNew = campaign.id.startsWith('SHOOT-') || campaign.id.startsWith('EVT-') || campaign.id.startsWith('legacy-');
+        
+        let query = supabase.from('shoots');
+        
+        // @ts-ignore
+        const { data, error } = isNew 
+            ? await query.insert(payload).select().single()
+            : await query.update(payload).eq('id', campaign.id).select().single();
 
-        if (error) {
-           console.error("Supabase Save Error", error);
-           // Fallthrough to local storage so user doesn't lose work
-        } else {
-           return; // Success
+        if (error) throw error;
+
+        if (data) {
+            return {
+                ...campaign,
+                id: data.id, 
+                createdAt: data.created_at,
+                lastUpdated: data.updated_at
+            };
         }
       }
     } catch (e) {
-      console.warn("Saving to LocalStorage (Network/Auth unavailable)");
+      console.error("Supabase Save Failed:", e);
+      saveToLocalStorage(campaign);
     }
+    return campaign;
+  },
 
-    // Local Storage Fallback (Legacy)
-    // CRITICAL: We must strip large images before saving to LocalStorage to prevent crashes
-    const safeCampaign = { ...campaign };
-    if (safeCampaign.data?.moodBoardImages) {
-        // Store only the first image or a placeholder to save space
-        // In a real app, these files must go to Storage Bucket
-        safeCampaign.data.moodBoardImages = []; 
-        safeCampaign.thumbnail = "https://placehold.co/400x400?text=Moodboard";
-    }
+  // Update specific fields of a campaign (e.g. shotList inside brief_data)
+  update: async (id: string, updates: Partial<Campaign>): Promise<void> => {
+      try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+              // Local storage update
+              const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+              const index = campaigns.findIndex((c: Campaign) => c.id === id);
+              if (index >= 0) {
+                  campaigns[index] = { ...campaigns[index], ...updates, lastUpdated: new Date().toISOString() };
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+                  window.dispatchEvent(new Event('campaignsUpdated'));
+              }
+              return;
+          }
 
-    const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const existingIndex = campaigns.findIndex((c: Campaign) => c.id === campaign.id);
-    
-    if (existingIndex >= 0) {
-      campaigns[existingIndex] = safeCampaign;
-    } else {
-      campaigns.unshift(safeCampaign);
-    }
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
-    window.dispatchEvent(new Event('campaignsUpdated'));
+          // DB Update
+          // We need to merge the updates into the existing DB row structure
+          // This assumes 'data' in updates maps to 'brief_data' in DB
+          const payload: any = { updated_at: new Date().toISOString() };
+          
+          if (updates.status) payload.status = updates.status.toLowerCase().replace(' ', '_');
+          if (updates.data) payload.brief_data = updates.data;
+          
+          // If we are just updating the data (shot list etc), we often need to fetch first to deep merge, 
+          // or just overwrite brief_data if we are confident the frontend has the latest state.
+          // For this MVP, we assume the frontend sends the complete updated 'data' object.
+
+          const { error } = await supabase.from('shoots').update(payload).eq('id', id);
+          if (error) throw error;
+
+      } catch (e) {
+          console.error("Update failed", e);
+      }
   },
 
   migrateLegacy: (): void => {
-    // Migration logic remains the same
     const legacy = localStorage.getItem('active_campaign');
     if (legacy) {
       try {
         const data = JSON.parse(legacy);
-        const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        if (!campaigns.find((c: any) => c.id === data.id)) {
-            const campaign: Campaign = {
-                id: data.id || `legacy-${Date.now()}`,
+        // Only migrate if it has meaningful data
+        if (data.title) {
+            saveToLocalStorage({
+                id: `legacy-${Date.now()}`,
                 type: 'shoot',
                 title: `${data.shootType || 'Custom'} Shoot`,
-                status: 'Migrated',
+                status: 'Planning',
                 client: 'FashionOS Studio',
                 date: data.date,
                 progress: 10,
                 data: data,
                 createdAt: new Date().toISOString(),
                 lastUpdated: new Date().toISOString()
-            };
-            campaigns.push(campaign);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+            });
         }
         localStorage.removeItem('active_campaign');
       } catch (e) {}
     }
   }
+};
+
+// --- Helpers ---
+
+const saveToLocalStorage = (campaign: Campaign) => {
+    const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const index = campaigns.findIndex((c: Campaign) => c.id === campaign.id);
+    
+    const safeCampaign = { ...campaign };
+    if (safeCampaign.data?.moodBoardImages?.some((img: any) => typeof img === 'string' && img.length > 1000)) {
+        safeCampaign.data.moodBoardImages = []; 
+    }
+
+    if (index >= 0) {
+        campaigns[index] = safeCampaign;
+    } else {
+        campaigns.unshift(safeCampaign);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+    window.dispatchEvent(new Event('campaignsUpdated'));
+};
+
+const mapDbStatusToUi = (status: string): string => {
+    const map: Record<string, string> = {
+        'draft': 'Draft',
+        'planning': 'Planning',
+        'pre_production': 'Pre-Production',
+        'production': 'Production',
+        'post_production': 'Post-Production',
+        'completed': 'Completed'
+    };
+    return map[status] || status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const calculateProgress = (status: string): number => {
+    const map: Record<string, number> = {
+        'draft': 10,
+        'planning': 25,
+        'pre_production': 40,
+        'production': 60,
+        'post_production': 80,
+        'completed': 100
+    };
+    return map[status] || 15;
 };

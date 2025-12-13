@@ -2,7 +2,7 @@
 import React from 'react';
 import { FileText, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../ToastProvider';
+import { useToast } from '../components/ToastProvider';
 import { generateCallSheetPDF } from '../../services/pdf/callSheet';
 
 interface DeliverablesListProps {
@@ -16,6 +16,8 @@ export const DeliverablesList: React.FC<DeliverablesListProps> = ({ campaign, to
 
   const handleDownloadCallSheet = () => {
     if (campaign) {
+      // We pass the entire campaign object. 
+      // The generateCallSheetPDF function now normalizes this by looking for campaign.data
       generateCallSheetPDF(campaign);
       addToast("Downloading Call Sheet...", "success");
     } else {

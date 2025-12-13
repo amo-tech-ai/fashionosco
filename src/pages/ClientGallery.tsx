@@ -1,39 +1,128 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { MOCK_GALLERY_ASSETS } from '../data/mockGallery';
-import { GalleryAsset, AssetStatus } from '../types/gallery';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { GalleryAsset, AssetStatus, Comment } from '../types/gallery';
 import { PhotoCard } from '../components/gallery/PhotoCard';
 import { Lightbox } from '../components/gallery/Lightbox';
-import { Filter, Download, CheckSquare, Grid as GridIcon, Wand2 } from 'lucide-react';
+import { Download, Wand2, Grid as GridIcon, Camera, Upload, Loader2 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useToast } from '../components/ToastProvider';
+import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
+import { CampaignService } from '../services/data/campaigns';
+import { StorageService } from '../services/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ClientGallery: React.FC = () => {
+  const { activeCampaign, refreshCampaign } = useActiveCampaign();
+  const { user } = useAuth();
   const [assets, setAssets] = useState<GalleryAsset[]>([]);
   const [filter, setFilter] = useState<'all' | AssetStatus>('all');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
 
-  // Load from local storage or fall back to mock
+  // Load Assets from Active Campaign
   useEffect(() => {
-    const saved = localStorage.getItem('gallery_assets');
-    if (saved) {
-      try {
-        setAssets(JSON.parse(saved));
-      } catch (e) {
-        setAssets(MOCK_GALLERY_ASSETS);
-      }
-    } else {
-      setAssets(MOCK_GALLERY_ASSETS);
+    if (activeCampaign) {
+       // If real gallery data exists, use it
+       if (activeCampaign.data?.galleryAssets) {
+          setAssets(activeCampaign.data.galleryAssets);
+       } else if (activeCampaign.data?.moodBoardImages && activeCampaign.data.moodBoardImages.length > 0) {
+          // Fallback: Use moodboard images as "Proofs" for demo purposes
+          const placeholders: GalleryAsset[] = activeCampaign.data.moodBoardImages.map((url: string, i: number) => ({
+             id: `asset-${i}`,
+             url: url,
+             filename: `CAM_SHOT_${100 + i}.jpg`,
+             status: 'unrated',
+             rating: 0,
+             comments: [],
+             metadata: { fStop: 'f/2.8', shutter: '1/200', iso: '100', camera: 'Canon R5' }
+          }));
+          setAssets(placeholders);
+       } else {
+          setAssets([]);
+       }
     }
-  }, []);
+  }, [activeCampaign?.id]);
 
-  // Save to local storage whenever assets change
-  useEffect(() => {
-    if (assets.length > 0) {
-      localStorage.setItem('gallery_assets', JSON.stringify(assets));
+  const saveGalleryState = async (updatedAssets: GalleryAsset[]) => {
+     if (!activeCampaign) return;
+     setAssets(updatedAssets);
+     
+     try {
+        const updatedData = { ...activeCampaign.data, galleryAssets: updatedAssets };
+        // Calculate stats for KPI updates
+        const stats = {
+            total: updatedAssets.length,
+            selected: updatedAssets.filter(a => a.status === 'selected').length,
+            retouching: updatedAssets.filter(a => a.status === 'retouching').length,
+            rejected: updatedAssets.filter(a => a.status === 'rejected').length
+        };
+        
+        // Pass galleryStats to update method (if API supports it, otherwise store in data)
+        const updatePayload: any = { data: { ...updatedData, galleryStats: stats } };
+        
+        await CampaignService.update(activeCampaign.id, updatePayload);
+        refreshCampaign();
+     } catch (e) {
+        console.error("Failed to save gallery", e);
+     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !activeCampaign) return;
+    
+    setIsUploading(true);
+    const files = Array.from(e.target.files);
+    
+    try {
+        // Upload to Storage
+        const urls = await StorageService.uploadFiles(files, 'gallery', activeCampaign.id);
+        
+        // Create Asset Objects
+        const newAssets: GalleryAsset[] = urls.map((url, i) => ({
+            id: `new-${Date.now()}-${i}`,
+            url: url,
+            filename: files[i].name,
+            status: 'unrated',
+            rating: 0,
+            comments: [],
+            metadata: { fStop: '-', shutter: '-', iso: '-', camera: '-' }
+        }));
+
+        // Merge and Save
+        const updatedAssets = [...assets, ...newAssets];
+        await saveGalleryState(updatedAssets);
+        addToast(`${newAssets.length} images uploaded successfully`, "success");
+    } catch (error) {
+        console.error(error);
+        addToast("Failed to upload images", "error");
+    } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [assets]);
+  };
+
+  const handleAddComment = (text: string) => {
+    if (lightboxIndex === null) return;
+    
+    const assetId = assets[lightboxIndex].id;
+    const newComment: Comment = {
+      id: Date.now().toString(),
+      user: user?.user_metadata?.full_name?.split(' ')[0] || 'User',
+      text: text,
+      timestamp: 'Just now'
+    };
+
+    const updated = assets.map(a => {
+      if (a.id === assetId) {
+        return { ...a, comments: [...a.comments, newComment] };
+      }
+      return a;
+    });
+
+    saveGalleryState(updated);
+  };
 
   const filteredAssets = useMemo(() => {
     if (filter === 'all') return assets;
@@ -41,40 +130,31 @@ export const ClientGallery: React.FC = () => {
   }, [assets, filter]);
 
   const updateAssetStatus = (id: string, status: AssetStatus) => {
-    setAssets(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+    const updated = assets.map(a => a.id === id ? { ...a, status } : a);
+    saveGalleryState(updated);
   };
 
   const selectedCount = assets.filter(a => a.status === 'selected').length;
-  const retouchingCount = assets.filter(a => a.status === 'retouching').length;
 
   const handleConfirmSelections = () => {
      if (selectedCount === 0) return;
-     
-     // Move all 'selected' to 'retouching'
-     setAssets(prev => prev.map(a => a.status === 'selected' ? { ...a, status: 'retouching' } : a));
-     
+     const updated = assets.map(a => a.status === 'selected' ? { ...a, status: 'retouching' as AssetStatus } : a);
+     saveGalleryState(updated);
      addToast(`${selectedCount} images sent to retouching queue.`, "success");
-     
-     // Update campaign status if possible
-     const campaignStr = localStorage.getItem('active_campaign');
-     if (campaignStr) {
-        try {
-           const campaign = JSON.parse(campaignStr);
-           campaign.status = "Post-Production";
-           campaign.progress = 75;
-           localStorage.setItem('active_campaign', JSON.stringify(campaign));
-        } catch(e) {}
-     }
   };
+
+  if (!activeCampaign) {
+     return <div className="p-8 text-center text-gray-500">Please select a campaign from the dashboard.</div>;
+  }
 
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-20 z-10">
+      <div className="bg-white border-b border-gray-200 px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10">
          <div className="flex items-center gap-4">
             <h1 className="font-serif text-2xl text-[#1A1A1A]">Campaign Proofs</h1>
-            <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-[200px] md:max-w-none scrollbar-hide">
+            <span className="text-xs text-gray-400 border-l pl-4 border-gray-200 hidden md:inline">{activeCampaign.title}</span>
+            <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-[200px] md:max-w-none scrollbar-hide ml-4">
                {['all', 'selected', 'retouching', 'rejected'].map((f) => (
                   <button
                      key={f}
@@ -92,15 +172,32 @@ export const ClientGallery: React.FC = () => {
          </div>
 
          <div className="flex items-center gap-3">
+            <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+            />
+            <Button 
+                variant="secondary" 
+                className="h-9 text-xs px-4" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+            >
+               {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} className="mr-2" />} 
+               Upload
+            </Button>
+            
+            <div className="h-6 w-px bg-gray-200 mx-2"></div>
+
             <span className="text-xs font-medium text-gray-500 hidden md:inline">
                {selectedCount} selected
             </span>
             <Button onClick={handleConfirmSelections} className="h-9 text-xs px-4 bg-black text-white" disabled={selectedCount === 0}>
                <Wand2 size={14} className="mr-2" /> Send to Retouching
             </Button>
-            <button className="p-2 border border-gray-200 rounded hover:bg-gray-50 text-gray-600">
-               <Download size={18} />
-            </button>
          </div>
       </div>
 
@@ -108,9 +205,28 @@ export const ClientGallery: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F7F7F5]">
          {filteredAssets.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400">
-               <GridIcon size={48} className="mb-4 opacity-20" />
-               <p className="text-lg font-medium">No images found in this view.</p>
-               <button onClick={() => setFilter('all')} className="text-sm underline mt-2">View All</button>
+               {assets.length === 0 ? (
+                  <>
+                     <Camera size={48} className="mb-4 opacity-20" />
+                     <p className="text-lg font-medium">No images uploaded yet.</p>
+                     <p className="text-sm text-gray-500 mt-2 max-w-xs text-center">
+                        Upload raw assets or proofs for client review.
+                     </p>
+                     <Button 
+                        variant="secondary" 
+                        className="mt-6"
+                        onClick={() => fileInputRef.current?.click()}
+                     >
+                        Upload Photos
+                     </Button>
+                  </>
+               ) : (
+                  <>
+                     <GridIcon size={48} className="mb-4 opacity-20" />
+                     <p className="text-lg font-medium">No images found in this view.</p>
+                     <button onClick={() => setFilter('all')} className="text-sm underline mt-2">View All</button>
+                  </>
+               )}
             </div>
          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -134,6 +250,7 @@ export const ClientGallery: React.FC = () => {
             onNext={() => setLightboxIndex((prev) => (prev !== null && prev < assets.length - 1 ? prev + 1 : 0))}
             onPrev={() => setLightboxIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : assets.length - 1))}
             onUpdateStatus={(status) => updateAssetStatus(assets[lightboxIndex].id, status)}
+            onAddComment={handleAddComment}
          />
       )}
     </div>

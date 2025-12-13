@@ -17,10 +17,11 @@ import { Products } from './pages/Products';
 import { ClientGallery } from './pages/ClientGallery';
 import { Settings } from './pages/Settings';
 import { ShootWizardPage } from './pages/ShootWizardPage'; 
-import { EventWizardPage } from './pages/EventWizardPage'; // New
+import { EventWizardPage } from './pages/EventWizardPage';
 import { Directory } from './pages/Directory';
 import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export const Router: React.FC = () => {
   return (
@@ -36,7 +37,7 @@ export const Router: React.FC = () => {
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
         <Route path="/directory" element={<Directory />} />
-        {/* Wizards */}
+        {/* Wizards (Publicly accessible for leads, but might require auth to finish) */}
         <Route path="/shoot-wizard" element={<ShootWizardPage />} />
         <Route path="/event-wizard" element={<EventWizardPage />} />
       </Route>
@@ -44,13 +45,15 @@ export const Router: React.FC = () => {
       {/* Standalone Route for Login (No Header/Footer) */}
       <Route path="/login" element={<Login />} />
 
-      {/* Dashboard Routes wrapped in Dashboard Layout */}
-      <Route path="/dashboard" element={<DashboardLayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="shotlist" element={<ShotList />} />
-        <Route path="products" element={<Products />} />
-        <Route path="gallery" element={<ClientGallery />} />
-        <Route path="settings" element={<Settings />} />
+      {/* Protected Dashboard Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="shotlist" element={<ShotList />} />
+          <Route path="products" element={<Products />} />
+          <Route path="gallery" element={<ClientGallery />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Route>
 
       {/* Fallback Route */}

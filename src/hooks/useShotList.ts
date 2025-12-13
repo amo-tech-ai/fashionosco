@@ -1,20 +1,31 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../components/ToastProvider';
 import { generateShotList } from '../services/ai/shotList';
+import { CampaignService } from '../services/data/campaigns';
+import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
 import { Shot } from '../types/ai';
 import { ShotItem } from '../types/shotlist';
 
 export const useShotList = () => {
+  const { activeCampaign, refreshCampaign } = useActiveCampaign();
   const [shots, setShots] = useState<ShotItem[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [copilotInput, setCopilotInput] = useState('');
   const [isCopilotLoading, setIsCopilotLoading] = useState(false);
   const { addToast } = useToast();
 
-  // Helper to map AI shots to UI shots
+  // Load shots from active campaign
+  useEffect(() => {
+    if (activeCampaign?.data?.shotList) {
+      setShots(mapShots(activeCampaign.data.shotList));
+    } else {
+      setShots([]);
+    }
+  }, [activeCampaign?.id]); // Only reset when ID changes to avoid loop
+
   const mapShots = useCallback((aiShots: Shot[], existingShots: ShotItem[] = []): ShotItem[] => {
     return aiShots.map(s => {
+      // Preserve existing status if we are re-mapping
       const existing = existingShots.find(e => e.id === s.id);
       if (existing) return existing;
       return {
@@ -26,63 +37,27 @@ export const useShotList = () => {
     });
   }, []);
 
-  // 1. Initial Load
-  useEffect(() => {
-    const activeCampaign = localStorage.getItem('active_campaign');
-    if (activeCampaign) {
-      try {
-        const campaignData = JSON.parse(activeCampaign);
-        if (campaignData.shotList && campaignData.shotList.length > 0) {
-          setShots(mapShots(campaignData.shotList));
-          return;
-        }
-      } catch (e) {
-        console.error("Error loading active campaign shots", e);
-      }
-    }
+  // Sync to DB
+  const saveShots = async (updatedShots: ShotItem[]) => {
+    if (!activeCampaign) return;
+    
+    // Optimistic Update
+    setShots(updatedShots);
 
-    // Fallback check for wizard intermediate data
-    const wizardData = localStorage.getItem('latest_wizard_shots');
-    if (wizardData) {
-       try {
-          const parsed = JSON.parse(wizardData);
-          if (parsed.length > 0) {
-             setShots(mapShots(parsed));
-             return;
-          }
-       } catch(e) {}
+    try {
+      const updatedData = { 
+        ...activeCampaign.data, 
+        shotList: updatedShots 
+      };
+      
+      await CampaignService.update(activeCampaign.id, { data: updatedData });
+      // We don't await refresh here to keep UI snappy, but we trigger it
+      refreshCampaign(); 
+    } catch (e) {
+      console.error("Failed to save shots", e);
+      addToast("Failed to save changes", "error");
     }
-
-    // Default Fallback
-    setShots([
-      { 
-        id: '1', name: 'Hero Shot - Beach', description: 'Wide angle establishing shot with natural lighting.', 
-        angle: 'Wide', lighting: 'Natural Golden Hour', props: 'Surfboard', priority: 'High',
-        status: 'Approved', model: 'Sarah J', outfit: 'Look 01'
-      },
-      { 
-        id: '2', name: 'Detail - Texture', description: 'Close up of fabric details.', 
-        angle: 'Macro', lighting: 'Soft Diffused', props: '-', priority: 'Medium',
-        status: 'Draft', model: '-', outfit: 'Look 01' 
-      }
-    ]);
-  }, [mapShots]);
-
-  // 2. Persistence
-  useEffect(() => {
-    if (shots.length === 0) return;
-    const activeCampaignStr = localStorage.getItem('active_campaign');
-    if (activeCampaignStr) {
-      try {
-        const campaign = JSON.parse(activeCampaignStr);
-        campaign.shotList = shots;
-        campaign.lastUpdated = new Date().toISOString();
-        localStorage.setItem('active_campaign', JSON.stringify(campaign));
-      } catch (e) {
-        console.error("Failed to sync shots", e);
-      }
-    }
-  }, [shots]);
+  };
 
   // --- Handlers ---
 
@@ -104,30 +79,32 @@ export const useShotList = () => {
     updated.splice(draggedIndex, 1);
     updated.splice(targetIndex, 0, item);
     
-    setShots(updated);
+    saveShots(updated);
     setDraggedIndex(null);
   };
 
   const handleStatusToggle = (id: string) => {
-     setShots(prev => prev.map(s => {
+     const updated = shots.map(s => {
         if (s.id === id) {
-           const nextStatus = s.status === 'Draft' ? 'Approved' : s.status === 'Approved' ? 'Shot' : 'Draft';
+           const nextStatus: ShotItem['status'] = s.status === 'Draft' ? 'Approved' : s.status === 'Approved' ? 'Shot' : 'Draft';
            return { ...s, status: nextStatus };
         }
         return s;
-     }));
+     });
+     saveShots(updated);
   };
 
   const handlePriorityCycle = (id: string) => {
     const priorities: ('High' | 'Medium' | 'Low')[] = ['High', 'Medium', 'Low'];
-    setShots(prev => prev.map(s => {
+    const updated = shots.map(s => {
       if (s.id === id) {
         const idx = priorities.indexOf(s.priority);
         const next = priorities[(idx + 1) % 3];
         return { ...s, priority: next };
       }
       return s;
-    }));
+    });
+    saveShots(updated);
   };
 
   const addNewShot = () => {
@@ -143,31 +120,23 @@ export const useShotList = () => {
       model: 'TBD',
       outfit: 'TBD'
     };
-    setShots([newShot, ...shots]);
-    addToast("New shot added to list", "success");
+    saveShots([newShot, ...shots]);
+    addToast("New shot added", "success");
   };
 
   const handleCopilotSubmit = async () => {
-    if (!copilotInput.trim()) return;
+    if (!copilotInput.trim() || !activeCampaign) return;
     
     setIsCopilotLoading(true);
     try {
-      let context = { 
-        vibe: 'editorial', 
+      const context = { 
+        vibe: activeCampaign.data.vibe || 'editorial', 
         numberOfItems: shots.length + 1, 
-        shootType: 'campaign', 
-        referenceBrands: '', 
-        turnaround: 'standard' 
+        shootType: activeCampaign.type, 
+        referenceBrands: activeCampaign.data.referenceBrands || '', 
+        turnaround: activeCampaign.data.turnaround || 'standard' 
       };
       
-      const saved = localStorage.getItem('active_campaign');
-      if (saved) {
-         try {
-           const parsed = JSON.parse(saved);
-           context = { ...context, ...parsed };
-         } catch (e) { console.error("Failed to parse campaign ctx"); }
-      }
-
       const updatedAiShots = await generateShotList({
          ...context,
          numberOfItems: shots.length + 1,
@@ -176,7 +145,7 @@ export const useShotList = () => {
       });
 
       const mergedShots = mapShots(updatedAiShots, shots);
-      setShots(mergedShots);
+      saveShots(mergedShots);
       setCopilotInput('');
       addToast("AI Copilot added new shot", "success");
 

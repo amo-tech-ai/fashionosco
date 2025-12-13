@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { KPIGrid } from '../components/dashboard/KPIGrid';
@@ -10,44 +10,31 @@ import { TeamPanel } from '../components/dashboard/TeamPanel';
 import { AIInsightCard } from '../components/dashboard/AIInsightCard';
 import { StorageWidget } from '../components/dashboard/StorageWidget';
 import { DashboardEmptyState } from '../components/dashboard/DashboardEmptyState';
-import { CampaignService, Campaign } from '../services/data/campaigns';
-import { ArrowRight, Calendar, Camera } from 'lucide-react';
+import { useCampaigns } from '../hooks/useCampaigns';
+import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
+import { Calendar, Camera, Loader2 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Migrate any legacy data first
-    CampaignService.migrateLegacy();
-    
-    // Load all campaigns
-    const loadData = async () => {
-       const all = await CampaignService.getAll();
-       setCampaigns(all);
-       if (all.length > 0) {
-          setActiveCampaign(all[0]); // Default to most recent
-       }
-       setIsLoading(false);
-    };
-
-    loadData();
-    window.addEventListener('campaignsUpdated', loadData);
-    return () => window.removeEventListener('campaignsUpdated', loadData);
-  }, []);
+  const { campaigns } = useCampaigns();
+  const { activeCampaign, setActiveCampaignId, isLoading } = useActiveCampaign();
 
   const handleNewShoot = () => {
     localStorage.removeItem('wizard_state');
     navigate('/shoot-wizard');
   };
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   if (campaigns.length === 0) {
      return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500 p-6 md:p-8 overflow-y-auto h-full">
            <DashboardHeader 
               title="Dashboard" 
               status="Overview" 
@@ -58,17 +45,19 @@ export const Dashboard: React.FC = () => {
      );
   }
 
-  // Use the active campaign data for the dashboard view
-  // Adapt legacy structure if needed
+  // Construct display object for components
   const displayCampaign = activeCampaign ? {
      ...activeCampaign.data,
+     id: activeCampaign.id,
      status: activeCampaign.status,
      title: activeCampaign.title,
-     progress: activeCampaign.progress
+     progress: activeCampaign.progress,
+     shotList: activeCampaign.data?.shotList || [],
+     moodBoardImages: activeCampaign.data?.moodBoardImages || []
   } : null;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 p-6 md:p-8 overflow-y-auto h-full">
       
       <DashboardHeader 
         title={activeCampaign?.title || 'Dashboard'} 
@@ -76,14 +65,14 @@ export const Dashboard: React.FC = () => {
         onNewShoot={handleNewShoot} 
       />
 
-      {/* Campaign Switcher (If multiple) */}
+      {/* Campaign Switcher */}
       {campaigns.length > 1 && (
-         <div className="flex gap-4 overflow-x-auto pb-2">
+         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {campaigns.map(c => (
                <button
                   key={c.id}
-                  onClick={() => setActiveCampaign(c)}
-                  className={`flex items-center gap-3 p-3 pr-6 rounded-lg border transition-all min-w-[200px] ${
+                  onClick={() => setActiveCampaignId(c.id)}
+                  className={`flex items-center gap-3 p-3 pr-6 rounded-lg border transition-all min-w-[200px] flex-shrink-0 ${
                      activeCampaign?.id === c.id 
                      ? 'bg-[#1A1A1A] text-white border-black shadow-md' 
                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
@@ -92,9 +81,9 @@ export const Dashboard: React.FC = () => {
                   <div className={`w-10 h-10 rounded-md flex items-center justify-center ${activeCampaign?.id === c.id ? 'bg-white/10' : 'bg-gray-100'}`}>
                      {c.type === 'event' ? <Calendar size={18} /> : <Camera size={18} />}
                   </div>
-                  <div className="text-left">
+                  <div className="text-left min-w-0">
                      <div className="text-xs font-bold uppercase tracking-wider opacity-70">{c.type}</div>
-                     <div className="font-bold text-sm truncate max-w-[120px]">{c.title}</div>
+                     <div className="font-bold text-sm truncate max-w-[140px]">{c.title}</div>
                   </div>
                </button>
             ))}
@@ -103,7 +92,7 @@ export const Dashboard: React.FC = () => {
 
       <KPIGrid campaign={displayCampaign} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
         
         {/* Left Column: Activity & Actions */}
         <div className="lg:col-span-2 space-y-8">

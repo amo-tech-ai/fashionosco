@@ -1,40 +1,51 @@
 
 import React from 'react';
-import { Camera, CheckCircle, Clock, ArrowUpRight, Wand2 } from 'lucide-react';
+import { Camera, CheckCircle, Clock, ArrowUpRight, Wand2, Users, Calendar, Ticket } from 'lucide-react';
 
 interface KPIGridProps {
   campaign: any;
 }
 
 export const KPIGrid: React.FC<KPIGridProps> = ({ campaign }) => {
-  const totalShots = campaign ? (campaign.shotList?.length || campaign.numberOfItems * 2) : 32;
-  const budget = campaign ? `$${campaign.totalPrice}` : '$12.4k';
-  const turnaround = campaign?.turnaround === 'rush' ? 'Rush (48h)' : campaign?.turnaround === 'extended' ? '14 Days' : 'Standard';
+  const isEvent = campaign?.type === 'event';
+  const budget = campaign ? `$${campaign.totalPrice?.toLocaleString()}` : '$12.4k';
   
   // Calculate Progress
   let progressValue = '15%';
-  let progressSub = 'Pre-Production';
+  let progressSub = 'Planning';
   let progressTrend = 'Started';
   let ProgressIcon = CheckCircle;
 
   if (campaign) {
-     if (campaign.galleryStats && campaign.galleryStats.retouching > 0) {
+     if (!isEvent && campaign.galleryStats && campaign.galleryStats.retouching > 0) {
         progressValue = '75%';
         progressSub = 'Post-Production';
         progressTrend = `${campaign.galleryStats.retouching} Retouching`;
         ProgressIcon = Wand2;
-     } else if (campaign.shotList && campaign.shotList.length > 0) {
+     } else if (!isEvent && campaign.shotList && campaign.shotList.length > 0) {
         progressValue = '25%';
         progressSub = 'Production Ready';
+     } else if (isEvent) {
+        // Event Logic
+        progressValue = `${campaign.progress || 10}%`;
+        progressSub = campaign.status || 'Planning';
      }
   } else {
      progressValue = '56%';
   }
 
-  const stats = [
-    { label: 'Total Shots', value: totalShots, sub: campaign ? 'Confirmed' : 'Planned', icon: Camera, trend: null },
+  // Define Stats Array based on Type
+  const stats = isEvent ? [
+    // EVENT STATS
+    { label: 'Guests', value: campaign?.guestCount || 0, sub: 'Estimated Capacity', icon: Users, trend: null },
+    { label: 'Status', value: progressSub, sub: 'Production Timeline', icon: Calendar, trend: 'On Track' },
+    { label: 'RSVP', value: '0', sub: 'Invites Pending', icon: Ticket, trend: 'Not Sent' },
+    { label: 'Budget', value: budget, sub: '50% Deposit Paid', icon: ArrowUpRight, trend: 'On Track' }
+  ] : [
+    // SHOOT STATS
+    { label: 'Total Shots', value: campaign ? (campaign.shotList?.length || campaign.numberOfItems * 2) : 32, sub: campaign ? 'Confirmed' : 'Planned', icon: Camera, trend: null },
     { label: 'Progress', value: progressValue, sub: progressSub, icon: ProgressIcon, trend: progressTrend },
-    { label: 'Turnaround', value: turnaround, sub: 'Estimated Delivery', icon: Clock, trend: 'On Schedule' },
+    { label: 'Turnaround', value: campaign?.turnaround === 'rush' ? 'Rush (48h)' : campaign?.turnaround === 'extended' ? '14 Days' : 'Standard', sub: 'Estimated Delivery', icon: Clock, trend: 'On Schedule' },
     { label: 'Budget', value: budget, sub: '50% Deposit Paid', icon: ArrowUpRight, trend: 'On Track' }
   ];
 

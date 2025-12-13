@@ -5,36 +5,57 @@ import { Button } from '../../Button';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../ToastProvider';
 import { CampaignService, Campaign } from '../../../services/data/campaigns';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const EventReviewStep: React.FC = () => {
-  const { state } = useEventWizard();
+  const { state, reset } = useEventWizard();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) {
+        addToast("Please log in to book an event.", "error");
+        navigate('/login', { state: { returnTo: '/event-wizard' } });
+        return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate API delay
-    setTimeout(() => {
+    try {
         const newCampaign: Campaign = {
             id: `EVT-${Date.now().toString().slice(-6)}`,
             type: 'event',
             title: state.eventName,
             status: 'Planning',
-            client: 'FashionOS User',
-            date: null, // TBD
+            client: user.email || 'FashionOS User',
+            date: state.date ? state.date.toISOString() : null,
             progress: 10,
-            data: state,
+            data: state, // Persist full wizard state
+            totalPrice: state.totalPrice,
+            location: state.venueType || 'TBD',
             createdAt: new Date().toISOString(),
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            user_id: user.id
         };
 
-        CampaignService.save(newCampaign);
+        const saved = await CampaignService.save(newCampaign);
+        
+        if (saved && saved.id) {
+            localStorage.setItem('active_campaign_id', saved.id);
+        }
+        
         addToast("Event brief created successfully!", "success");
+        reset(); // Clear wizard context
         navigate('/dashboard');
-    }, 1500);
+    } catch (error) {
+        console.error("Failed to save event", error);
+        addToast("Failed to create event. Please try again.", "error");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,8 +101,14 @@ export const EventReviewStep: React.FC = () => {
       </div>
 
       <div className="flex justify-center pt-8">
-         <Button onClick={handleSubmit} isLoading={isSubmitting} className="px-12 py-4">
-            Submit Brief & Pay Deposit
+         <Button onClick={handleSubmit} disabled={isSubmitting} className="px-12 py-4">
+            {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                    <Loader2 className="animate-spin" size={16} /> Processing...
+                </span>
+            ) : (
+                'Submit Brief & Pay Deposit'
+            )}
          </Button>
       </div>
     </div>

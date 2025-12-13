@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, CheckCircle, XCircle, MessageSquare, Info, Download } from 'lucide-react';
 import { GalleryAsset } from '../../types/gallery';
 
@@ -9,13 +9,25 @@ interface LightboxProps {
   onNext: () => void;
   onPrev: () => void;
   onUpdateStatus: (status: GalleryAsset['status']) => void;
+  onAddComment: (text: string) => void;
 }
 
-export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPrev, onUpdateStatus }) => {
-  
+export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPrev, onUpdateStatus, onAddComment }) => {
+  const [commentText, setCommentText] = useState('');
+
+  const handleSubmitComment = () => {
+    if (commentText.trim()) {
+      onAddComment(commentText);
+      setCommentText('');
+    }
+  };
+
   // Handle keydown for navigation
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts if typing in textarea
+      if (document.activeElement?.tagName === 'TEXTAREA') return;
+
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') onNext();
       if (e.key === 'ArrowLeft') onPrev();
@@ -102,11 +114,11 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
                   <MessageSquare size={12} /> Comments
                </h4>
-               {asset.comments.length === 0 ? (
-                  <p className="text-sm text-gray-600 italic">No comments yet.</p>
-               ) : (
-                  <div className="space-y-3">
-                     {asset.comments.map(comment => (
+               <div className="space-y-3 max-h-40 overflow-y-auto pr-1">
+                  {asset.comments.length === 0 ? (
+                     <p className="text-sm text-gray-600 italic">No comments yet.</p>
+                  ) : (
+                     asset.comments.map(comment => (
                         <div key={comment.id} className="bg-white/5 p-3 rounded text-sm">
                            <div className="flex justify-between text-xs mb-1">
                               <span className="font-bold text-white">{comment.user}</span>
@@ -114,14 +126,24 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
                            </div>
                            <p className="text-gray-300">{comment.text}</p>
                         </div>
-                     ))}
-                  </div>
-               )}
-               <textarea 
-                  placeholder="Add a retouching note..." 
-                  className="w-full bg-black border border-white/20 rounded p-3 text-sm text-white focus:border-white/50 focus:outline-none resize-none h-20"
-               ></textarea>
-               <button className="w-full bg-white text-black py-2 rounded text-xs font-bold uppercase tracking-widest hover:bg-gray-200">Post Comment</button>
+                     ))
+                  )}
+               </div>
+               
+               <div className="pt-2">
+                  <textarea 
+                     value={commentText}
+                     onChange={(e) => setCommentText(e.target.value)}
+                     placeholder="Add a retouching note..." 
+                     className="w-full bg-black border border-white/20 rounded p-3 text-sm text-white focus:border-white/50 focus:outline-none resize-none h-20"
+                  ></textarea>
+                  <button 
+                     onClick={handleSubmitComment}
+                     className="w-full bg-white text-black py-2 rounded text-xs font-bold uppercase tracking-widest hover:bg-gray-200 mt-2"
+                  >
+                     Post Comment
+                  </button>
+               </div>
             </div>
          </div>
 
