@@ -14,7 +14,9 @@ import { InstagramServices } from './pages/InstagramServices';
 import { Dashboard } from './pages/Dashboard';
 import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
-import { ShootWizardPage } from './pages/ShootWizardPage'; // New Import
+import { ClientGallery } from './pages/ClientGallery';
+import { Settings } from './pages/Settings'; // New Import
+import { ShootWizardPage } from './pages/ShootWizardPage'; 
 import { NotFound } from './pages/NotFound';
 
 export const Router: React.FC = () => {
@@ -39,6 +41,8 @@ export const Router: React.FC = () => {
         <Route index element={<Dashboard />} />
         <Route path="shotlist" element={<ShotList />} />
         <Route path="products" element={<Products />} />
+        <Route path="gallery" element={<ClientGallery />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Fallback Route */}

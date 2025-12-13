@@ -15,7 +15,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { shootType, numberOfItems, vibe, referenceBrands } = await req.json();
+    const { shootType, numberOfItems, vibe, referenceBrands, refinement, currentShots } = await req.json();
 
     const apiKey = Deno.env.get('API_KEY');
     if (!apiKey) {
@@ -48,21 +48,44 @@ serve(async (req: Request) => {
       required: ["shots"]
     };
 
-    const prompt = `
-      You are a world-class Fashion Creative Director. 
-      Generate a shot list for a ${shootType} shoot.
-      
-      Parameters:
-      - Item Count: ${numberOfItems}
-      - Vibe/Aesthetic: ${vibe}
-      - Brand References: ${referenceBrands}
-      
-      Instructions:
-      1. Create a cohesive visual story.
-      2. Mix commercial "safe" shots with high-impact "editorial" angles.
-      3. Limit to ${Math.min(numberOfItems + 3, 15)} key shots.
-      4. Ensure lighting and props match the requested vibe.
-    `;
+    let prompt = "";
+
+    if (refinement && currentShots) {
+        // Refinement Mode Prompt
+        prompt = `
+          You are a world-class Fashion Creative Director refining a shoot plan.
+          
+          CURRENT SHOT LIST:
+          ${JSON.stringify(currentShots)}
+
+          FEEDBACK / REFINEMENT INSTRUCTION:
+          "${refinement}"
+
+          OBJECTIVE:
+          Modify the shot list to address the feedback. 
+          - You can add, remove, or edit shots.
+          - Maintain the vibe: ${vibe}.
+          - Ensure the total count remains appropriate for ${numberOfItems} items (approx ${Math.min(numberOfItems + 3, 15)} shots).
+          - Update descriptions and lighting if the feedback implies a style change.
+        `;
+    } else {
+        // Generation Mode Prompt
+        prompt = `
+          You are a world-class Fashion Creative Director. 
+          Generate a shot list for a ${shootType} shoot.
+          
+          Parameters:
+          - Item Count: ${numberOfItems}
+          - Vibe/Aesthetic: ${vibe}
+          - Brand References: ${referenceBrands}
+          
+          Instructions:
+          1. Create a cohesive visual story.
+          2. Mix commercial "safe" shots with high-impact "editorial" angles.
+          3. Limit to ${Math.min(numberOfItems + 3, 15)} key shots.
+          4. Ensure lighting and props match the requested vibe.
+        `;
+    }
 
     // Using Gemini 3 Pro with Thinking Config
     const response = await ai.models.generateContent({

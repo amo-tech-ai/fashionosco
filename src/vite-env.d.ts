@@ -10,3 +10,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module 'react-router-dom';
+declare module 'jspdf';
+declare module 'jspdf-autotable';

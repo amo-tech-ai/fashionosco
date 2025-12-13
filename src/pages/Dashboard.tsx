@@ -9,12 +9,16 @@ import {
   MoreHorizontal, 
   Sparkles,
   Calendar,
-  Package
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
+import { generateCallSheetPDF } from '../services/pdf/callSheet';
+import { useToast } from '../components/ToastProvider';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [campaign, setCampaign] = useState<any>(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     // Load the most recent booking from local storage
@@ -36,6 +40,15 @@ export const Dashboard: React.FC = () => {
   const status = campaign?.status || 'Active';
   const suggestion = campaign?.aiAnalysis?.suggestion || "AI Analysis pending...";
   const palette = campaign?.aiAnalysis?.colors || ['#F3E8FF', '#A855F7', '#1A1A1A'];
+
+  const handleDownloadCallSheet = () => {
+     if (campaign) {
+        generateCallSheetPDF(campaign);
+        addToast("Downloading Call Sheet...", "success");
+     } else {
+        addToast("No active campaign data found. Book a shoot first.", "error");
+     }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -105,12 +118,20 @@ export const Dashboard: React.FC = () => {
                     <p className="text-white/70 text-xs">Review the AI-generated shot list and approve logistics.</p>
                  </div>
               </div>
-              <button 
-                onClick={() => navigate('/dashboard/shotlist')}
-                className="px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-100 transition-colors w-full sm:w-auto text-center"
-              >
-                 Review Shots
-              </button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                 <button 
+                   onClick={() => navigate('/dashboard/shotlist')}
+                   className="flex-1 px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-100 transition-colors text-center"
+                 >
+                    Review Shots
+                 </button>
+                 <button 
+                   onClick={() => navigate('/dashboard/gallery')}
+                   className="flex-1 px-4 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded hover:bg-white/10 transition-colors text-center"
+                 >
+                    Gallery
+                 </button>
+              </div>
            </div>
 
            {/* Activity Feed */}
@@ -170,30 +191,40 @@ export const Dashboard: React.FC = () => {
                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">View All</span>
               </div>
               <div className="divide-y divide-[#E5E5E5]">
-                 {[
-                    { name: "Campaign_Brief.pdf", size: "2 MB", status: "Ready", type: "PDF" },
-                    { name: "Shot_List_v1.json", size: "145 KB", status: "Review", type: "Data" },
-                    { name: "Moodboard_Assets.zip", size: "45 MB", status: "Ready", type: "ZIP" }
-                 ].map((file, i) => (
-                    <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F7F5] transition-colors cursor-pointer group">
-                       <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-[#F7F7F5] rounded-lg flex items-center justify-center text-[#6B7280] group-hover:bg-white group-hover:shadow-sm transition-all">
-                             <CheckCircle size={18} />
-                          </div>
-                          <div>
-                             <p className="text-sm font-medium text-[#1A1A1A]">{file.name}</p>
-                             <p className="text-xs text-[#9CA3AF]">{file.type} • {file.size}</p>
-                          </div>
+                 <div 
+                    onClick={handleDownloadCallSheet}
+                    className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F7F5] transition-colors cursor-pointer group"
+                 >
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-[#F7F7F5] rounded-lg flex items-center justify-center text-[#6B7280] group-hover:bg-white group-hover:shadow-sm transition-all">
+                          <FileText size={18} />
                        </div>
-                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          file.status === 'Ready' ? 'bg-[#DCFCE7] text-[#166534] border-[#DCFCE7]' :
-                          file.status === 'Review' ? 'bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7]' :
-                          'bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]'
-                       }`}>
-                          {file.status}
-                       </span>
+                       <div>
+                          <p className="text-sm font-medium text-[#1A1A1A]">Production Call Sheet.pdf</p>
+                          <p className="text-xs text-[#9CA3AF]">PDF • ~1.2 MB</p>
+                       </div>
                     </div>
-                 ))}
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-[#DCFCE7] text-[#166534] border-[#DCFCE7]">
+                       Ready
+                    </span>
+                 </div>
+                 
+                 <div className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F7F5] transition-colors cursor-pointer group"
+                 onClick={() => navigate('/dashboard/gallery')}
+                 >
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-[#F7F7F5] rounded-lg flex items-center justify-center text-[#6B7280] group-hover:bg-white group-hover:shadow-sm transition-all">
+                          <ImageIcon size={18} />
+                       </div>
+                       <div>
+                          <p className="text-sm font-medium text-[#1A1A1A]">Client_Proofs_Gallery</p>
+                          <p className="text-xs text-[#9CA3AF]">Link • {totalShots} items</p>
+                       </div>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7]">
+                       Pending
+                    </span>
+                 </div>
               </div>
            </div>
         </div>
@@ -256,10 +287,10 @@ export const Dashboard: React.FC = () => {
            <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm p-6">
                <h3 className="font-serif text-lg text-[#1A1A1A] mb-4">Storage Usage</h3>
                <div className="w-full bg-[#F7F7F5] rounded-full h-2 mb-4">
-                  <div className="bg-[#1A1A1A] h-2 rounded-full" style={{ width: '75%' }}></div>
+                  <div className="bg-[#1A1A1A] h-2 rounded-full" style={{ width: '15%' }}></div>
                </div>
                <div className="flex justify-between text-xs text-[#6B7280] font-medium">
-                  <span>750GB Used</span>
+                  <span>150GB Used</span>
                   <span>1TB Total</span>
                </div>
            </div>

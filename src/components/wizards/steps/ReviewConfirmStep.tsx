@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers } from 'lucide-react';
+import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers, FileText, AlertTriangle } from 'lucide-react';
 import { useToast } from '../../ToastProvider';
+import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
+import { filesToBase64Strings, compressBase64Image } from '../../../utils/fileHelpers';
 
 export const ReviewConfirmStep: React.FC = () => {
   const { state, prevStep, resetWizard } = useShootWizard();
@@ -13,34 +15,70 @@ export const ReviewConfirmStep: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate Backend API Latency
-    setTimeout(() => {
-       setIsSubmitting(false);
-       setIsSuccess(true);
-       
-       // Persist booking to local storage to simulate Database save
-       const bookingData = {
-         ...state,
-         id: `CAM-${Date.now().toString().slice(-6)}`,
-         status: 'Active',
-         lastUpdated: new Date().toISOString(),
-         progress: 15 // Initial progress
-       };
-       localStorage.setItem('active_campaign', JSON.stringify(bookingData));
-       
-       // Clear the wizard draft from local storage to prevent conflicts
-       localStorage.removeItem('wizard_state');
-       
-       addToast("Booking request submitted successfully!", "success");
-    }, 2000);
+    
+    try {
+        // 1. Process Images for Persistence
+        let savedImages: string[] = [];
+        if (state.moodBoardImages.length > 0) {
+            // Compress heavily for LocalStorage (max 4 images, low quality)
+            const filesToSave = state.moodBoardImages.slice(0, 4);
+            const rawBase64s = await filesToBase64Strings(filesToSave);
+            savedImages = await Promise.all(rawBase64s.map(img => compressBase64Image(img, 600)));
+        }
+
+        // 2. Prepare Booking Data
+        const bookingData = {
+            ...state,
+            id: `CAM-${Date.now().toString().slice(-6)}`,
+            status: 'Active',
+            lastUpdated: new Date().toISOString(),
+            progress: 15,
+            moodBoardImages: savedImages
+        };
+
+        // 3. Attempt Persistence with Fallback
+        try {
+            const serialized = JSON.stringify(bookingData);
+            // Check approximate size (UTF-16 char is 2 bytes)
+            const sizeInBytes = serialized.length * 2; 
+            
+            // If > 4.5MB, strip images to avoid quota limit (typically 5MB)
+            if (sizeInBytes > 4.5 * 1024 * 1024) {
+               throw new Error("Payload too large");
+            }
+            
+            localStorage.setItem('active_campaign', serialized);
+        } catch (e) {
+            console.warn("Storage limit reached or error, saving without images", e);
+            // Fallback: save without images
+            const { moodBoardImages, ...rest } = bookingData;
+            localStorage.setItem('active_campaign', JSON.stringify(rest));
+            addToast("Campaign saved (Images excluded due to browser storage limits)", "info");
+        }
+        
+        // 4. Simulate Network & Cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        localStorage.removeItem('wizard_state');
+        setIsSuccess(true);
+        addToast("Booking request submitted successfully!", "success");
+
+    } catch (error) {
+        console.error("Booking failed", error);
+        addToast("Failed to submit booking. Please try again.", "error");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const handleFinish = () => {
-    // Reset the context state before navigating
     resetWizard();
     navigate('/dashboard');
+  };
+
+  const handleDownloadPDF = () => {
+    generateCallSheetPDF(state);
   };
 
   if (isSuccess) {
@@ -53,7 +91,12 @@ export const ReviewConfirmStep: React.FC = () => {
            <p className="text-gray-500 mb-8 max-w-md mx-auto text-lg font-light">
               Your shoot has been reserved. Our production team has received your AI-generated brief and will contact you shortly.
            </p>
-           <Button onClick={handleFinish} className="px-8 py-4 text-sm">Go to Dashboard</Button>
+           <div className="flex gap-4">
+              <Button variant="secondary" onClick={handleDownloadPDF} className="flex items-center gap-2">
+                 <FileText size={16} /> Download Brief
+              </Button>
+              <Button onClick={handleFinish} className="px-8 py-4 text-sm">Go to Dashboard</Button>
+           </div>
         </div>
      );
   }
@@ -99,7 +142,17 @@ export const ReviewConfirmStep: React.FC = () => {
 
          {/* AI Insight Summary */}
          {(state.aiAnalysis || state.shotList.length > 0) && (
-            <div className="bg-purple-50 rounded-lg p-5 border border-purple-100 flex flex-col md:flex-row gap-6 shadow-sm">
+            <div className="bg-purple-50 rounded-lg p-5 border border-purple-100 flex flex-col md:flex-row gap-6 shadow-sm relative">
+               {state.shotList.length > 0 && (
+                  <button 
+                     onClick={handleDownloadPDF} 
+                     className="absolute top-4 right-4 text-purple-600 hover:text-purple-800 p-1" 
+                     title="Download Call Sheet"
+                  >
+                     <FileText size={18} />
+                  </button>
+               )}
+               
                {state.aiAnalysis && (
                   <div className="flex-1">
                      <div className="flex items-center gap-2 mb-2">

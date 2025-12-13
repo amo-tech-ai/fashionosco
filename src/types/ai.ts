@@ -25,4 +25,7 @@ export interface GenerateShotListParams {
   vibe: string;
   referenceBrands: string;
   turnaround: string;
+  // New fields for refinement flow
+  refinement?: string;
+  currentShots?: Shot[];
 }

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -9,18 +9,34 @@ import {
   LogOut, 
   Bell,
   Search,
-  PlusCircle
+  PlusCircle,
+  Image as ImageIcon
 } from 'lucide-react';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const sidebarItems = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Book a Shoot', href: '/shoot-wizard', icon: PlusCircle },
   { label: 'Shot List', href: '/dashboard/shotlist', icon: ListVideo },
+  { label: 'Client Gallery', href: '/dashboard/gallery', icon: ImageIcon },
   { label: 'Products', href: '/dashboard/products', icon: Package },
 ];
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const { profile } = useUserProfile();
+  const [user, setUser] = useState(profile);
+
+  // Listen for profile updates from other tabs/components
+  useEffect(() => {
+    setUser(profile);
+    const handleProfileUpdate = () => {
+       const saved = localStorage.getItem('user_profile');
+       if (saved) setUser(JSON.parse(saved));
+    };
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, [profile]);
 
   return (
     <div className="min-h-screen bg-[#F7F7F5] flex font-sans text-[#1A1A1A]">
@@ -76,11 +92,11 @@ export const DashboardLayout: React.FC = () => {
         <div className="p-4 border-t border-[#E5E5E5]">
           <div className="flex items-center p-3 rounded-xl hover:bg-[#F7F7F5] cursor-pointer transition-colors">
             <div className="h-10 w-10 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-serif font-bold">
-              CD
+              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-[#1A1A1A]">Creative Director</p>
-              <p className="text-xs text-[#6B7280]">Studio Admin</p>
+            <div className="ml-3 min-w-0">
+              <p className="text-sm font-medium text-[#1A1A1A] truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-xs text-[#6B7280] truncate">{user.role}</p>
             </div>
           </div>
         </div>
@@ -118,7 +134,7 @@ export const DashboardLayout: React.FC = () => {
             </div>
         </header>
         
-        <main className="flex-1 p-6 md:p-8 overflow-x-hidden">
+        <main className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
           <Outlet />
         </main>
       </div>

@@ -1,110 +1,77 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Sparkles, Layers, Loader2, RefreshCw, AlertCircle, Edit2, Save, Trash2, ArrowUpCircle, MinusCircle, ArrowDownCircle, GripVertical } from 'lucide-react';
+import { Sparkles, Layers, Loader2, AlertCircle, Download, FileText } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
+import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
 import { Shot } from '../../../types/ai';
+
+// Modular Sub-components
+import { DeliverablesControls } from './deliverables/DeliverablesControls';
+import { PropSummary } from './deliverables/PropSummary';
+import { ShotList } from './deliverables/ShotList';
+import { RefinementBar } from './deliverables/RefinementBar';
 
 export const DeliverablesStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editingShotId, setEditingShotId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ name: string; description: string }>({ name: '', description: '' });
-  
-  // DnD State
-  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
+  const [refinementText, setRefinementText] = useState('');
 
-  // Persist shots to local storage for ShotList page retrieval
+  // Persist shots to local storage
   useEffect(() => {
     if (state.shotList.length > 0) {
       localStorage.setItem('latest_wizard_shots', JSON.stringify(state.shotList));
     }
   }, [state.shotList]);
 
-  const handleGenerateShotList = async () => {
+  // Derived Prop List
+  const uniqueProps = useMemo(() => {
+    const all = state.shotList
+      .flatMap((s) => (s.props ? s.props.split(',').map((p) => p.trim()) : []))
+      .filter((p) => p && p.toLowerCase() !== 'none' && p.toLowerCase() !== 'n/a');
+    return Array.from(new Set(all));
+  }, [state.shotList]);
+
+  const handleGenerateShotList = async (isRefinement = false) => {
     setIsGenerating(true);
     setError(null);
     try {
-       // Incorporate AI Analysis if available for richer generation
-       let derivedVibe = state.vibe || 'editorial';
-       if (state.aiAnalysis) {
-          derivedVibe += `. Style keywords: ${state.aiAnalysis.keywords.join(', ')}. Lighting: ${state.aiAnalysis.lightingStyle}`;
-       }
+      let derivedVibe = state.vibe || 'editorial';
+      if (state.aiAnalysis) {
+        derivedVibe += `. Style keywords: ${state.aiAnalysis.keywords.join(
+          ', '
+        )}. Lighting: ${state.aiAnalysis.lightingStyle}`;
+      }
 
-       const shots = await generateShotList({
-          shootType: state.shootType || 'custom',
-          numberOfItems: state.numberOfItems,
-          vibe: derivedVibe,
-          referenceBrands: state.referenceBrands || (state.aiAnalysis?.similarBrands?.join(', ') || 'Standard'),
-          turnaround: state.turnaround
-       });
-       updateField('shotList', shots);
+      const shots = await generateShotList({
+        shootType: state.shootType || 'custom',
+        numberOfItems: state.numberOfItems,
+        vibe: derivedVibe,
+        referenceBrands:
+          state.referenceBrands ||
+          (state.aiAnalysis?.similarBrands?.join(', ') || 'Standard'),
+        turnaround: state.turnaround,
+        refinement: isRefinement ? refinementText : undefined,
+        currentShots: isRefinement ? state.shotList : undefined,
+      });
+
+      updateField('shotList', shots);
+      if (isRefinement) setRefinementText('');
     } catch (err) {
-       setError("Couldn't generate shot list. Please try again.");
+      setError("Couldn't generate shot list. Please try again.");
     } finally {
-       setIsGenerating(false);
+      setIsGenerating(false);
     }
   };
 
-  const handleEditClick = (shot: Shot) => {
-    setEditingShotId(shot.id);
-    setEditForm({ name: shot.name, description: shot.description });
+  const handleDownloadPDF = () => {
+    generateCallSheetPDF(state);
   };
 
-  const handleSaveEdit = (id: string) => {
-    const updatedList = state.shotList.map(s => 
-      s.id === id ? { ...s, name: editForm.name, description: editForm.description } : s
-    );
-    updateField('shotList', updatedList);
-    setEditingShotId(null);
-  };
-
-  const cyclePriority = (id: string, current: string) => {
-    const priorities: Shot['priority'][] = ['High', 'Medium', 'Low'];
-    const currentIndex = priorities.indexOf(current as Shot['priority']);
-    const nextPriority = priorities[(currentIndex + 1) % priorities.length];
-    
-    const updatedList = state.shotList.map(s => 
-      s.id === id ? { ...s, priority: nextPriority } : s
-    );
-    updateField('shotList', updatedList);
-  };
-
-  const deleteShot = (id: string) => {
-    const updatedList = state.shotList.filter(s => s.id !== id);
-    updateField('shotList', updatedList);
-  };
-
-  // Drag and Drop Handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedItemIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    // Transparent drag image or default
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedItemIndex === null || draggedItemIndex === index) return;
-    
-    // Optional: Add logic here for live reordering visual feedback if desired
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedItemIndex === null) return;
-
-    const items = [...state.shotList];
-    const draggedItem = items[draggedItemIndex];
-    
-    // Remove from old index
-    items.splice(draggedItemIndex, 1);
-    // Insert at new index
-    items.splice(targetIndex, 0, draggedItem);
-    
-    updateField('shotList', items);
-    setDraggedItemIndex(null);
+  const updateShotList = (newShots: Shot[]) => {
+    updateField('shotList', newShots);
   };
 
   return (
@@ -114,175 +81,98 @@ export const DeliverablesStep: React.FC = () => {
         <p className="text-gray-500 font-light">What do you need at the end of the day?</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         
-         <div className="space-y-6">
-            {/* Image Count */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-               <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Final Retouched Images</label>
-               <div className="flex items-center gap-4">
-                  <input 
-                  type="range" 
-                  min="5" 
-                  max="100" 
-                  step="5"
-                  value={state.finalImagesCount} 
-                  onChange={(e) => updateField('finalImagesCount', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-                  />
-                  <div className="w-16 h-12 flex items-center justify-center border border-gray-300 rounded-md font-serif text-xl font-bold">
-                     {state.finalImagesCount}
-                  </div>
-               </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column: Controls */}
+        <div className="lg:col-span-4 space-y-6">
+          <DeliverablesControls
+            finalImagesCount={state.finalImagesCount}
+            resolution={state.resolution}
+            onUpdate={updateField}
+          />
+          <PropSummary props={uniqueProps} />
+          
+          {/* Export Actions Sidebar */}
+          {state.shotList.length > 0 && (
+             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Export Options</label>
+                <button 
+                   onClick={handleDownloadPDF}
+                   className="w-full flex items-center justify-center gap-2 p-3 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-800 hover:bg-gray-50 hover:border-black transition-all shadow-sm mb-3"
+                >
+                   <FileText size={16} /> Download Call Sheet
+                </button>
+             </div>
+          )}
+        </div>
 
-            {/* Resolution */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-               <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Resolution</label>
-               <div className="grid grid-cols-2 gap-4">
-                  <button 
-                     onClick={() => updateField('resolution', 'web')}
-                     className={`p-3 rounded-lg border text-sm font-medium transition-all ${state.resolution === 'web' ? 'border-black bg-gray-50' : 'border-gray-200'}`}
-                  >
-                     Web (72 DPI)
-                  </button>
-                  <button 
-                     onClick={() => updateField('resolution', 'print')}
-                     className={`p-3 rounded-lg border text-sm font-medium transition-all ${state.resolution === 'print' ? 'border-black bg-gray-50' : 'border-gray-200'}`}
-                  >
-                     Print (300 DPI)
-                  </button>
-               </div>
+        {/* Right Column: AI Shot List Preview */}
+        <div className="lg:col-span-8 bg-gradient-to-br from-[#F7F7F5] to-white border border-gray-200 rounded-xl p-6 flex flex-col h-full shadow-sm relative overflow-hidden min-h-[600px]">
+          <div className="flex items-center justify-between mb-6 relative z-10">
+            <div className="flex items-center gap-2">
+              <div className="bg-black text-white p-1 rounded-md">
+                <Sparkles size={14} />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest">
+                AI Shot List Builder
+              </span>
             </div>
-         </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleGenerateShotList(false)}
+                isLoading={isGenerating}
+                className="text-xs h-8 px-3"
+              >
+                {state.shotList.length > 0 ? 'Regenerate All' : 'Generate List'}
+              </Button>
+            </div>
+          </div>
 
-         {/* AI Shot List Preview */}
-         <div className="bg-gradient-to-br from-[#F7F7F5] to-white border border-gray-200 rounded-xl p-6 flex flex-col h-full shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-6 relative z-10">
-               <div className="flex items-center gap-2">
-                  <div className="bg-black text-white p-1 rounded-md">
-                    <Sparkles size={14} />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-widest">AI Shot List Builder</span>
-               </div>
-               <Button onClick={handleGenerateShotList} isLoading={isGenerating} className="text-xs h-8 px-3">
-                  {state.shotList.length > 0 ? 'Regenerate List' : (state.aiAnalysis ? 'Generate from Analysis' : 'Generate List')}
-               </Button>
-            </div>
-
-            <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden relative min-h-[300px] z-10 flex flex-col">
-               {isGenerating && (
-                  <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
-                     <Loader2 className="animate-spin text-black mb-3 w-8 h-8" />
-                     <p className="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">Gemini Thinking...</p>
-                  </div>
-               )}
-               
-               {state.shotList.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                     <Layers size={32} className="mb-4 opacity-50" />
-                     <p className="text-xs max-w-[200px] leading-relaxed">
-                        {state.aiAnalysis 
-                           ? "Gemini understands your moodboard. Click generate to create a tailored shot list."
-                           : "Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your details."}
-                     </p>
-                  </div>
-               ) : (
-                  <div className="divide-y divide-gray-100 overflow-y-auto max-h-[400px] p-2 custom-scrollbar">
-                     {state.shotList.map((shot: Shot, idx: number) => (
-                        <div 
-                           key={shot.id} 
-                           draggable
-                           onDragStart={(e) => handleDragStart(e, idx)}
-                           onDragOver={(e) => handleDragOver(e, idx)}
-                           onDrop={(e) => handleDrop(e, idx)}
-                           className={`p-4 hover:bg-gray-50 rounded-lg transition-colors group animate-in slide-in-from-bottom-2 ${draggedItemIndex === idx ? 'opacity-50 border-2 border-dashed border-gray-300' : ''}`}
-                           style={{ animationDelay: `${idx * 50}ms`, cursor: 'grab' }}
-                        >
-                           {editingShotId === shot.id ? (
-                              <div className="space-y-3">
-                                 <input 
-                                    type="text" 
-                                    value={editForm.name} 
-                                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                                    className="w-full text-sm font-bold border-b border-gray-300 focus:border-black outline-none pb-1 bg-transparent"
-                                 />
-                                 <textarea 
-                                    value={editForm.description} 
-                                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                                    className="w-full text-xs text-gray-600 border border-gray-200 rounded p-2 focus:border-black outline-none bg-white"
-                                    rows={2}
-                                 />
-                                 <div className="flex gap-2 justify-end">
-                                    <button onClick={() => setEditingShotId(null)} className="text-xs text-gray-500 hover:text-black">Cancel</button>
-                                    <button onClick={() => handleSaveEdit(shot.id)} className="text-xs font-bold text-green-600 flex items-center gap-1"><Save size={12} /> Save</button>
-                                 </div>
-                              </div>
-                           ) : (
-                              <>
-                                 <div className="flex justify-between items-start mb-1">
-                                    <div className="flex items-center gap-2">
-                                       <GripVertical size={14} className="text-gray-300 cursor-grab" />
-                                       <span className="font-bold text-sm text-gray-900">{shot.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                       <button 
-                                          onClick={() => cyclePriority(shot.id, shot.priority)}
-                                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full cursor-pointer select-none flex items-center gap-1 ${
-                                             shot.priority === 'High' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 
-                                             shot.priority === 'Medium' ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' :
-                                             'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                          }`}
-                                          title="Click to toggle priority"
-                                       >
-                                          {shot.priority}
-                                          {shot.priority === 'High' && <ArrowUpCircle size={10} />}
-                                          {shot.priority === 'Medium' && <MinusCircle size={10} />}
-                                          {shot.priority === 'Low' && <ArrowDownCircle size={10} />}
-                                       </button>
-                                       <button onClick={() => handleEditClick(shot)} className="text-gray-300 hover:text-black transition-colors opacity-0 group-hover:opacity-100">
-                                          <Edit2 size={12} />
-                                       </button>
-                                       <button onClick={() => deleteShot(shot.id)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                                          <Trash2 size={12} />
-                                       </button>
-                                    </div>
-                                 </div>
-                                 <p className="text-xs text-gray-500 leading-relaxed mb-2 ml-6 cursor-pointer hover:text-gray-800" onClick={() => handleEditClick(shot)}>{shot.description}</p>
-                                 <div className="flex gap-2 flex-wrap ml-6">
-                                    <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.angle}</span>
-                                    <span className="text-[10px] text-gray-400 border border-gray-100 px-1.5 rounded">{shot.lighting}</span>
-                                 </div>
-                              </>
-                           )}
-                        </div>
-                     ))}
-                  </div>
-               )}
-            </div>
-            
-            {state.shotList.length > 0 && (
-               <div className="mt-4 flex justify-between items-center px-2 relative z-10">
-                  <span className="text-xs text-gray-400">{state.shotList.length} Shots Generated</span>
-                  <span className="text-[10px] text-gray-300">Drag to reorder</span>
-               </div>
+          <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden relative flex flex-col z-10">
+            {isGenerating && (
+              <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
+                <Loader2 className="animate-spin text-black mb-3 w-8 h-8" />
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">
+                  Gemini Thinking...
+                </p>
+              </div>
             )}
-            
-            {error && (
-               <div className="flex items-center gap-2 mt-2 text-xs text-red-500 justify-center relative z-10">
-                  <AlertCircle size={14} />
-                  <span>{error}</span>
-               </div>
-            )}
-            
-            {/* Background Decoration */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50 z-0"></div>
-         </div>
 
+            {state.shotList.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                <Layers size={32} className="mb-4 opacity-50" />
+                <p className="text-xs max-w-[200px] leading-relaxed">
+                  Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your details.
+                </p>
+              </div>
+            ) : (
+              <>
+                <ShotList shots={state.shotList} onUpdateList={updateShotList} />
+                <RefinementBar
+                  value={refinementText}
+                  onChange={setRefinementText}
+                  onSubmit={() => handleGenerateShotList(true)}
+                  isGenerating={isGenerating}
+                />
+              </>
+            )}
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-red-500 justify-center relative z-10">
+              <AlertCircle size={14} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50 z-0"></div>
+        </div>
       </div>
 
       <div className="flex justify-between pt-8 border-t border-gray-100">
-        <Button variant="secondary" onClick={prevStep}>Back</Button>
+        <Button variant="secondary" onClick={prevStep}>
+          Back
+        </Button>
         <Button onClick={nextStep}>Continue</Button>
       </div>
     </div>
