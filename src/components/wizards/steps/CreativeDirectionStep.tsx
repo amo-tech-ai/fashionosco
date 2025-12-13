@@ -13,7 +13,7 @@ export const CreativeDirectionStep: React.FC = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
+      const files = Array.from(e.target.files) as File[];
       updateField('moodBoardImages', [...state.moodBoardImages, ...files]);
       
       // Auto-analyze after first upload

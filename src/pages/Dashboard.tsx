@@ -1,19 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowUpRight, 
   Clock, 
   CheckCircle, 
-  AlertCircle, 
   Camera, 
   MoreHorizontal, 
   Sparkles,
   Calendar,
-  MessageSquare,
   Package
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<any>(null);
 
   useEffect(() => {
@@ -53,9 +53,12 @@ export const Dashboard: React.FC = () => {
           <button className="px-4 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm font-medium text-[#1A1A1A] hover:bg-[#F7F7F5] transition-colors shadow-sm">
             Share View
           </button>
-          <button className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors shadow-sm flex items-center">
+          <button 
+            onClick={() => navigate('/shoot-wizard')}
+            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors shadow-sm flex items-center"
+          >
             <Camera size={16} className="mr-2" />
-            New Shot
+            New Shoot
           </button>
         </div>
       </div>
@@ -103,7 +106,7 @@ export const Dashboard: React.FC = () => {
                  </div>
               </div>
               <button 
-                onClick={() => window.location.href = '/#/dashboard/shotlist'}
+                onClick={() => navigate('/dashboard/shotlist')}
                 className="px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-100 transition-colors w-full sm:w-auto text-center"
               >
                  Review Shots

@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
 import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers } from 'lucide-react';
+import { useToast } from '../../ToastProvider';
 
 export const ReviewConfirmStep: React.FC = () => {
   const { state, prevStep, resetWizard } = useShootWizard();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const handleSubmit = () => {
     setIsSubmitting(true);
@@ -30,6 +32,8 @@ export const ReviewConfirmStep: React.FC = () => {
        
        // Clear the wizard draft from local storage to prevent conflicts
        localStorage.removeItem('wizard_state');
+       
+       addToast("Booking request submitted successfully!", "success");
     }, 2000);
   };
 

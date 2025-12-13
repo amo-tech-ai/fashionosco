@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Defined in subgraph Types: NavItem.ts
 export interface NavItem {
   label: string;
