@@ -15,8 +15,11 @@ import { Dashboard } from './pages/Dashboard';
 import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
 import { ClientGallery } from './pages/ClientGallery';
-import { Settings } from './pages/Settings'; // New Import
+import { Settings } from './pages/Settings';
 import { ShootWizardPage } from './pages/ShootWizardPage'; 
+import { EventWizardPage } from './pages/EventWizardPage'; // New
+import { Directory } from './pages/Directory';
+import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
 
 export const Router: React.FC = () => {
@@ -32,9 +35,14 @@ export const Router: React.FC = () => {
         <Route path="/services/creative-still-life" element={<CreativeStillLife />} />
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
-        {/* Wizard Route - Public accessible but full screen vibe */}
+        <Route path="/directory" element={<Directory />} />
+        {/* Wizards */}
         <Route path="/shoot-wizard" element={<ShootWizardPage />} />
+        <Route path="/event-wizard" element={<EventWizardPage />} />
       </Route>
+
+      {/* Standalone Route for Login (No Header/Footer) */}
+      <Route path="/login" element={<Login />} />
 
       {/* Dashboard Routes wrapped in Dashboard Layout */}
       <Route path="/dashboard" element={<DashboardLayout />}>

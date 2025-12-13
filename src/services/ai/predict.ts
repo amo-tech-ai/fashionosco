@@ -1,4 +1,6 @@
 
+import { compressBase64Image } from '../../utils/fileHelpers';
+
 export interface PredictionResult {
   score: number;
   verdict: string;
@@ -19,7 +21,6 @@ export interface PredictionHistoryItem {
   caption?: string;
   niche?: string;
   result: PredictionResult;
-  // We do NOT save the full image in history to avoid LocalStorage quota limits (5MB)
 }
 
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
@@ -83,14 +84,7 @@ const convertToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-        } else {
-            reject(new Error("Failed to convert file to base64"));
-        }
-    };
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
 };
@@ -105,7 +99,9 @@ export const predictEngagement = async (params: PredictionParams): Promise<Predi
       return new Promise(resolve => setTimeout(() => resolve(MOCK_PREDICTION), 3000));
     }
 
-    const imageBase64 = await convertToBase64(params.image);
+    const raw = await convertToBase64(params.image);
+    const compressed = await compressBase64Image(raw, 512, 0.7);
+    const imageBase64 = compressed.split(',')[1];
 
     const response = await fetch(`${SUPABASE_FUNCTION_URL}/predict-engagement`, {
       method: 'POST',

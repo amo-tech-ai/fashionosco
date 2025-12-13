@@ -4,7 +4,7 @@ import { MOCK_GALLERY_ASSETS } from '../data/mockGallery';
 import { GalleryAsset, AssetStatus } from '../types/gallery';
 import { PhotoCard } from '../components/gallery/PhotoCard';
 import { Lightbox } from '../components/gallery/Lightbox';
-import { Filter, Download, CheckSquare, Grid as GridIcon } from 'lucide-react';
+import { Filter, Download, CheckSquare, Grid as GridIcon, Wand2 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useToast } from '../components/ToastProvider';
 
@@ -45,9 +45,26 @@ export const ClientGallery: React.FC = () => {
   };
 
   const selectedCount = assets.filter(a => a.status === 'selected').length;
+  const retouchingCount = assets.filter(a => a.status === 'retouching').length;
 
   const handleConfirmSelections = () => {
-     addToast(`${selectedCount} images confirmed for retouching.`, "success");
+     if (selectedCount === 0) return;
+     
+     // Move all 'selected' to 'retouching'
+     setAssets(prev => prev.map(a => a.status === 'selected' ? { ...a, status: 'retouching' } : a));
+     
+     addToast(`${selectedCount} images sent to retouching queue.`, "success");
+     
+     // Update campaign status if possible
+     const campaignStr = localStorage.getItem('active_campaign');
+     if (campaignStr) {
+        try {
+           const campaign = JSON.parse(campaignStr);
+           campaign.status = "Post-Production";
+           campaign.progress = 75;
+           localStorage.setItem('active_campaign', JSON.stringify(campaign));
+        } catch(e) {}
+     }
   };
 
   return (
@@ -57,12 +74,12 @@ export const ClientGallery: React.FC = () => {
          <div className="flex items-center gap-4">
             <h1 className="font-serif text-2xl text-[#1A1A1A]">Campaign Proofs</h1>
             <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            <div className="flex bg-gray-100 p-1 rounded-lg">
-               {['all', 'selected', 'unrated', 'rejected'].map((f) => (
+            <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-[200px] md:max-w-none scrollbar-hide">
+               {['all', 'selected', 'retouching', 'rejected'].map((f) => (
                   <button
                      key={f}
                      onClick={() => setFilter(f as any)}
-                     className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                     className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                         filter === f 
                         ? 'bg-white text-black shadow-sm' 
                         : 'text-gray-500 hover:text-black'
@@ -75,11 +92,11 @@ export const ClientGallery: React.FC = () => {
          </div>
 
          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-gray-500">
-               {selectedCount} selections
+            <span className="text-xs font-medium text-gray-500 hidden md:inline">
+               {selectedCount} selected
             </span>
             <Button onClick={handleConfirmSelections} className="h-9 text-xs px-4 bg-black text-white" disabled={selectedCount === 0}>
-               <CheckSquare size={14} className="mr-2" /> Confirm Selections
+               <Wand2 size={14} className="mr-2" /> Send to Retouching
             </Button>
             <button className="p-2 border border-gray-200 rounded hover:bg-gray-50 text-gray-600">
                <Download size={18} />

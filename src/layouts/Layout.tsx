@@ -8,9 +8,9 @@ import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
 const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
-  { label: 'Directory', href: '/' }, // Directory section is on Home
-  { label: 'Marketplace', href: '/' }, // Marketplace section is on Home
-  { label: 'BTS', href: '/' }, // Behind the Scenes section is on Home
+  { label: 'Directory', href: '/directory' }, 
+  { label: 'Marketplace', href: '/services' }, // Placeholder for now
+  { label: 'BTS', href: '/services/clothing-photography' }, // Redirect to a page with BTS content
 ];
 
 export const Layout: React.FC = () => {
@@ -84,7 +84,7 @@ export const Layout: React.FC = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
-             <Link to="/dashboard" className="hidden md:block text-xs uppercase tracking-widest font-semibold hover:text-gray-600">
+             <Link to="/login" className="hidden md:block text-xs uppercase tracking-widest font-semibold hover:text-gray-600">
                 Log In
              </Link>
              <Link to="/shoot-wizard">
@@ -126,7 +126,7 @@ export const Layout: React.FC = () => {
                       )}
                    </div>
                 ))}
-                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif font-medium border-b border-gray-100 pb-4 block">
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif font-medium border-b border-gray-100 pb-4 block">
                    Log In
                 </Link>
                 <div className="pt-8 pb-12">
@@ -168,8 +168,7 @@ export const Layout: React.FC = () => {
                <ul className="space-y-4 text-sm text-gray-500">
                   <li><Link to="/" className="hover:text-black transition-colors">Home</Link></li>
                   <li><Link to="/services" className="hover:text-black transition-colors">Services</Link></li>
-                  <li><Link to="/" className="hover:text-black transition-colors">Directory</Link></li>
-                  <li><Link to="/" className="hover:text-black transition-colors">Events</Link></li>
+                  <li><Link to="/directory" className="hover:text-black transition-colors">Directory</Link></li>
                   <li><Link to="/services" className="hover:text-black transition-colors">Portfolio</Link></li>
                </ul>
             </div>
@@ -177,14 +176,12 @@ export const Layout: React.FC = () => {
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">Services</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                  <li><Link to="/services" className="hover:text-black transition-colors">Web Design</Link></li>
                   <li><Link to="/services/product-photography" className="hover:text-black transition-colors">Product Photography</Link></li>
                   <li><Link to="/services/clothing-photography" className="hover:text-black transition-colors">Clothing Photography</Link></li>
                   <li><Link to="/services/ecommerce" className="hover:text-black transition-colors">Ecommerce Photography</Link></li>
                   <li><Link to="/services/creative-still-life" className="hover:text-black transition-colors">Creative Still Life</Link></li>
                   <li><Link to="/services/video-production" className="hover:text-black transition-colors">Video Production</Link></li>
                   <li><Link to="/services/instagram" className="hover:text-black transition-colors">Instagram Services</Link></li>
-                  <li><Link to="/services" className="hover:text-black transition-colors">AI Creative</Link></li>
                </ul>
             </div>
 
@@ -192,10 +189,8 @@ export const Layout: React.FC = () => {
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">For Creators</h4>
                <ul className="space-y-4 text-sm text-gray-500">
                   <li><Link to="/shoot-wizard" className="hover:text-black transition-colors font-bold text-black">Start Booking</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Create Event</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Dashboard</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Join Directory</Link></li>
-                  <li><Link to="/dashboard" className="hover:text-black transition-colors">Contact</Link></li>
+                  <li><Link to="/login" className="hover:text-black transition-colors">Studio Login</Link></li>
+                  <li><Link to="/directory" className="hover:text-black transition-colors">Join Directory</Link></li>
                </ul>
             </div>
           </div>

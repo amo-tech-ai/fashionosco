@@ -5,16 +5,19 @@ import { Router } from './Router';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ToastProvider } from './components/ToastProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthProvider } from './contexts/AuthContext';
 
 const App: React.FC = () => {
   return (
     // Using HashRouter for compatibility with static file hosting/preview environments
     <HashRouter>
       <ErrorBoundary>
-        <ToastProvider>
-          <ScrollToTop />
-          <Router />
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <ScrollToTop />
+            <Router />
+          </ToastProvider>
+        </AuthProvider>
       </ErrorBoundary>
     </HashRouter>
   );

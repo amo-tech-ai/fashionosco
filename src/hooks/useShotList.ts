@@ -41,7 +41,19 @@ export const useShotList = () => {
       }
     }
 
-    // Fallback Mock Data
+    // Fallback check for wizard intermediate data
+    const wizardData = localStorage.getItem('latest_wizard_shots');
+    if (wizardData) {
+       try {
+          const parsed = JSON.parse(wizardData);
+          if (parsed.length > 0) {
+             setShots(mapShots(parsed));
+             return;
+          }
+       } catch(e) {}
+    }
+
+    // Default Fallback
     setShots([
       { 
         id: '1', name: 'Hero Shot - Beach', description: 'Wide angle establishing shot with natural lighting.', 

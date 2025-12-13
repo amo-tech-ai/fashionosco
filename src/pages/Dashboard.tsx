@@ -1,299 +1,122 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowUpRight, 
-  Clock, 
-  CheckCircle, 
-  Camera, 
-  MoreHorizontal, 
-  Sparkles,
-  Calendar,
-  Image as ImageIcon,
-  FileText
-} from 'lucide-react';
-import { generateCallSheetPDF } from '../services/pdf/callSheet';
-import { useToast } from '../components/ToastProvider';
+import { DashboardHeader } from '../components/dashboard/DashboardHeader';
+import { KPIGrid } from '../components/dashboard/KPIGrid';
+import { ActionBanner } from '../components/dashboard/ActionBanner';
+import { ActivityFeed } from '../components/dashboard/ActivityFeed';
+import { DeliverablesList } from '../components/dashboard/DeliverablesList';
+import { TeamPanel } from '../components/dashboard/TeamPanel';
+import { AIInsightCard } from '../components/dashboard/AIInsightCard';
+import { StorageWidget } from '../components/dashboard/StorageWidget';
+import { DashboardEmptyState } from '../components/dashboard/DashboardEmptyState';
+import { CampaignService, Campaign } from '../services/data/campaigns';
+import { ArrowRight, Calendar, Camera } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [campaign, setCampaign] = useState<any>(null);
-  const { addToast } = useToast();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [activeCampaign, setActiveCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load the most recent booking from local storage
-    const saved = localStorage.getItem('active_campaign');
-    if (saved) {
-      try {
-        setCampaign(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load campaign data", e);
-      }
-    }
+    // Migrate any legacy data first
+    CampaignService.migrateLegacy();
+    
+    // Load all campaigns
+    const loadData = async () => {
+       const all = await CampaignService.getAll();
+       setCampaigns(all);
+       if (all.length > 0) {
+          setActiveCampaign(all[0]); // Default to most recent
+       }
+       setIsLoading(false);
+    };
+
+    loadData();
+    window.addEventListener('campaignsUpdated', loadData);
+    return () => window.removeEventListener('campaignsUpdated', loadData);
   }, []);
 
-  // Hydrate UI with campaign data or fallbacks
-  const title = campaign ? `${campaign.shootType.charAt(0).toUpperCase() + campaign.shootType.slice(1)} Shoot` : 'Summer 2025 Campaign';
-  const totalShots = campaign ? (campaign.shotList?.length || campaign.numberOfItems * 2) : 32;
-  const budget = campaign ? `$${campaign.totalPrice}` : '$12.4k';
-  const turnaround = campaign?.turnaround === 'rush' ? 'Rush (48h)' : campaign?.turnaround === 'extended' ? '14 Days' : 'Standard';
-  const status = campaign?.status || 'Active';
-  const suggestion = campaign?.aiAnalysis?.suggestion || "AI Analysis pending...";
-  const palette = campaign?.aiAnalysis?.colors || ['#F3E8FF', '#A855F7', '#1A1A1A'];
-
-  const handleDownloadCallSheet = () => {
-     if (campaign) {
-        generateCallSheetPDF(campaign);
-        addToast("Downloading Call Sheet...", "success");
-     } else {
-        addToast("No active campaign data found. Book a shoot first.", "error");
-     }
+  const handleNewShoot = () => {
+    localStorage.removeItem('wizard_state');
+    navigate('/shoot-wizard');
   };
+
+  if (isLoading) return null;
+
+  if (campaigns.length === 0) {
+     return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+           <DashboardHeader 
+              title="Dashboard" 
+              status="Overview" 
+              onNewShoot={handleNewShoot} 
+           />
+           <DashboardEmptyState />
+        </div>
+     );
+  }
+
+  // Use the active campaign data for the dashboard view
+  // Adapt legacy structure if needed
+  const displayCampaign = activeCampaign ? {
+     ...activeCampaign.data,
+     status: activeCampaign.status,
+     title: activeCampaign.title,
+     progress: activeCampaign.progress
+  } : null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-           <h1 className="font-serif text-3xl md:text-4xl text-[#1A1A1A] leading-tight">{title}</h1>
-           <div className="flex items-center gap-2 mt-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] text-xs font-medium border border-[#DCFCE7]">{status}</span>
-              <span className="text-sm text-[#6B7280]">• Last updated just now</span>
-           </div>
-        </div>
-        <div className="flex space-x-3">
-          <button className="px-4 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm font-medium text-[#1A1A1A] hover:bg-[#F7F7F5] transition-colors shadow-sm">
-            Share View
-          </button>
-          <button 
-            onClick={() => navigate('/shoot-wizard')}
-            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors shadow-sm flex items-center"
-          >
-            <Camera size={16} className="mr-2" />
-            New Shoot
-          </button>
-        </div>
-      </div>
+      <DashboardHeader 
+        title={activeCampaign?.title || 'Dashboard'} 
+        status={activeCampaign?.status || 'Active'} 
+        onNewShoot={handleNewShoot} 
+      />
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Shots', value: totalShots, sub: campaign ? 'From Wizard' : 'Planned', icon: Camera, trend: null },
-          { label: 'Progress', value: '15%', sub: 'Pre-Production', icon: CheckCircle, trend: 'Started' },
-          { label: 'Turnaround', value: turnaround, sub: 'Estimated Delivery', icon: Clock, trend: 'On Schedule' },
-          { label: 'Budget', value: budget, sub: '50% Deposit Paid', icon: ArrowUpRight, trend: 'On Track' }
-        ].map((item, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl border border-[#E5E5E5] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-            <div className="flex justify-between items-start mb-4">
-               <div className="w-10 h-10 bg-[#F7F7F5] rounded-xl flex items-center justify-center text-[#1A1A1A]">
-                  <item.icon size={20} strokeWidth={1.5} />
-               </div>
-               {item.trend && (
-                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${item.trend.includes('Schedule') || item.trend.includes('Track') ? 'bg-[#F3E8FF] text-[#6B21A8]' : 'bg-[#DCFCE7] text-[#166534]'}`}>
-                    {item.trend}
-                 </span>
-               )}
-            </div>
-            <dt className="text-xs font-semibold uppercase tracking-wider text-[#6B7280] mb-1">{item.label}</dt>
-            <dd className="font-serif text-3xl text-[#1A1A1A] mb-1">{item.value}</dd>
-            <p className="text-xs text-[#9CA3AF] font-medium">{item.sub}</p>
-          </div>
-        ))}
-      </div>
+      {/* Campaign Switcher (If multiple) */}
+      {campaigns.length > 1 && (
+         <div className="flex gap-4 overflow-x-auto pb-2">
+            {campaigns.map(c => (
+               <button
+                  key={c.id}
+                  onClick={() => setActiveCampaign(c)}
+                  className={`flex items-center gap-3 p-3 pr-6 rounded-lg border transition-all min-w-[200px] ${
+                     activeCampaign?.id === c.id 
+                     ? 'bg-[#1A1A1A] text-white border-black shadow-md' 
+                     : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                  }`}
+               >
+                  <div className={`w-10 h-10 rounded-md flex items-center justify-center ${activeCampaign?.id === c.id ? 'bg-white/10' : 'bg-gray-100'}`}>
+                     {c.type === 'event' ? <Calendar size={18} /> : <Camera size={18} />}
+                  </div>
+                  <div className="text-left">
+                     <div className="text-xs font-bold uppercase tracking-wider opacity-70">{c.type}</div>
+                     <div className="font-bold text-sm truncate max-w-[120px]">{c.title}</div>
+                  </div>
+               </button>
+            ))}
+         </div>
+      )}
+
+      <KPIGrid campaign={displayCampaign} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column: Activity & Actions */}
         <div className="lg:col-span-2 space-y-8">
-           
-           {/* Next Best Action Bar */}
-           <div className="bg-[#1A1A1A] text-white p-5 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white">
-                    <Sparkles size={20} />
-                 </div>
-                 <div>
-                    <h3 className="font-medium text-sm">Action Required</h3>
-                    <p className="text-white/70 text-xs">Review the AI-generated shot list and approve logistics.</p>
-                 </div>
-              </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                 <button 
-                   onClick={() => navigate('/dashboard/shotlist')}
-                   className="flex-1 px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-100 transition-colors text-center"
-                 >
-                    Review Shots
-                 </button>
-                 <button 
-                   onClick={() => navigate('/dashboard/gallery')}
-                   className="flex-1 px-4 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded hover:bg-white/10 transition-colors text-center"
-                 >
-                    Gallery
-                 </button>
-              </div>
-           </div>
-
-           {/* Activity Feed */}
-           <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm p-6">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="font-serif text-xl text-[#1A1A1A]">Campaign Activity</h3>
-                 <button className="text-[#6B7280] hover:text-[#1A1A1A] transition-colors">
-                    <MoreHorizontal size={20} />
-                 </button>
-              </div>
-              
-              <div className="relative border-l border-[#E5E5E5] ml-3 space-y-8">
-                 {[
-                    { user: "System", action: "Campaign created via Wizard", target: title, time: "2m ago", type: "system" },
-                    { user: "AI Copilot", action: "generated vision analysis", target: "Moodboard", time: "5m ago", type: "ai" },
-                    { user: "System", action: "Deposit Payment Received", target: "$"+(campaign?.deposit || 0), time: "6m ago", type: "system" },
-                 ].map((activity, i) => (
-                    <div key={i} className="pl-8 relative group">
-                       <div className={`absolute -left-1.5 top-1 w-3 h-3 rounded-full border-2 border-white ${
-                          activity.type === 'ai' ? 'bg-[#A855F7]' : 
-                          activity.type === 'review' ? 'bg-[#F59E0B]' : 'bg-[#1A1A1A]'
-                       } shadow-sm`}></div>
-                       <div className="flex justify-between items-start">
-                          <div>
-                             <p className="text-sm text-[#1A1A1A]">
-                                <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-medium text-[#6B7280]">for {activity.target}</span>
-                             </p>
-                             {activity.type === 'ai' && (
-                                <div className="mt-2 p-3 bg-[#F3E8FF] rounded-lg border border-[#E9D5FF]">
-                                   <div className="flex gap-2 items-start">
-                                      <Sparkles size={14} className="text-[#6B21A8] mt-0.5 shrink-0" />
-                                      <div>
-                                         <p className="text-xs text-[#6B21A8] leading-relaxed italic mb-2">
-                                            "{suggestion}"
-                                         </p>
-                                         <div className="flex gap-1">
-                                            {palette.slice(0, 5).map((c: string, idx: number) => (
-                                               <div key={idx} className="w-3 h-3 rounded-full border border-black/10" style={{backgroundColor: c}}></div>
-                                            ))}
-                                         </div>
-                                      </div>
-                                   </div>
-                                </div>
-                             )}
-                          </div>
-                          <span className="text-xs text-[#9CA3AF] whitespace-nowrap ml-4">{activity.time}</span>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           </div>
-
-           {/* Deliverables Table */}
-           <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-[#E5E5E5] flex justify-between items-center">
-                 <h3 className="font-serif text-xl text-[#1A1A1A]">Deliverables</h3>
-                 <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">View All</span>
-              </div>
-              <div className="divide-y divide-[#E5E5E5]">
-                 <div 
-                    onClick={handleDownloadCallSheet}
-                    className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F7F5] transition-colors cursor-pointer group"
-                 >
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-[#F7F7F5] rounded-lg flex items-center justify-center text-[#6B7280] group-hover:bg-white group-hover:shadow-sm transition-all">
-                          <FileText size={18} />
-                       </div>
-                       <div>
-                          <p className="text-sm font-medium text-[#1A1A1A]">Production Call Sheet.pdf</p>
-                          <p className="text-xs text-[#9CA3AF]">PDF • ~1.2 MB</p>
-                       </div>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-[#DCFCE7] text-[#166534] border-[#DCFCE7]">
-                       Ready
-                    </span>
-                 </div>
-                 
-                 <div className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F7F5] transition-colors cursor-pointer group"
-                 onClick={() => navigate('/dashboard/gallery')}
-                 >
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-[#F7F7F5] rounded-lg flex items-center justify-center text-[#6B7280] group-hover:bg-white group-hover:shadow-sm transition-all">
-                          <ImageIcon size={18} />
-                       </div>
-                       <div>
-                          <p className="text-sm font-medium text-[#1A1A1A]">Client_Proofs_Gallery</p>
-                          <p className="text-xs text-[#9CA3AF]">Link • {totalShots} items</p>
-                       </div>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7]">
-                       Pending
-                    </span>
-                 </div>
-              </div>
-           </div>
+           <ActionBanner />
+           <ActivityFeed campaign={displayCampaign} />
+           <DeliverablesList campaign={displayCampaign} totalShots={displayCampaign?.shotList?.length || 0} />
         </div>
 
         {/* Right Column: AI & Team */}
         <div className="space-y-8">
-           
-           {/* Team Panel */}
-           <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm p-6">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="font-serif text-lg text-[#1A1A1A]">Team Access</h3>
-                 <button className="text-xs font-bold uppercase tracking-widest text-[#1A1A1A] hover:text-[#6B7280]">Manage</button>
-              </div>
-              <div className="flex -space-x-2 overflow-hidden mb-6">
-                 {[1,2,3,4].map((i) => (
-                    <img 
-                       key={i}
-                       className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover"
-                       src={`https://images.unsplash.com/photo-${i === 1 ? '1534528741775-53994a69daeb' : i === 2 ? '1506794778202-cad84cf45f1d' : i === 3 ? '1507003211169-0a1dd7228f2d' : '1517841905240-472988babdf9'}?q=80&w=100&auto=format&fit=crop`}
-                       alt=""
-                    />
-                 ))}
-                 <div className="h-10 w-10 rounded-full bg-[#F7F7F5] border border-white flex items-center justify-center text-xs font-medium text-[#6B7280] ring-2 ring-white">
-                    +2
-                 </div>
-              </div>
-              <div className="space-y-3">
-                 <div className="flex items-center gap-3 text-sm text-[#6B7280]">
-                    <div className="w-2 h-2 rounded-full bg-[#22C55E]"></div>
-                    3 Members Online
-                 </div>
-                 <div className="flex items-center gap-3 text-sm text-[#6B7280]">
-                    <Calendar size={14} />
-                    Shoot Day: {campaign?.date ? new Date(campaign.date).toLocaleDateString() : 'TBD'}
-                 </div>
-              </div>
-           </div>
-
-           {/* AI Insight Card */}
-           <div className="bg-gradient-to-br from-[#F3E8FF] to-white border border-[#E9D5FF] rounded-2xl shadow-sm p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#E9D5FF] rounded-full blur-3xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
-              
-              <div className="flex items-center gap-2 mb-4 relative z-10">
-                 <Sparkles size={18} className="text-[#A855F7]" />
-                 <span className="text-xs font-bold uppercase tracking-widest text-[#6B21A8]">AI Insight</span>
-              </div>
-              
-              <h4 className="font-serif text-lg text-[#1A1A1A] mb-2 relative z-10">Production Alert</h4>
-              <p className="text-sm text-[#4A4F5B] mb-4 leading-relaxed relative z-10">
-                 Rain is predicted for your outdoor shoot location next Tuesday. Would you like to check studio availability as a backup?
-              </p>
-              
-              <div className="flex gap-2 relative z-10">
-                 <button className="flex-1 bg-white border border-[#E9D5FF] text-[#6B21A8] py-2 rounded-lg text-xs font-bold hover:bg-[#F3E8FF] transition-colors">Check Studio</button>
-                 <button className="flex-1 bg-transparent text-[#6B7280] py-2 text-xs font-medium hover:text-[#1A1A1A]">Dismiss</button>
-              </div>
-           </div>
-
-           {/* Storage */}
-           <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm p-6">
-               <h3 className="font-serif text-lg text-[#1A1A1A] mb-4">Storage Usage</h3>
-               <div className="w-full bg-[#F7F7F5] rounded-full h-2 mb-4">
-                  <div className="bg-[#1A1A1A] h-2 rounded-full" style={{ width: '15%' }}></div>
-               </div>
-               <div className="flex justify-between text-xs text-[#6B7280] font-medium">
-                  <span>150GB Used</span>
-                  <span>1TB Total</span>
-               </div>
-           </div>
+           <TeamPanel campaign={displayCampaign} />
+           <AIInsightCard />
+           <StorageWidget />
         </div>
       </div>
     </div>

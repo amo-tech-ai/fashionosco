@@ -1,4 +1,6 @@
 
+import { compressBase64Image } from '../../utils/fileHelpers';
+
 export interface Caption {
   archetype: string;
   hook: string;
@@ -57,15 +59,7 @@ const convertToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            // Remove data:image/jpeg;base64, prefix
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-        } else {
-            reject(new Error("Failed to convert file to base64"));
-        }
-    };
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
 };
@@ -127,7 +121,9 @@ export const generateCaptions = async (params: GenerateCaptionParams): Promise<C
 
     let imageBase64 = null;
     if (params.image) {
-      imageBase64 = await convertToBase64(params.image);
+      const raw = await convertToBase64(params.image);
+      const compressed = await compressBase64Image(raw, 512, 0.7);
+      imageBase64 = compressed.split(',')[1];
     }
 
     const response = await fetch(`${SUPABASE_FUNCTION_URL}/generate-captions`, {

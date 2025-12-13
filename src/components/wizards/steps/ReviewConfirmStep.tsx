@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers, FileText, AlertTriangle } from 'lucide-react';
+import { Check, Calendar, MapPin, Package, Clock, Shield, Sparkles, Layers, FileText } from 'lucide-react';
 import { useToast } from '../../ToastProvider';
 import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
 import { filesToBase64Strings, compressBase64Image } from '../../../utils/fileHelpers';
+import { CampaignService, Campaign } from '../../../services/data/campaigns';
 
 export const ReviewConfirmStep: React.FC = () => {
   const { state, prevStep, resetWizard } = useShootWizard();
@@ -29,34 +30,26 @@ export const ReviewConfirmStep: React.FC = () => {
         }
 
         // 2. Prepare Booking Data
-        const bookingData = {
-            ...state,
-            id: `CAM-${Date.now().toString().slice(-6)}`,
-            status: 'Active',
-            lastUpdated: new Date().toISOString(),
+        // Create full campaign object
+        const newCampaign: Campaign = {
+            id: `SHOOT-${Date.now().toString().slice(-6)}`,
+            type: 'shoot',
+            title: `${state.shootType ? state.shootType.charAt(0).toUpperCase() + state.shootType.slice(1) : 'Custom'} Shoot`,
+            status: 'Pre-Production',
+            client: 'FashionOS User',
+            date: state.date ? state.date.toISOString() : null,
             progress: 15,
-            moodBoardImages: savedImages
+            thumbnail: savedImages[0] || undefined,
+            data: {
+                ...state,
+                moodBoardImages: savedImages // Store processed strings, not Files
+            },
+            createdAt: new Date().toISOString(),
+            lastUpdated: new Date().toISOString()
         };
 
-        // 3. Attempt Persistence with Fallback
-        try {
-            const serialized = JSON.stringify(bookingData);
-            // Check approximate size (UTF-16 char is 2 bytes)
-            const sizeInBytes = serialized.length * 2; 
-            
-            // If > 4.5MB, strip images to avoid quota limit (typically 5MB)
-            if (sizeInBytes > 4.5 * 1024 * 1024) {
-               throw new Error("Payload too large");
-            }
-            
-            localStorage.setItem('active_campaign', serialized);
-        } catch (e) {
-            console.warn("Storage limit reached or error, saving without images", e);
-            // Fallback: save without images
-            const { moodBoardImages, ...rest } = bookingData;
-            localStorage.setItem('active_campaign', JSON.stringify(rest));
-            addToast("Campaign saved (Images excluded due to browser storage limits)", "info");
-        }
+        // 3. Save via Service
+        CampaignService.save(newCampaign);
         
         // 4. Simulate Network & Cleanup
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -66,7 +59,7 @@ export const ReviewConfirmStep: React.FC = () => {
 
     } catch (error) {
         console.error("Booking failed", error);
-        addToast("Failed to submit booking. Please try again.", "error");
+        addToast("Failed to submit booking. Storage quota may be full.", "error");
     } finally {
         setIsSubmitting(false);
     }

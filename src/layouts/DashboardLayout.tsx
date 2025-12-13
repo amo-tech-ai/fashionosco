@@ -10,13 +10,17 @@ import {
   Bell,
   Search,
   PlusCircle,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Menu,
+  X,
+  Calendar
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 
 const sidebarItems = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Book a Shoot', href: '/shoot-wizard', icon: PlusCircle },
+  { label: 'Plan an Event', href: '/event-wizard', icon: Calendar },
   { label: 'Shot List', href: '/dashboard/shotlist', icon: ListVideo },
   { label: 'Client Gallery', href: '/dashboard/gallery', icon: ImageIcon },
   { label: 'Products', href: '/dashboard/products', icon: Package },
@@ -26,6 +30,7 @@ export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const { profile } = useUserProfile();
   const [user, setUser] = useState(profile);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Listen for profile updates from other tabs/components
   useEffect(() => {
@@ -38,15 +43,33 @@ export const DashboardLayout: React.FC = () => {
     return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, [profile]);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-[#F7F7F5] flex font-sans text-[#1A1A1A]">
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-[#E5E5E5] hidden md:flex flex-col fixed h-full z-20">
+      
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
+
+      {/* Sidebar (Desktop & Mobile) */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-[#E5E5E5] flex flex-col transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:static
+      `}>
         {/* Brand Header */}
-        <div className="h-20 flex items-center px-8 border-b border-[#E5E5E5]">
+        <div className="h-20 flex items-center justify-between px-8 border-b border-[#E5E5E5]">
           <Link to="/" className="font-serif text-2xl font-bold tracking-tight text-[#1A1A1A]">
             FashionOS.
           </Link>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-500 hover:text-black">
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -91,9 +114,13 @@ export const DashboardLayout: React.FC = () => {
         {/* User Footer */}
         <div className="p-4 border-t border-[#E5E5E5]">
           <div className="flex items-center p-3 rounded-xl hover:bg-[#F7F7F5] cursor-pointer transition-colors">
-            <div className="h-10 w-10 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-serif font-bold">
-              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-            </div>
+            {user.avatarUrl ? (
+               <img src={user.avatarUrl} alt="Profile" className="h-10 w-10 rounded-full object-cover border border-gray-200" />
+            ) : (
+               <div className="h-10 w-10 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-serif font-bold">
+                 {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+               </div>
+            )}
             <div className="ml-3 min-w-0">
               <p className="text-sm font-medium text-[#1A1A1A] truncate">{user.firstName} {user.lastName}</p>
               <p className="text-xs text-[#6B7280] truncate">{user.role}</p>
@@ -103,11 +130,16 @@ export const DashboardLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-72 flex flex-col min-h-screen transition-all duration-200">
+      <div className="flex-1 flex flex-col min-h-screen transition-all duration-200 w-full">
         {/* Mobile Header */}
         <header className="bg-white border-b border-[#E5E5E5] md:hidden sticky top-0 z-30">
           <div className="h-16 flex items-center justify-between px-6">
-            <span className="font-serif text-xl font-bold text-[#1A1A1A]">FashionOS.</span>
+            <div className="flex items-center gap-4">
+               <button onClick={() => setIsMobileMenuOpen(true)} className="text-[#1A1A1A]">
+                  <Menu size={24} />
+               </button>
+               <span className="font-serif text-xl font-bold text-[#1A1A1A]">FashionOS.</span>
+            </div>
             <Link to="/" className="text-sm text-[#6B7280] font-medium">Exit</Link>
           </div>
         </header>
@@ -134,7 +166,7 @@ export const DashboardLayout: React.FC = () => {
             </div>
         </header>
         
-        <main className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
+        <main className="flex-1 overflow-hidden h-[calc(100vh-64px)] md:h-[calc(100vh-80px)]">
           <Outlet />
         </main>
       </div>

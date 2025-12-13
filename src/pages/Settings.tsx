@@ -1,15 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../components/Button';
-import { User, Bell, Lock, Building, CreditCard, Save, RefreshCcw } from 'lucide-react';
+import { User, Bell, Lock, Building, CreditCard, Save, RefreshCcw, Upload, X } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { compressBase64Image, fileToBase64 } from '../utils/fileHelpers';
 
 export const Settings: React.FC = () => {
   const { addToast } = useToast();
   const { profile, saveProfile } = useUserProfile();
   const [formData, setFormData] = useState(profile);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync form data when profile loads
   useEffect(() => {
@@ -22,12 +24,31 @@ export const Settings: React.FC = () => {
 
   const handleSave = () => {
     setIsLoading(true);
-    // Simulate network delay
+    // Simulate network delay for realism
     setTimeout(() => {
       saveProfile(formData);
       setIsLoading(false);
       addToast("Profile settings updated successfully", "success");
     }, 800);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        // Convert to base64 and compress to avoid huge localStorage usage
+        const base64 = await fileToBase64(file);
+        const compressed = await compressBase64Image(base64, 200, 0.7); // Small avatar size
+        setFormData(prev => ({ ...prev, avatarUrl: compressed }));
+        addToast("Avatar updated (Don't forget to save)", "info");
+      } catch (err) {
+        addToast("Failed to process image", "error");
+      }
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setFormData(prev => ({ ...prev, avatarUrl: undefined }));
   };
 
   const handleResetDemo = () => {
@@ -38,13 +59,13 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl p-6 md:p-0">
       <div>
         <h1 className="font-serif text-3xl text-[#1A1A1A]">Settings</h1>
         <p className="text-sm text-[#6B7280]">Manage your profile and studio preferences.</p>
       </div>
 
-      <div className="bg-white border border-[#E5E5E5] rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#E5E5E5] rounded-xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
           {/* Sidebar */}
           <div className="md:col-span-4 border-r border-[#E5E5E5] bg-[#F7F7F5]/50 p-4">
@@ -72,23 +93,47 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Content */}
-          <div className="md:col-span-8 p-8 space-y-8">
+          <div className="md:col-span-8 p-8 space-y-8 overflow-y-auto">
             {/* Profile Section */}
             <div>
               <h3 className="text-lg font-bold text-[#1A1A1A] mb-1">My Profile</h3>
               <p className="text-sm text-[#6B7280] mb-6">Manage your personal information.</p>
               
               <div className="flex items-center gap-6 mb-8">
-                <div className="w-20 h-20 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xl font-serif">
-                  {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                <div className="relative group">
+                   {formData.avatarUrl ? (
+                      <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200">
+                         <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                         <button 
+                           onClick={handleRemoveAvatar}
+                           className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                         >
+                            <X size={20} />
+                         </button>
+                      </div>
+                   ) : (
+                      <div className="w-20 h-20 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xl font-serif">
+                        {formData.firstName?.charAt(0) || 'U'}{formData.lastName?.charAt(0) || 'N'}
+                      </div>
+                   )}
                 </div>
-                <div>
-                  <Button variant="secondary" className="text-xs h-8">Change Avatar</Button>
+                
+                <div className="flex gap-3">
+                  <input 
+                     type="file" 
+                     ref={fileInputRef} 
+                     onChange={handleAvatarUpload} 
+                     accept="image/*" 
+                     className="hidden" 
+                  />
+                  <Button variant="secondary" className="text-xs h-9 px-4" onClick={() => fileInputRef.current?.click()}>
+                     <Upload size={14} className="mr-2" /> Upload New
+                  </Button>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#6B7280]">First Name</label>
                     <input 
@@ -96,7 +141,7 @@ export const Settings: React.FC = () => {
                       type="text" 
                       value={formData.firstName} 
                       onChange={handleChange}
-                      className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A]" 
+                      className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A] transition-colors" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -106,7 +151,7 @@ export const Settings: React.FC = () => {
                       type="text" 
                       value={formData.lastName} 
                       onChange={handleChange}
-                      className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A]" 
+                      className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A] transition-colors" 
                     />
                   </div>
                 </div>
@@ -117,17 +162,22 @@ export const Settings: React.FC = () => {
                     type="email" 
                     value={formData.email} 
                     onChange={handleChange}
-                    className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A]" 
+                    className="w-full border border-[#E5E5E5] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#1A1A1A] transition-colors" 
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-[#6B7280]">Role</label>
-                  <input type="text" value={formData.role} disabled className="w-full border border-[#E5E5E5] bg-[#F7F7F5] rounded-lg px-4 py-2.5 text-sm text-[#9CA3AF] cursor-not-allowed" />
+                  <input 
+                    type="text" 
+                    value={formData.role} 
+                    disabled 
+                    className="w-full border border-[#E5E5E5] bg-[#F7F7F5] rounded-lg px-4 py-2.5 text-sm text-[#9CA3AF] cursor-not-allowed" 
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#E5E5E5] flex justify-between items-center">
+            <div className="pt-6 border-t border-[#E5E5E5] flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
               <button 
                 onClick={handleResetDemo}
                 className="text-red-500 text-xs font-bold uppercase tracking-widest hover:text-red-700 flex items-center gap-2"
@@ -135,7 +185,7 @@ export const Settings: React.FC = () => {
                 <RefreshCcw size={14} /> Reset Demo Data
               </button>
               
-              <Button onClick={handleSave} isLoading={isLoading}>
+              <Button onClick={handleSave} isLoading={isLoading} className="w-full sm:w-auto">
                 <Save size={16} className="mr-2" /> Save Changes
               </Button>
             </div>

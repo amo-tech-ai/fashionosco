@@ -13,24 +13,34 @@ export const filesToBase64Strings = async (files: File[]): Promise<string[]> => 
   return Promise.all(promises);
 };
 
-export const compressBase64Image = (base64: string, maxWidth = 800): Promise<string> => {
+export const compressBase64Image = (base64: string, maxWidth = 800, quality = 0.7): Promise<string> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.src = base64;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return resolve(base64);
+      let { width, height } = img;
 
-      const ratio = maxWidth / img.width;
-      const width = maxWidth;
-      const height = img.height * ratio;
+      // Calculate new dimensions
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
 
       canvas.width = width;
       canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(base64); // Fallback to original if canvas fails
+
+      // Draw and compress
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to 70% quality JPEG
+      
+      // Return bare base64 string (strip data:image/jpeg;base64, prefix if needed by caller, 
+      // but usually AI APIs handle the standard format or need stripping. 
+      // Here we return full data URI, callers can strip if needed.)
+      resolve(canvas.toDataURL('image/jpeg', quality)); 
     };
-    img.onerror = () => resolve(base64);
+    img.onerror = () => resolve(base64); // Fallback on error
   });
 };

@@ -1,5 +1,6 @@
 
 import { MoodBoardAnalysis } from '../../types/ai';
+import { compressBase64Image } from '../../utils/fileHelpers';
 
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
 
@@ -23,8 +24,17 @@ export const analyzeMoodBoard = async (files: File[]): Promise<MoodBoardAnalysis
       return new Promise(resolve => setTimeout(() => resolve(MOCK_ANALYSIS), 2500));
     }
 
-    // Convert files to base64 for transport
-    const images = await Promise.all(files.map(file => convertToBase64(file)));
+    // 1. Convert to Base64
+    const rawBase64s = await Promise.all(files.map(file => convertToBase64(file)));
+    
+    // 2. Compress images to max 512px width to ensure fast processing and low payload size
+    const compressedImages = await Promise.all(
+        rawBase64s.map(b64 => compressBase64Image(b64, 512, 0.6))
+    );
+
+    // 3. Strip header for API if needed (Supabase function expects raw base64 usually, or handles data uri)
+    // The provided Edge Function seems to expect just the data, so we strip headers.
+    const cleanImages = compressedImages.map(img => img.split(',')[1]);
 
     const response = await fetch(`${SUPABASE_FUNCTION_URL}/analyze-mood-board`, {
       method: 'POST',
@@ -32,7 +42,7 @@ export const analyzeMoodBoard = async (files: File[]): Promise<MoodBoardAnalysis
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${anonKey}`,
       },
-      body: JSON.stringify({ images }),
+      body: JSON.stringify({ images: cleanImages }),
     });
 
     if (!response.ok) {
@@ -51,15 +61,7 @@ const convertToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            // Remove data:image/jpeg;base64, prefix if present
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-        } else {
-            reject(new Error("Failed to convert file to base64"));
-        }
-    };
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
 };
