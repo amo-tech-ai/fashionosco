@@ -40,8 +40,15 @@ export const CampaignService = {
         
         // Map DB fields to Campaign Interface
         return data.map((item: any) => {
-           // Critical: Check brief_data for specific event type if DB type is generic or 'custom'
-           const derivedType = item.brief_data?.eventType ? 'event' : mapDbTypeToUiType(item.shoot_type);
+           // Critical Check: Determine type from brief_data if DB column is generic
+           const wizardState = item.brief_data || {};
+           let derivedType: 'shoot' | 'event' = 'shoot';
+           
+           if (wizardState.eventType || item.shoot_type === 'event' || item.title.includes('Event')) {
+               derivedType = 'event';
+           } else {
+               derivedType = 'shoot';
+           }
            
            return {
              id: item.id,
@@ -53,8 +60,8 @@ export const CampaignService = {
              location: item.location,
              totalPrice: item.total_price,
              progress: calculateProgress(item.status),
-             data: item.brief_data || {}, 
-             thumbnail: item.brief_data?.moodBoardImages?.[0] || undefined,
+             data: wizardState, 
+             thumbnail: wizardState.moodBoardImages?.[0] || undefined,
              createdAt: item.created_at,
              lastUpdated: item.updated_at,
              user_id: item.client_id
@@ -77,7 +84,7 @@ export const CampaignService = {
 
       if (session) {
         // Safe mapping for DB Enum constraints
-        // If it's an event, we might need to store it as 'custom' if 'event' isn't in the enum
+        // If it's an event, we store as 'custom' in shoot_type column but keep full data in JSONB
         const dbShootType = campaign.type === 'event' ? 'custom' : campaign.type;
 
         const payload = {
@@ -208,13 +215,10 @@ const mapDbStatusToUi = (status: string): string => {
         'pre_production': 'Pre-Production',
         'production': 'Production',
         'post_production': 'Post-Production',
-        'completed': 'Completed'
+        'completed': 'Completed',
+        'confirmed': 'Confirmed'
     };
     return map[status] || status.charAt(0).toUpperCase() + status.slice(1);
-};
-
-const mapDbTypeToUiType = (type: string): 'shoot' | 'event' => {
-    return type === 'event' ? 'event' : 'shoot'; 
 };
 
 const calculateProgress = (status: string): number => {
@@ -224,7 +228,8 @@ const calculateProgress = (status: string): number => {
         'pre_production': 40,
         'production': 60,
         'post_production': 80,
-        'completed': 100
+        'completed': 100,
+        'confirmed': 20
     };
     return map[status] || 15;
 };

@@ -41,6 +41,8 @@ const Calendar = React.lazy(() => import('./pages/Calendar').then(module => ({ d
 const Billing = React.lazy(() => import('./pages/Billing').then(module => ({ default: module.Billing })));
 const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
 const SeatingChart = React.lazy(() => import('./components/dashboard/events/SeatingChart').then(module => ({ default: module.SeatingChart })));
+const EventTimeline = React.lazy(() => import('./components/dashboard/events/EventTimeline').then(module => ({ default: module.EventTimeline })));
+const GuestList = React.lazy(() => import('./components/dashboard/events/GuestList').then(module => ({ default: module.GuestList })));
 
 export const Router: React.FC = () => {
   return (
@@ -90,9 +92,8 @@ export const Router: React.FC = () => {
             <Route path="settings" element={<Settings />} />
             
             {/* Event Specific Sub-routes */}
-            <Route path="timeline" element={<Dashboard />} />
-            <Route path="guests" element={<Dashboard />} />
-            <Route path="budget" element={<Dashboard />} />
+            <Route path="timeline" element={<EventTimeline />} />
+            <Route path="guests" element={<GuestList />} />
             <Route path="seating" element={<SeatingChart />} />
           </Route>
         </Route>

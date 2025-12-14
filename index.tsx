@@ -1,6 +1,9 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+// Redirect to the feature-complete App in src/
+import App from './src/App';
+import './index.css'; // Ensure we have a CSS file or this line is harmless if handled by Tailwind script
 
 const rootElement = document.getElementById('root');
 
