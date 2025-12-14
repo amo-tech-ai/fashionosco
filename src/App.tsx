@@ -1,13 +1,19 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter } from 'react-router-dom';
 import { Router } from './Router';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ToastProvider } from './components/ToastProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
+import { initializeAnalytics } from './lib/analytics';
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Initialize Vercel Web Analytics on component mount
+    initializeAnalytics();
+  }, []);
+
   return (
     // Using HashRouter for compatibility with static file hosting/preview environments
     <HashRouter>
