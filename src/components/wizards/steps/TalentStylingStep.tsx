@@ -2,7 +2,7 @@
 import React from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { User, Scissors, X } from 'lucide-react';
+import { User, Scissors, CheckCircle, Star } from 'lucide-react';
 
 export const TalentStylingStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
@@ -13,6 +13,19 @@ export const TalentStylingStep: React.FC = () => {
         <h2 className="font-serif text-3xl md:text-4xl text-gray-900 mb-2">Talent & Styling.</h2>
         <p className="text-gray-500 font-light">Who and what do you need on set?</p>
       </div>
+      
+      {/* Preferred Talent Banner */}
+      {state.preferredTalent && (
+         <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-2">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+               <Star size={20} fill="currentColor" />
+            </div>
+            <div>
+               <h4 className="text-sm font-bold text-purple-900">Talent Request Active</h4>
+               <p className="text-xs text-purple-700">You are requesting to book <strong>{state.preferredTalent}</strong>. We will confirm their availability.</p>
+            </div>
+         </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          
@@ -82,8 +95,8 @@ export const TalentStylingStep: React.FC = () => {
             <p className="text-sm text-gray-500 mb-6">Expert steaming, pinning, and outfit coordination on set.</p>
             
             {state.stylingNeeded === 'stylist' && (
-               <div className="p-3 bg-purple-50 text-purple-700 text-xs rounded-lg animate-in fade-in">
-                  Stylist added to your package (+$700/day).
+               <div className="p-3 bg-purple-50 text-purple-700 text-xs rounded-lg animate-in fade-in flex items-center gap-2">
+                  <CheckCircle size={14} /> Stylist added to your package (+$700/day).
                </div>
             )}
          </div>

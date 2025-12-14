@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-import { Sparkles, Layers, Loader2, AlertCircle, Download, FileText } from 'lucide-react';
+import { Sparkles, Layers, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
 import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
 import { Shot } from '../../../types/ai';
@@ -18,13 +18,6 @@ export const DeliverablesStep: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refinementText, setRefinementText] = useState('');
-
-  // Persist shots to local storage
-  useEffect(() => {
-    if (state.shotList.length > 0) {
-      localStorage.setItem('latest_wizard_shots', JSON.stringify(state.shotList));
-    }
-  }, [state.shotList]);
 
   // Derived Prop List
   const uniqueProps = useMemo(() => {

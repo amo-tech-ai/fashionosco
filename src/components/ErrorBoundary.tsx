@@ -1,9 +1,10 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
+import { ButtonVariant } from '../types';
 
 interface Props {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 interface State {
@@ -11,14 +12,11 @@ interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-    };
-  }
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null,
+  };
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
@@ -51,7 +49,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               </span>
             </p>
             <div className="flex justify-center gap-4">
-               <Button onClick={() => window.location.href = '/' } variant="secondary">Go Home</Button>
+               <Button onClick={() => window.location.href = '/' } variant={ButtonVariant.SECONDARY} className="border-gray-200">Go Home</Button>
                <Button onClick={this.handleReset}>
                   <RefreshCcw size={16} className="mr-2" /> Reload App
                </Button>

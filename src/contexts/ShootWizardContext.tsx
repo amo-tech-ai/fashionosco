@@ -3,6 +3,9 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ShootWizardState, PRICING, SHOOT_TYPES } from '../types/wizard';
 
+const STORAGE_KEY = 'fashionos_wizard_state';
+const STORAGE_VERSION = '1.0';
+
 // Initial State
 const initialState: ShootWizardState = {
   step: 1,
@@ -30,7 +33,9 @@ const initialState: ShootWizardState = {
   totalPrice: 0,
   deposit: 0,
   shotList: [],
-  aiAnalysis: null
+  aiAnalysis: null,
+  preferredTalent: undefined,
+  brandVibeContext: undefined
 };
 
 // Actions
@@ -102,16 +107,26 @@ const calculatePrice = (state: ShootWizardState) => {
   return Math.round(total);
 };
 
-// Helper: Load state from localStorage
+// Helper: Load state from localStorage with version check
 const loadState = (): ShootWizardState => {
   try {
-    const saved = localStorage.getItem('wizard_state');
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
+      
+      // Version check to prevent schema conflicts
+      if (parsed._version !== STORAGE_VERSION) {
+        return initialState;
+      }
+
       // Restore Date objects if they were stringified
       if (parsed.date) parsed.date = new Date(parsed.date);
+      
       // Reset File objects (moodBoardImages) as they cannot be persisted in localStorage
+      // We keep the array structure but empty it to avoid type errors
       parsed.moodBoardImages = [];
+      
+      // Merge with initialState to ensure any new fields are present
       return { ...initialState, ...parsed };
     }
   } catch(e) {
@@ -135,7 +150,7 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [state, dispatch] = useReducer(reducer, initialState, loadState);
   const location = useLocation();
 
-  // Handle incoming presets from Marketplace
+  // Handle incoming presets from Marketplace, Directory, or Brand Audit
   useEffect(() => {
     if (location.state && location.state.prefill) {
         dispatch({ type: 'LOAD_PRESET', payload: location.state.prefill });
@@ -148,13 +163,13 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
   useEffect(() => {
     // Separate out fields that shouldn't or can't be persisted (like File objects)
     const { moodBoardImages, ...persistableState } = state;
-    localStorage.setItem('wizard_state', JSON.stringify(persistableState));
+    // Add version info
+    const storageData = { ...persistableState, _version: STORAGE_VERSION };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
   }, [state]);
 
   // Auto-recalculate price on state change
   useEffect(() => {
-    // If a preset loaded a fixed price, we might want to respect it, but generally wizards are dynamic.
-    // For now, we allow recalculation to ensure consistency.
     const price = calculatePrice(state);
     const deposit = Math.round(price * 0.5); // 50% deposit
     if (price !== state.totalPrice) {
@@ -182,7 +197,7 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const prevStep = () => dispatch({ type: 'PREV_STEP' });
   
   const resetWizard = () => {
-    localStorage.removeItem('wizard_state');
+    localStorage.removeItem(STORAGE_KEY);
     dispatch({ type: 'RESET_WIZARD' });
   };
 

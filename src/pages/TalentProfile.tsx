@@ -26,7 +26,19 @@ export const TalentProfile: React.FC = () => {
   }, [id]);
 
   const handleBook = () => {
-    navigate('/shoot-wizard', { state: { prefill: { modelNeeded: talent?.role === 'Model', stylingNeeded: talent?.role === 'Stylist' ? 'stylist' : null } } });
+    // Clear wizard state to ensure clean start, but then provide prefill
+    localStorage.removeItem('wizard_state');
+    
+    navigate('/shoot-wizard', { 
+        state: { 
+            prefill: { 
+                modelNeeded: talent?.role === 'Model', 
+                stylingNeeded: talent?.role === 'Stylist' ? 'stylist' : null,
+                preferredTalent: talent?.name, // Pass the name
+                shootType: 'custom' // Default to custom flow
+            } 
+        } 
+    });
   };
 
   if (loading) return <div className="min-h-screen pt-24 flex justify-center"><div className="animate-spin w-8 h-8 border-2 border-black rounded-full border-t-transparent"></div></div>;

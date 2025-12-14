@@ -37,6 +37,9 @@ export interface ShootWizardState {
   usageRights: UsageRights;
   totalPrice: number;
   deposit: number;
+  // Context Fields (New)
+  preferredTalent?: string; // Name of specific talent booked from directory
+  brandVibeContext?: string; // Aesthetic context passed from Brand Audit
   // AI Generated Data
   shotList: Shot[];
   aiAnalysis: MoodBoardAnalysis | null;

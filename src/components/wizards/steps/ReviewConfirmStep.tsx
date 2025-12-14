@@ -72,7 +72,8 @@ export const ReviewConfirmStep: React.FC = () => {
             localStorage.setItem('active_campaign_id', saved.id);
         }
         
-        localStorage.removeItem('wizard_state');
+        // Use the context's reset function which handles the specific key removal
+        resetWizard();
         setIsSuccess(true);
 
     } catch (error) {
@@ -84,7 +85,7 @@ export const ReviewConfirmStep: React.FC = () => {
   };
 
   const handleFinish = () => {
-    resetWizard();
+    // Already reset on success, just navigate
     navigate('/dashboard');
   };
 

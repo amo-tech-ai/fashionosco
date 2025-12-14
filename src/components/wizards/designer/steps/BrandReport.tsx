@@ -9,11 +9,13 @@ import { BrandService } from '../../../../services/data/brands';
 import { useToast } from '../../../ToastProvider';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
+import { ButtonVariant } from '../../../../types';
 
 // Sub-components
 import { IdentityCard } from './report/IdentityCard';
 import { MarketCoordinates } from './report/MarketCoordinates';
 import { StrategicOpportunities } from './report/StrategicOpportunities';
+import { DigitalPresence } from './report/DigitalPresence';
 
 interface BrandReportProps {
   initialResult: BrandAuditResult;
@@ -59,14 +61,26 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
     }
   };
 
-  const handleExit = async (path: string) => {
+  const handleExit = async (path: string, state?: any) => {
     setIsSaving(true);
     const success = await persistData();
     setIsSaving(false);
     if (success) {
         addToast("Profile saved successfully.", "success");
-        navigate(path);
+        navigate(path, { state });
     }
+  };
+
+  const handleBookMatchingShoot = () => {
+      // Pass the brand's unique aesthetic "vibe" to the shoot wizard
+      // to pre-configure the AI creative direction
+      handleExit('/shoot-wizard', {
+          prefill: {
+              brandVibeContext: result.brand_profile.vibe_description,
+              referenceBrands: result.brand_profile.category, // Use category as broad reference
+              shootType: 'campaign'
+          }
+      });
   };
 
   const handleExportPDF = () => {
@@ -160,9 +174,12 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
             />
 
             <MarketCoordinates result={result} />
+            
+            {/* New Digital Presence Section */}
+            <DigitalPresence result={result} />
 
             {/* Brand Health Timeline */}
-            <div className="bg-white border border-gray-200 p-8 rounded-2xl">
+            <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-sm">
                <h4 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
                   <Clock size={14} /> Brand Trajectory
                </h4>
@@ -181,7 +198,12 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
                <Button onClick={() => handleExit('/dashboard')} isLoading={isSaving} className="flex-1 justify-center py-4 bg-black text-white hover:bg-gray-800">
                   Save & Go to Dashboard
                </Button>
-               <Button variant="secondary" onClick={() => handleExit('/shoot-wizard')} isLoading={isSaving} className="flex-1 justify-center py-4 border-gray-200 text-gray-600 hover:text-black hover:border-black">
+               <Button 
+                   variant={ButtonVariant.SECONDARY} 
+                   onClick={handleBookMatchingShoot} 
+                   isLoading={isSaving} 
+                   className="flex-1 justify-center py-4 border-gray-200 text-gray-600 hover:text-black hover:border-black"
+                >
                   <ShoppingBag size={16} className="mr-2" /> Book Matching Shoot
                </Button>
             </div>
