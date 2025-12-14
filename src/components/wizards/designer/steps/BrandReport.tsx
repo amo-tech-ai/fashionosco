@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BrandAuditResult, BrandInput } from '../../../../types/brand';
-import { Save, Edit2, ShoppingBag, Clock, Download } from 'lucide-react';
+import { Save, Edit2, ShoppingBag, Clock, Download, ArrowRight } from 'lucide-react';
 import { Button } from '../../../Button';
 import { CompetitorGraph } from '../CompetitorGraph';
 import { BrandHealthTimeline } from '../BrandHealthTimeline';
@@ -23,6 +23,7 @@ interface BrandReportProps {
 export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }) => {
   const [result, setResult] = useState(initialResult);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -30,9 +31,9 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
     window.scrollTo(0, 0);
   }, []);
 
-  const handleSave = async () => {
+  const persistData = async () => {
     try {
-      // Destructure to remove lookbookFiles as it is not in BrandProfile schema and causes LS issues
+      // Destructure to remove lookbookFiles as it is not in BrandProfile schema
       const { lookbookFiles, ...profileData } = input;
       
       await BrandService.save({
@@ -40,10 +41,31 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
         auditResult: result,
         lastAuditedAt: new Date().toISOString()
       });
-      setIsEditing(false);
-      addToast("Brand profile saved to ecosystem.", "success");
+      return true;
     } catch (e) {
+      console.error("Save failed", e);
       addToast("Failed to save changes.", "error");
+      return false;
+    }
+  };
+
+  const handleManualSave = async () => {
+    setIsSaving(true);
+    const success = await persistData();
+    setIsSaving(false);
+    if (success) {
+      setIsEditing(false);
+      addToast("Brand profile updated.", "success");
+    }
+  };
+
+  const handleExit = async (path: string) => {
+    setIsSaving(true);
+    const success = await persistData();
+    setIsSaving(false);
+    if (success) {
+        addToast("Profile saved successfully.", "success");
+        navigate(path);
     }
   };
 
@@ -56,7 +78,9 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Score: ${result.audit_score}/100`, 20, 45);
-    doc.text(`Vibe: ${result.brand_profile.vibe_description}`, 20, 55, { maxWidth: 170 });
+    // Wrap text for vibe description
+    const splitVibe = doc.splitTextToSize(`Vibe: ${result.brand_profile.vibe_description}`, 170);
+    doc.text(splitVibe, 20, 55);
     
     doc.text("Strategic Opportunities:", 20, 80);
     result.strategic_advice.forEach((item, i) => {
@@ -91,8 +115,8 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
                 <Download size={16} />
             </button>
             {isEditing ? (
-               <Button onClick={handleSave} className="h-8 text-xs px-4 bg-green-600 border-green-600 hover:bg-green-700 text-white">
-                  <Save size={12} className="mr-2" /> Save Profile
+               <Button onClick={handleManualSave} isLoading={isSaving} className="h-8 text-xs px-4 bg-green-600 border-green-600 hover:bg-green-700 text-white">
+                  <Save size={12} className="mr-2" /> Save Changes
                </Button>
             ) : (
                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-black transition-colors p-2" title="Edit Profile">
@@ -154,10 +178,10 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
             <StrategicOpportunities result={result} />
 
             <div className="flex gap-4 pt-4">
-               <Button onClick={() => navigate('/dashboard/brand')} className="flex-1 justify-center py-4 bg-black text-white hover:bg-gray-800">
-                  Go to Dashboard
+               <Button onClick={() => handleExit('/dashboard')} isLoading={isSaving} className="flex-1 justify-center py-4 bg-black text-white hover:bg-gray-800">
+                  Save & Go to Dashboard
                </Button>
-               <Button variant="secondary" onClick={() => navigate('/shoot-wizard')} className="flex-1 justify-center py-4 border-gray-200 text-gray-600 hover:text-black hover:border-black">
+               <Button variant="secondary" onClick={() => handleExit('/shoot-wizard')} isLoading={isSaving} className="flex-1 justify-center py-4 border-gray-200 text-gray-600 hover:text-black hover:border-black">
                   <ShoppingBag size={16} className="mr-2" /> Book Matching Shoot
                </Button>
             </div>

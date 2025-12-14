@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     const prompt = `
       ROLE: You are a World-Class Fashion Brand Strategist and Social Media Data Scientist.
       
-      TASK: Perform a "Deep Research" audit on the brand "${brandName}".
+      TASK: Perform a "Deep Research" audit on the brand "${brandName}" with a specific focus on Social Media Engagement and Competitor Benchmarking.
       
       INPUTS:
       - Website: ${websiteUrl}
@@ -71,10 +71,10 @@ serve(async (req: Request) => {
       ${images && images.length > 0 ? '- Visuals: Attached lookbook images provided by the brand.' : ''}
 
       INSTRUCTIONS:
-      1.  **Research**: Google Search for "${brandName} competitors" and "trending marketing strategies for [Brand Category] 2025".
-      2.  **Competitor Gap Analysis**: Identify what top competitors are doing on social media that this brand is NOT (e.g., "Competitors are using lo-fi BTS video", "Competitors use TikTok audio trends").
-      3.  **Visual Audit**: Compare the website tone (Formal/Casual) vs instagram tone.
-      4.  **Extract Signals**: Determine the categorical quality of specific attributes.
+      1.  **Competitor Reconnaissance**: Use Google Search to identify 3 top competitors for "${brandName}". Analyze their recent high-performing content formats (e.g., Reels vs Carousels, Lo-fi vs Highly Produced).
+      2.  **Trend Alignment**: Identify current 2025 platform trends relevant to this brand's category (e.g., "Quiet Luxury aesthetic", "GRWM videos", "Educational styling").
+      3.  **Gap Analysis**: Compare the brand's current output (inferred from website/social context) against these competitor wins. What specific content engine is missing?
+      4.  **Signal Extraction**: Rate their foundational elements (Visuals, UX, Voice).
 
       OUTPUT FORMAT (JSON Only - No Markdown):
       {
@@ -96,13 +96,13 @@ serve(async (req: Request) => {
         },
         "strategic_advice": [
           { 
-            "title": "string (Specific Action)", 
-            "description": "string (Detailed advice referencing a specific competitor tactic or platform trend. Do NOT be generic. Say 'Post 3x Reels about X' instead of 'Post more video'.)", 
+            "title": "string (Actionable Social Tactic)", 
+            "description": "string (Specific instruction based on competitor analysis. Example: 'Competitor X drives 3x engagement using 7-second looping fabric close-ups. Implement this for your silk collection to boost dwell time.')", 
             "impact": "High" | "Medium" | "Low" 
           },
           { 
-            "title": "string (Specific Action)", 
-            "description": "string", 
+            "title": "string (Content Format Opportunity)", 
+            "description": "string (e.g. 'Shift from static product shots to 'How to Style' carousels to increase Saves by 40%, matching the strategy of [Competitor Name].')", 
             "impact": "High" | "Medium" | "Low" 
           }
         ],

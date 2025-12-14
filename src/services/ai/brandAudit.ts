@@ -28,18 +28,18 @@ const MOCK_AUDIT_RESULT: BrandAuditResult = {
   },
   strategic_advice: [
     {
-      title: "Visual Consistency Gap",
-      description: "Your website photography is high-key studio, but Instagram is dark/moody UGC. Aligning these visual languages could increase conversion by 15%.",
+      title: "Adopt 'Lo-Fi' Luxury Reels",
+      description: "Competitors like The Row use raw, handheld video to convey authenticity. Your current feed is too polished. Switch to iPhone-shot BTS content for 3 posts/week to increase relatability and engagement.",
       impact: "High"
     },
     {
-      title: "Video Content Deficiency",
-      description: "Competitors in the 'Sustainable Luxury' niche are posting 4x more Reels. Increasing video output is critical for discovery.",
+      title: "Leverage 'Educational' Carousels",
+      description: "Data shows 'How to Style' posts drive 2x more Saves than product shots in your niche. Create step-by-step styling guides for your Linen Blazer to boost algorithm ranking.",
       impact: "High"
     },
     {
-      title: "SEO Opportunity",
-      description: "High search volume for 'Organic Linen Suits' in your region, which matches your catalog but isn't in your keywords.",
+      title: "Optimize SEO Keywords",
+      description: "High search volume for 'Organic Capsule Wardrobe' is being captured by competitors. Add these exact keywords to your Instagram bio and website H1 tags immediately.",
       impact: "Medium"
     }
   ],
