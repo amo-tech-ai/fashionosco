@@ -7,7 +7,6 @@ import { PageLoader } from './components/ui/PageLoader';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Lazy Load Pages
-// Using named export adapter pattern: .then(module => ({ default: module.Component }))
 const Home = React.lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
 const Services = React.lazy(() => import('./pages/Services').then(module => ({ default: module.Services })));
 const ProductPhotography = React.lazy(() => import('./pages/ProductPhotography').then(module => ({ default: module.ProductPhotography })));
@@ -30,6 +29,7 @@ const BuyerApplicationPage = React.lazy(() => import('./pages/wholesale/BuyerApp
 const WholesaleShowroom = React.lazy(() => import('./pages/wholesale/WholesaleShowroom').then(module => ({ default: module.WholesaleShowroom })));
 const Login = React.lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const NotFound = React.lazy(() => import('./pages/NotFound').then(module => ({ default: module.NotFound })));
+const BrandAuditPage = React.lazy(() => import('./pages/BrandAuditPage').then(module => ({ default: module.BrandAuditPage })));
 
 // Dashboard Pages
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -59,6 +59,7 @@ export const Router: React.FC = () => {
           
           {/* Core Feature Routes */}
           <Route path="/create-profile" element={<DesignerWizardPage />} />
+          <Route path="/brand-audit" element={<BrandAuditPage />} />
           <Route path="/shoot-wizard" element={<ShootWizardPage />} />
           <Route path="/event-wizard" element={<EventWizardPage />} />
           <Route path="/talent-wizard" element={<TalentWizard />} />

@@ -7,6 +7,7 @@ export interface AuditResult {
   weaknesses: string[];
   opportunities: string[];
   bioFix: string;
+  competitorInsight?: string;
 }
 
 export interface AuditParams {
@@ -14,6 +15,8 @@ export interface AuditParams {
   niche: string;
   audience: string;
   recentContent?: string;
+  instagramHandle?: string;
+  websiteUrl?: string;
 }
 
 export interface AuditHistoryItem {
@@ -31,8 +34,9 @@ const MOCK_AUDIT: AuditResult = {
   summary: "Your aesthetic is strong, but your conversion strategy is vague. You're capturing eyes but not clicks.",
   strengths: ["Clear visual identity implied", "Niche specific terminology used"],
   weaknesses: ["Call to Action is weak", "Bio lacks authority markers"],
-  opportunities: [" leverage 'Quiet Luxury' reels", "Use carousel storytelling for education"],
-  bioFix: "Curating modern minimalism. 🧥 | Daily style inspo for the conscious creative. | Shop the look 👇"
+  opportunities: ["Leverage 'Quiet Luxury' reels", "Use carousel storytelling for education"],
+  bioFix: "Curating modern minimalism. 🧥 | Daily style inspo for the conscious creative. | Shop the look 👇",
+  competitorInsight: "Top competitors are using 3-second video hooks to drive 2x engagement."
 };
 
 // --- History Management ---

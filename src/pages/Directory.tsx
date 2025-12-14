@@ -1,17 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Filter, Instagram, Globe, Check, Loader2, Sparkles } from 'lucide-react';
+import { Search, MapPin, Star, Filter, Instagram, Globe, Check, Loader2, Sparkles, X } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { useToast } from '../components/ToastProvider';
 import { Stakeholder, StakeholderService } from '../services/data/stakeholders';
 import { useNavigate } from 'react-router-dom';
+import { searchTalentAI, MatchResult } from '../services/ai/matching';
 
 export const Directory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [talentData, setTalentData] = useState<Stakeholder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [matches, setMatches] = useState<MatchResult[]>([]);
+  
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -30,12 +34,52 @@ export const Directory: React.FC = () => {
     loadTalent();
   }, []);
 
-  const filteredTalent = talentData.filter(t => 
-    (activeFilter === 'All' || t.role === activeFilter) &&
-    (t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     t.location.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
-  );
+  const handleSmartSearch = async () => {
+    if (!searchTerm.trim()) return;
+    
+    setIsSearching(true);
+    setMatches([]);
+    
+    try {
+        const results = await searchTalentAI(searchTerm, talentData);
+        setMatches(results);
+        if (results.length > 0) {
+            addToast(`Found ${results.length} smart matches`, "success");
+        } else {
+            addToast("No AI matches found. Trying text search.", "info");
+        }
+    } catch (e) {
+        addToast("Smart search failed", "error");
+    } finally {
+        setIsSearching(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') handleSmartSearch();
+  };
+
+  const clearSearch = () => {
+      setSearchTerm('');
+      setMatches([]);
+      setActiveFilter('All');
+  };
+
+  // Filter Logic: If we have AI matches, prioritize those. Otherwise standard filter.
+  const displayData = matches.length > 0 
+    ? talentData.filter(t => matches.some(m => m.id === t.id))
+        .sort((a, b) => {
+            const scoreA = matches.find(m => m.id === a.id)?.score || 0;
+            const scoreB = matches.find(m => m.id === b.id)?.score || 0;
+            return scoreB - scoreA;
+        })
+    : talentData.filter(t => 
+        (activeFilter === 'All' || t.role === activeFilter) &&
+        (searchTerm === '' || 
+         t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         t.location.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+    );
 
   return (
     <div className="bg-white min-h-screen pt-20">
@@ -51,32 +95,50 @@ export const Directory: React.FC = () => {
                Connect with the world's best photographers, stylists, and creatives. Vetted for quality, reliability, and style.
             </p>
             
-            <div className="max-w-2xl mx-auto mt-8 relative">
+            <div className="max-w-2xl mx-auto mt-8 relative group">
                <input 
                   type="text" 
-                  placeholder="Search by name, location, or tag..." 
+                  placeholder="Ask AI: 'Find a photographer in Paris for a dark moody shoot'..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full py-4 pl-12 pr-4 rounded-full border border-gray-200 shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                  onKeyDown={handleKeyDown}
+                  className="w-full py-4 pl-12 pr-32 rounded-full border border-gray-200 shadow-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all text-sm"
                />
-               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+               <Search className={`absolute left-5 top-1/2 -translate-x-0 -translate-y-1/2 text-gray-400 ${isSearching ? 'opacity-0' : 'opacity-100'}`} size={20} />
+               {isSearching && <Loader2 className="absolute left-5 top-1/2 -translate-y-1/2 text-purple-600 animate-spin" size={20} />}
+               
+               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
+                  {searchTerm && (
+                      <button onClick={clearSearch} className="p-2 text-gray-400 hover:text-black">
+                          <X size={16} />
+                      </button>
+                  )}
+                  <button 
+                    onClick={handleSmartSearch}
+                    className="bg-black text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-gray-800 transition-colors"
+                  >
+                    <Sparkles size={12} /> Search
+                  </button>
+               </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 mt-6">
-               {['All', 'Photographer', 'Stylist', 'Model', 'Videographer', 'Makeup Artist', 'Art Director'].map(role => (
-                  <button 
-                     key={role}
-                     onClick={() => setActiveFilter(role)}
-                     className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
-                        activeFilter === role 
-                        ? 'bg-black text-white' 
-                        : 'bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black'
-                     }`}
-                  >
-                     {role}
-                  </button>
-               ))}
-            </div>
+            {matches.length === 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mt-6">
+                {['All', 'Photographer', 'Stylist', 'Model', 'Videographer', 'Makeup Artist', 'Art Director'].map(role => (
+                    <button 
+                        key={role}
+                        onClick={() => setActiveFilter(role)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                            activeFilter === role 
+                            ? 'bg-black text-white' 
+                            : 'bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black'
+                        }`}
+                    >
+                        {role}
+                    </button>
+                ))}
+                </div>
+            )}
          </div>
       </div>
 
@@ -88,64 +150,87 @@ export const Directory: React.FC = () => {
             </div>
          ) : (
             <>
+               {matches.length > 0 && (
+                   <div className="mb-8 flex items-center gap-2 text-purple-600 animate-in fade-in slide-in-from-top-2">
+                       <Sparkles size={16} />
+                       <span className="text-sm font-bold">AI found {matches.length} matches based on your criteria</span>
+                   </div>
+               )}
+
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredTalent.map(talent => (
-                     <div 
-                        key={talent.id} 
-                        className="group border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 bg-white cursor-pointer"
-                        onClick={() => navigate(`/directory/${talent.id}`)}
-                     >
-                        <div className="aspect-[4/3] overflow-hidden relative">
-                           <img src={talent.img} alt={talent.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
-                           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm shadow-sm">
-                              {talent.role}
-                           </div>
-                           <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
-                              <button className="bg-white p-2 rounded-full hover:bg-black hover:text-white transition-colors shadow-sm"><Instagram size={16} /></button>
-                              <button className="bg-white p-2 rounded-full hover:bg-black hover:text-white transition-colors shadow-sm"><Globe size={16} /></button>
-                           </div>
-                        </div>
-                        
-                        <div className="p-6">
-                           <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-serif text-xl font-bold text-[#1A1A1A] group-hover:text-purple-600 transition-colors">{talent.name}</h3>
-                              <div className="flex items-center gap-1 text-xs font-bold bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
-                                 <Star size={12} fill="currentColor" /> {talent.rating}
-                              </div>
-                           </div>
-                           
-                           <div className="flex items-center text-gray-500 text-sm mb-4">
-                              <MapPin size={14} className="mr-1" /> {talent.location}
-                           </div>
+                  {displayData.map(talent => {
+                     const match = matches.find(m => m.id === talent.id);
+                     return (
+                        <div 
+                            key={talent.id} 
+                            className="group border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 bg-white cursor-pointer relative"
+                            onClick={() => navigate(`/directory/${talent.id}`)}
+                        >
+                            {/* Match Badge */}
+                            {match && (
+                                <div className="absolute top-0 right-0 z-20 bg-purple-600 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-bl-xl shadow-md">
+                                    {match.score}% Match
+                                </div>
+                            )}
 
-                           <div className="flex flex-wrap gap-2 mb-6">
-                              {talent.tags.map((tag, i) => (
-                                 <span key={i} className="text-[10px] uppercase font-bold tracking-wider bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-100">
-                                    {tag}
-                                 </span>
-                              ))}
-                           </div>
+                            <div className="aspect-[4/3] overflow-hidden relative">
+                            <img src={talent.img} alt={talent.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm shadow-sm">
+                                {talent.role}
+                            </div>
+                            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
+                                <button className="bg-white p-2 rounded-full hover:bg-black hover:text-white transition-colors shadow-sm"><Instagram size={16} /></button>
+                                <button className="bg-white p-2 rounded-full hover:bg-black hover:text-white transition-colors shadow-sm"><Globe size={16} /></button>
+                            </div>
+                            </div>
+                            
+                            <div className="p-6">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-serif text-xl font-bold text-[#1A1A1A] group-hover:text-purple-600 transition-colors">{talent.name}</h3>
+                                <div className="flex items-center gap-1 text-xs font-bold bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
+                                    <Star size={12} fill="currentColor" /> {talent.rating}
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center text-gray-500 text-sm mb-4">
+                                <MapPin size={14} className="mr-1" /> {talent.location}
+                            </div>
 
-                           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                              <span className="text-sm font-medium text-gray-900">{talent.rate}</span>
-                              <Button 
-                                variant={ButtonVariant.SECONDARY} 
-                                className="text-xs py-2 h-auto" 
-                                onClick={(e) => { e.stopPropagation(); addToast("Contact request sent.", "info"); }}
-                              >
-                                Quick Contact
-                              </Button>
-                           </div>
+                            {match && match.reason && (
+                                <div className="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-100 text-xs text-purple-800 leading-snug">
+                                    <span className="font-bold mr-1">Why:</span> {match.reason}
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {talent.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] uppercase font-bold tracking-wider bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-100">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                <span className="text-sm font-medium text-gray-900">{talent.rate}</span>
+                                <Button 
+                                    variant={ButtonVariant.SECONDARY} 
+                                    className="text-xs py-2 h-auto" 
+                                    onClick={(e) => { e.stopPropagation(); addToast("Contact request sent.", "info"); }}
+                                >
+                                    Quick Contact
+                                </Button>
+                            </div>
+                            </div>
                         </div>
-                     </div>
-                  ))}
+                     );
+                  })}
                </div>
 
-               {filteredTalent.length === 0 && (
+               {displayData.length === 0 && (
                   <div className="text-center py-20 text-gray-400">
                      <Filter size={48} className="mx-auto mb-4 opacity-20" />
                      <p className="text-lg">No talent found matching your criteria.</p>
-                     <button onClick={() => {setSearchTerm(''); setActiveFilter('All');}} className="text-black underline mt-2 text-sm">Clear Filters</button>
+                     <button onClick={clearSearch} className="text-black underline mt-2 text-sm">Clear Search</button>
                   </div>
                )}
             </>

@@ -15,7 +15,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { bio, niche, audience, recentContent } = await req.json();
+    const { bio, niche, audience, recentContent, instagramHandle, websiteUrl } = await req.json();
 
     const apiKey = Deno.env.get('API_KEY');
     if (!apiKey) {
@@ -26,19 +26,24 @@ serve(async (req: Request) => {
 
     const prompt = `
       ROLE: 
-      You are a specialized Instagram Growth Strategist analyzing a fashion profile.
+      You are a specialized Instagram Growth Strategist & Brand Analyst.
 
       OBJECTIVE:
-      Provide a brutal, specific critique of this profile's conversion potential and engagement strategy.
+      Provide a brutal, specific critique of this profile's conversion potential and engagement strategy. 
+      You MUST benchmark against competitors and current platform trends.
 
       INPUTS:
-      - Bio: "${bio}"
+      - Bio: "${bio || 'Not provided'}"
       - Niche: "${niche}"
       - Target Audience: "${audience}"
+      - Handle: "${instagramHandle || 'Not provided'}"
+      - Website: "${websiteUrl || 'Not provided'}"
       - Recent Content Context: "${recentContent || 'Not provided'}"
 
-      TOOLS:
-      Use Google Search to find 2 current trending content formats (e.g. "GRWM", "Texture Zoom", "ASMR Unboxing") specific to the "${niche}" niche right now.
+      TOOLS & INSTRUCTIONS:
+      1. **Competitor Recon**: Use Google Search to identify 2 top-performing competitors in the "${niche}" niche. Analyze what they are doing differently/better.
+      2. **Trend Check**: Identify 1-2 specific, currently trending content formats (e.g. "Silent Review", "Texture Zoom", specific audio trends) relevant to this niche in 2025.
+      3. **Strategic Critique**: Analyze the alignment between the provided Bio/Website and the target audience.
 
       OUTPUT JSON FORMAT (Do not use Markdown):
       {
@@ -48,7 +53,8 @@ serve(async (req: Request) => {
         "strengths": ["string", "string"],
         "weaknesses": ["string", "string"],
         "opportunities": ["string (Must be a specific content format or hook to try, e.g. 'Try 7-second looping Reels')", "string"],
-        "bioFix": "string (a rewritten, optimized version of their bio using keywords)"
+        "bioFix": "string (a rewritten, optimized version of their bio using keywords)",
+        "competitorInsight": "string (Specific observation about a competitor's strategy to copy/avoid)"
       }
     `;
 

@@ -35,12 +35,12 @@ export const CampaignService = {
           
         if (error) {
           console.warn('Supabase fetch error (using fallback):', error.message);
-          throw error;
+          throw error; // Fallback to local storage
         }
         
         // Map DB fields to Campaign Interface
         return data.map((item: any) => {
-           // Critical: Check brief_data for specific event type if DB type is generic
+           // Critical: Check brief_data for specific event type if DB type is generic or 'custom'
            const derivedType = item.brief_data?.eventType ? 'event' : mapDbTypeToUiType(item.shoot_type);
            
            return {
@@ -97,22 +97,25 @@ export const CampaignService = {
         const isNew = campaign.id.startsWith('SHOOT-') || campaign.id.startsWith('EVT-') || campaign.id.startsWith('legacy-');
         
         let query = supabase.from('shoots');
+        let result;
         
-        const { data, error } = isNew 
-            ? await query.insert(payload).select().single()
-            : await query.update(payload).eq('id', campaign.id).select().single();
-
-        if (error) {
-            console.error("DB Write Error:", error);
-            throw error; // Fallback to local
+        if (isNew) {
+           result = await query.insert(payload).select().single();
+        } else {
+           result = await query.update(payload).eq('id', campaign.id).select().single();
         }
 
-        if (data) {
+        if (result.error) {
+            console.error("DB Write Error:", result.error);
+            throw result.error; // Fallback to local
+        }
+
+        if (result.data) {
             return {
                 ...campaign,
-                id: data.id, 
-                createdAt: data.created_at,
-                lastUpdated: data.updated_at
+                id: result.data.id, 
+                createdAt: result.data.created_at,
+                lastUpdated: result.data.updated_at
             };
         }
       }
