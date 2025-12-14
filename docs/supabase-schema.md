@@ -1,3 +1,4 @@
+
 # Supabase Schema Documentation
 
 **Project:** `fashionos`
@@ -260,10 +261,16 @@ This document provides a comprehensive detailing of all tables and fields in the
 | Column | Type | Nullable | Default |
 |---|---|---|---|
 | id | uuid | NO | gen_random_uuid() |
+| user_id | uuid | NO | - |
 | name | text | NO | - |
 | description | text | YES | - |
 | website_url | text | YES | - |
 | logo_url | text | YES | - |
+| instagram_handle | text | YES | - |
+| market_segment | text | YES | - |
+| aesthetic_keywords | ARRAY | YES | - |
+| brand_audit_score | integer | YES | - |
+| audit_report | jsonb | YES | - |
 | created_at | timestamptz | YES | now() |
 | updated_at | timestamptz | YES | now() |
 

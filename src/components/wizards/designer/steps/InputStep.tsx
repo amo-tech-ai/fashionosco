@@ -1,8 +1,8 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '../../../Button';
 import { BrandInput } from '../../../../types/brand';
-import { Globe, Instagram, Type, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Globe, Instagram, Type, Upload, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
 
 interface InputStepProps {
   data: BrandInput;
@@ -12,6 +12,7 @@ interface InputStepProps {
 
 export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -26,6 +27,28 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
     onChange('lookbookFiles', updated);
   };
 
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string.startsWith('http') ? string : `https://${string}`);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!data.brandName) {
+        setError("Brand name is required");
+        return;
+    }
+    if (data.websiteUrl && !isValidUrl(data.websiteUrl)) {
+        setError("Please enter a valid website URL");
+        return;
+    }
+    setError(null);
+    onNext();
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center space-y-4">
@@ -37,16 +60,23 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
 
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-8">
         
+        {/* Error Banner */}
+        {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm animate-in fade-in">
+                <AlertCircle size={16} /> {error}
+            </div>
+        )}
+
         {/* Text Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <div className="md:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Brand Name</label>
+              <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Brand Name *</label>
               <div className="relative">
                 <Type className="absolute left-3 top-3 text-gray-400" size={18} />
                 <input 
                   type="text" 
                   value={data.brandName}
-                  onChange={(e) => onChange('brandName', e.target.value)}
+                  onChange={(e) => { setError(null); onChange('brandName', e.target.value); }}
                   placeholder="e.g. Atelier Noir"
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
                 />
@@ -60,7 +90,7 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
                 <input 
                   type="url" 
                   value={data.websiteUrl}
-                  onChange={(e) => onChange('websiteUrl', e.target.value)}
+                  onChange={(e) => { setError(null); onChange('websiteUrl', e.target.value); }}
                   placeholder="e.g. www.atelier-noir.com"
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
                 />
@@ -126,8 +156,8 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
         </div>
 
         <Button 
-          onClick={onNext} 
-          disabled={!data.brandName || (!data.websiteUrl && !data.instagramHandle)}
+          onClick={handleSubmit} 
+          disabled={!data.brandName}
           className="w-full justify-center py-4 text-sm"
         >
           Begin Deep Analysis

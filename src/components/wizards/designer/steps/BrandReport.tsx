@@ -1,13 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrandAuditResult, BrandInput } from '../../../../types/brand';
-import { Save, Edit2, ShoppingBag, Clock } from 'lucide-react';
+import { Save, Edit2, ShoppingBag, Clock, Download } from 'lucide-react';
 import { Button } from '../../../Button';
 import { CompetitorGraph } from '../CompetitorGraph';
 import { BrandHealthTimeline } from '../BrandHealthTimeline';
 import { BrandService } from '../../../../services/data/brands';
 import { useToast } from '../../../ToastProvider';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 // Sub-components
 import { IdentityCard } from './report/IdentityCard';
@@ -24,6 +25,10 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
   const [isEditing, setIsEditing] = useState(false);
   const { addToast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -42,6 +47,26 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
     }
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFont("times", "bold");
+    doc.setFontSize(24);
+    doc.text(`Brand Audit: ${input.brandName}`, 20, 30);
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Score: ${result.audit_score}/100`, 20, 45);
+    doc.text(`Vibe: ${result.brand_profile.vibe_description}`, 20, 55, { maxWidth: 170 });
+    
+    doc.text("Strategic Opportunities:", 20, 80);
+    result.strategic_advice.forEach((item, i) => {
+        doc.text(`- ${item.title} (${item.impact} Impact)`, 25, 90 + (i*10));
+    });
+
+    doc.save(`${input.brandName}_Audit.pdf`);
+    addToast("Report downloaded successfully", "success");
+  };
+
   const handleEditChange = (field: string, value: any) => {
     setResult(prev => ({
       ...prev,
@@ -57,7 +82,14 @@ export const BrandReport: React.FC<BrandReportProps> = ({ initialResult, input }
       
       {/* Header Summary */}
       <div className="text-center relative max-w-3xl mx-auto">
-         <div className="absolute top-0 right-0">
+         <div className="absolute top-0 right-0 flex gap-2">
+            <button 
+                onClick={handleExportPDF}
+                className="text-gray-400 hover:text-black transition-colors p-2" 
+                title="Export PDF"
+            >
+                <Download size={16} />
+            </button>
             {isEditing ? (
                <Button onClick={handleSave} className="h-8 text-xs px-4 bg-green-600 border-green-600 hover:bg-green-700 text-white">
                   <Save size={12} className="mr-2" /> Save Profile

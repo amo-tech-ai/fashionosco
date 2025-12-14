@@ -1,6 +1,17 @@
 
 # Changelog
 
+## [2.1.0] - 2025-05-27
+### Brand Designer Onboarding
+- **New Feature**: "Digital Twin" Setup Wizard (`/create-profile`) for fashion brands.
+- **AI Agent**: Deployed `audit-brand` Edge Function using Gemini 3 Pro with Google Search Grounding to perform deep market research on brand URLs.
+- **Scoring Engine**: Implemented `BrandAuditResult` logic to calculate Brand Health and Content Consistency scores.
+- **Reporting**: Added PDF Export functionality for Brand Audits.
+- **UX Improvements**:
+  - Added retry logic for AI analysis steps.
+  - Implemented input validation for URLs.
+  - Added "Brand Health" widget to the main Dashboard.
+
 ## [2.0.0] - 2025-05-26
 ### Full Stack Integration & Launch Readiness
 - **Backend Architecture**: Fully migrated from local storage prototypes to Supabase (PostgreSQL + Edge Functions).
