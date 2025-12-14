@@ -39,22 +39,27 @@ export const CampaignService = {
         }
         
         // Map DB fields to Campaign Interface
-        return data.map((item: any) => ({
-           id: item.id,
-           type: mapDbTypeToUiType(item.shoot_type),
-           title: item.title || 'Untitled Project',
-           status: mapDbStatusToUi(item.status),
-           client: 'FashionOS User', 
-           date: item.booking_date,
-           location: item.location,
-           totalPrice: item.total_price,
-           progress: calculateProgress(item.status),
-           data: item.brief_data || {}, 
-           thumbnail: item.brief_data?.moodBoardImages?.[0] || undefined,
-           createdAt: item.created_at,
-           lastUpdated: item.updated_at,
-           user_id: item.client_id
-        }));
+        return data.map((item: any) => {
+           // Critical: Check brief_data for specific event type if DB type is generic
+           const derivedType = item.brief_data?.eventType ? 'event' : mapDbTypeToUiType(item.shoot_type);
+           
+           return {
+             id: item.id,
+             type: derivedType,
+             title: item.title || 'Untitled Project',
+             status: mapDbStatusToUi(item.status),
+             client: 'FashionOS User', 
+             date: item.booking_date,
+             location: item.location,
+             totalPrice: item.total_price,
+             progress: calculateProgress(item.status),
+             data: item.brief_data || {}, 
+             thumbnail: item.brief_data?.moodBoardImages?.[0] || undefined,
+             createdAt: item.created_at,
+             lastUpdated: item.updated_at,
+             user_id: item.client_id
+           };
+        });
       }
     } catch (e) {
       // Silent fail to LocalStorage for Demo Mode/Offline
@@ -206,8 +211,6 @@ const mapDbStatusToUi = (status: string): string => {
 };
 
 const mapDbTypeToUiType = (type: string): 'shoot' | 'event' => {
-    // If DB stores 'custom', we check brief_data in the main object, 
-    // but for the list view, we default to 'shoot' unless strictly 'event'
     return type === 'event' ? 'event' : 'shoot'; 
 };
 

@@ -103,7 +103,12 @@ export const generateCallSheetPDF = async (rawData: any) => {
                     });
                 } catch (err) {
                     console.warn("Could not fetch remote image for PDF (CORS likely):", item);
-                    // No base64, skips drawing
+                    // Draw a placeholder rect if image fails
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(xPos, yPos, imageSize, imageSize, 'F');
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text("Image N/A", xPos + 10, yPos + 20);
                 }
             } else {
                 base64 = item;
@@ -114,8 +119,10 @@ export const generateCallSheetPDF = async (rawData: any) => {
             // Determine type (Default to JPEG for simplicity if base64 header missing)
             const type = base64.includes('png') ? 'PNG' : 'JPEG';
             doc.addImage(base64, type, xPos, yPos, imageSize, imageSize, undefined, 'FAST');
-            xPos += imageSize + gap;
          }
+         
+         xPos += imageSize + gap;
+
        } catch (e) {
          console.warn("Skipping invalid image in PDF gen", e);
        }
@@ -128,7 +135,9 @@ export const generateCallSheetPDF = async (rawData: any) => {
     // If we didn't have images, add extra space
     if (!state.moodBoardImages || state.moodBoardImages.length === 0) yPos += 5;
     
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
     doc.text("Palette:", margin, yPos + 4);
     let xPos = margin + 20;
     state.aiAnalysis.colors.slice(0, 6).forEach((color: string) => {

@@ -9,13 +9,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Deterministic Scoring Logic
-const calculateScores = (signals: any) => {
-  let auditScore = 50; // Base score
+// --- SCORING ENGINE ---
+const calculateDeterministicScores = (signals: any) => {
+  let auditScore = 50; 
   let contentHealth = 50;
   let consistency = 50;
 
-  // 1. Visual Quality (Max 20 pts)
+  // Visual Quality Weight (20%)
   if (signals.visual_quality === 'High') {
     auditScore += 20;
     contentHealth += 20;
@@ -24,25 +24,82 @@ const calculateScores = (signals: any) => {
     contentHealth += 10;
   }
 
-  // 2. Consistency (Max 20 pts)
+  // Brand Voice & Consistency Weight (40%)
   if (signals.brand_voice_consistency === 'Strong') {
     auditScore += 20;
-    consistency += 40; // Heavy weight
+    consistency += 40;
   } else if (signals.brand_voice_consistency === 'Mixed') {
     auditScore += 10;
     consistency += 10;
   }
 
-  // 3. UX/Positioning (Max 10 pts)
+  // Positioning & UX Weight (10%)
   if (signals.website_ux === 'Modern') auditScore += 5;
   if (signals.market_positioning === 'Clear') auditScore += 5;
 
-  // Clamp values 0-100
   return {
-    audit_score: Math.min(98, Math.max(10, auditScore)),
-    content_health: Math.min(98, Math.max(10, contentHealth)),
-    visual_consistency_score: Math.min(98, Math.max(10, consistency))
+    audit_score: Math.min(98, Math.max(15, auditScore)),
+    content_health: Math.min(98, Math.max(15, contentHealth)),
+    visual_consistency_score: Math.min(98, Math.max(15, consistency))
   };
+};
+
+// --- PROMPT ENGINEERING ---
+const generateAnalysisPrompt = (brandName: string, websiteUrl: string, instagramHandle: string, hasImages: boolean) => {
+  return `
+    ROLE: You are a World-Class Fashion Brand Strategist & Data Scientist.
+    
+    TASK: Perform a "Deep Research" audit on the brand "${brandName}".
+    
+    CONTEXT:
+    - Website: ${websiteUrl}
+    - Social: ${instagramHandle}
+    ${hasImages ? '- Visuals: Attached images from brand lookbook.' : ''}
+
+    RESEARCH STRATEGY (Use Google Search Tool):
+    1. **Identity Check**: Search "site:${websiteUrl || brandName} about" to extract their self-defined mission.
+    2. **Reputation Check**: Search "${brandName} fashion reviews" or "${brandName} competitors" to see market perception.
+    3. **Trend Check**: Search for "Fashion trends 2025" relevant to the keywords found in step 1.
+
+    ANALYSIS OBJECTIVES:
+    1. **Gap Analysis**: Compare the brand's inferred output against top-tier competitors. What content engine is missing?
+    2. **Visual DNA**: Define their aesthetic using precise fashion terminology (e.g., "Y2K", "Old Money", "Avant-Garde").
+    3. **Signal Extraction**: Rate foundational elements (Visuals, UX, Voice) for the scoring engine.
+
+    OUTPUT JSON FORMAT (Strictly enforce this structure):
+    {
+      "brand_profile": {
+        "category": "string (e.g. 'Contemporary Womenswear')",
+        "aesthetic_keywords": ["string", "string", "string", "string"],
+        "price_positioning": "string (e.g. 'Accessible Luxury')",
+        "target_audience": "string",
+        "vibe_description": "string (2 sentences capturing the soul of the brand)",
+        "visual_archetype": "string (e.g. 'The Modern Minimalist')",
+        "palette": ["#hex", "#hex", "#hex", "#hex"]
+      },
+      "signals": {
+        "visual_quality": "High" | "Medium" | "Low",
+        "brand_voice_consistency": "Strong" | "Mixed" | "Weak",
+        "market_positioning": "Clear" | "Vague",
+        "website_ux": "Modern" | "Outdated" | "Basic",
+        "social_presence": "Active" | "Sparse" | "None"
+      },
+      "strategic_advice": [
+        { 
+          "title": "string (Actionable Tactic)", 
+          "description": "string (Specific instruction. E.g. 'Competitor X uses 7s loops. Do this.')", 
+          "impact": "High" | "Medium" | "Low" 
+        },
+        { 
+          "title": "string (Content Opportunity)", 
+          "description": "string", 
+          "impact": "High" | "Medium" | "Low" 
+        }
+      ],
+      "competitors": ["string", "string", "string"],
+      "market_gap": "string (A niche they can own)"
+    }
+  `;
 };
 
 serve(async (req: Request) => {
@@ -54,93 +111,42 @@ serve(async (req: Request) => {
     const { brandName, websiteUrl, instagramHandle, images } = await req.json();
 
     const apiKey = Deno.env.get('API_KEY');
-    if (!apiKey) {
-      throw new Error('Missing API Key');
-    }
+    if (!apiKey) throw new Error('Missing Gemini API Key');
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `
-      ROLE: You are a World-Class Fashion Brand Strategist and Social Media Data Scientist.
-      
-      TASK: Perform a "Deep Research" audit on the brand "${brandName}" with a specific focus on Social Media Engagement and Competitor Benchmarking.
-      
-      INPUTS:
-      - Website: ${websiteUrl}
-      - Social: ${instagramHandle}
-      ${images && images.length > 0 ? '- Visuals: Attached lookbook images provided by the brand.' : ''}
-
-      INSTRUCTIONS:
-      1.  **Competitor Reconnaissance**: Use Google Search to identify 3 top competitors for "${brandName}". Analyze their recent high-performing content formats (e.g., Reels vs Carousels, Lo-fi vs Highly Produced).
-      2.  **Trend Alignment**: Identify current 2025 platform trends relevant to this brand's category (e.g., "Quiet Luxury aesthetic", "GRWM videos", "Educational styling").
-      3.  **Gap Analysis**: Compare the brand's current output (inferred from website/social context) against these competitor wins. What specific content engine is missing?
-      4.  **Signal Extraction**: Rate their foundational elements (Visuals, UX, Voice).
-
-      OUTPUT FORMAT (JSON Only - No Markdown):
-      {
-        "brand_profile": {
-          "category": "string",
-          "aesthetic_keywords": ["string", "string", "string", "string"],
-          "price_positioning": "string (e.g. 'Accessible Luxury')",
-          "target_audience": "string",
-          "vibe_description": "string",
-          "visual_archetype": "string",
-          "palette": ["#hex", "#hex", "#hex", "#hex"]
-        },
-        "signals": {
-          "visual_quality": "High" | "Medium" | "Low",
-          "brand_voice_consistency": "Strong" | "Mixed" | "Weak",
-          "market_positioning": "Clear" | "Vague",
-          "website_ux": "Modern" | "Outdated" | "Basic",
-          "social_presence": "Active" | "Sparse" | "None"
-        },
-        "strategic_advice": [
-          { 
-            "title": "string (Actionable Social Tactic)", 
-            "description": "string (Specific instruction based on competitor analysis. Example: 'Competitor X drives 3x engagement using 7-second looping fabric close-ups. Implement this for your silk collection to boost dwell time.')", 
-            "impact": "High" | "Medium" | "Low" 
-          },
-          { 
-            "title": "string (Content Format Opportunity)", 
-            "description": "string (e.g. 'Shift from static product shots to 'How to Style' carousels to increase Saves by 40%, matching the strategy of [Competitor Name].')", 
-            "impact": "High" | "Medium" | "Low" 
-          }
-        ],
-        "competitors": ["string", "string", "string"],
-        "market_gap": "string"
-      }
-    `;
-
+    // Construct Multimodal Request
     const contents = [];
-    if (images && images.length > 0) {
+    if (images && Array.isArray(images)) {
        images.forEach((img: string) => {
           contents.push({
              inlineData: { mimeType: 'image/jpeg', data: img }
           });
        });
     }
-    contents.push({ text: prompt });
+    
+    const promptText = generateAnalysisPrompt(brandName, websiteUrl, instagramHandle, !!(images && images.length));
+    contents.push({ text: promptText });
 
+    // Call Gemini 3 Pro with Thinking & Tools
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: contents,
       config: {
         responseMimeType: 'application/json',
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 2048 }
+        tools: [{ googleSearch: {} }], 
+        thinkingConfig: { thinkingBudget: 2048 } // High budget for deep reasoning
       }
     });
 
-    let text = response.text;
-    if (!text) throw new Error("No response from AI");
+    const text = response.text;
+    if (!text) throw new Error("No response generated by AI");
 
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const rawData = JSON.parse(text);
+    // Parse & Post-Process
+    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const rawData = JSON.parse(cleanJson);
+    const scores = calculateDeterministicScores(rawData.signals);
 
-    // Calculate Deterministic Scores
-    const scores = calculateScores(rawData.signals);
-
-    // Merge Scores into Response
     const finalResult = {
       ...rawData,
       ...scores
@@ -151,8 +157,8 @@ serve(async (req: Request) => {
     });
 
   } catch (error: any) {
-    console.error("Error auditing brand:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Audit Brand Error:", error);
+    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

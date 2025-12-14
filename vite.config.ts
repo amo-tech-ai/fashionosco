@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Alias removed to enforce relative paths and fix runtime resolution errors
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {

@@ -89,18 +89,17 @@ export const Layout: React.FC = () => {
              <Link to="/login" className="hidden md:block text-xs uppercase tracking-widest font-semibold hover:text-gray-600">
                 Log In
              </Link>
-             <Link to="/create-profile">
-                <Button 
-                  variant={ButtonVariant.SECONDARY} 
-                  className="hidden md:inline-flex py-2 px-4 text-[10px] transform hover:scale-105 active:scale-95 transition-all duration-200"
-                >
-                  Sign Up
-                </Button>
-             </Link>
+             
+             <Button
+                onClick={() => navigate("/create-profile")}
+                variant={ButtonVariant.SECONDARY}
+                className="hidden md:inline-flex px-5 py-2 text-[10px] h-auto transform hover:scale-105 active:scale-95 transition-all duration-200"
+             >
+                Sign Up
+             </Button>
+
              <Link to="/shoot-wizard">
-                <Button 
-                  className="hidden md:inline-flex py-2 px-4 text-[10px] hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200"
-                >
+                <Button className="hidden md:inline-flex py-2 px-4 text-[10px] hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200">
                   Book a Shoot
                 </Button>
              </Link>
@@ -144,19 +143,13 @@ export const Layout: React.FC = () => {
                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium border border-gray-200 rounded-lg p-4 text-center">
                       Log In
                    </Link>
-                   <Link 
-                      to="/create-profile" 
-                      onClick={() => setIsMobileMenuOpen(false)} 
-                      className="text-xl font-serif font-medium bg-black text-white rounded-lg p-4 text-center transform hover:scale-105 active:scale-95 transition-all duration-200"
-                   >
+                   <Link to="/create-profile" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium bg-black text-white rounded-lg p-4 text-center transform hover:scale-105 active:scale-95 transition-all duration-200">
                       Sign Up
                    </Link>
                 </div>
                 <div className="pt-4 pb-12">
                    <Link to="/shoot-wizard" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button className="w-full justify-center py-4 text-sm hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200">
-                        Book a Shoot
-                      </Button>
+                      <Button className="w-full justify-center py-4 text-sm hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200">Book a Shoot</Button>
                    </Link>
                 </div>
              </nav>
