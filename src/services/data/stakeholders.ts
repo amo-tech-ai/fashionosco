@@ -13,6 +13,7 @@ export interface Stakeholder {
   rate: string;
   instagram?: string;
   website?: string;
+  bio?: string;
 }
 
 // Fallback data for Demo Mode / Offline
@@ -42,23 +43,78 @@ export const StakeholderService = {
             id: item.id,
             name: item.name,
             role: item.role || 'Creative',
-            location: item.location || 'Global', // Assuming location added to schema or jsonb
-            rating: item.rating || 5.0, // Mock if missing
+            location: item.location || 'Global', 
+            rating: item.rating || 5.0,
             reviews: item.reviews_count || 0,
             img: item.profile_image_url || 'https://via.placeholder.com/150',
             tags: item.specializations || [],
             rate: item.hourly_rate ? `$${item.hourly_rate}/hr` : 'Custom',
             instagram: item.instagram_handle,
-            website: item.website_url
+            website: item.website_url,
+            bio: item.notes
           }));
         }
       }
     } catch (e) {
-      // Silent fail to mock data
       console.warn("Using mock stakeholder data");
     }
     
-    // Return Mock Data if DB is empty or fails
-    return MOCK_STAKEHOLDERS;
+    // Check local storage for newly added demo stakeholders
+    const local = localStorage.getItem('demo_stakeholders');
+    const localData = local ? JSON.parse(local) : [];
+
+    // Return Mock Data + Local Demo Data
+    return [...localData, ...MOCK_STAKEHOLDERS];
+  },
+
+  create: async (stakeholder: Partial<Stakeholder>): Promise<Stakeholder> => {
+    const newId = `new-${Date.now()}`;
+    const newStakeholder: Stakeholder = {
+        id: newId,
+        name: stakeholder.name || 'New Talent',
+        role: stakeholder.role || 'Creative',
+        location: stakeholder.location || 'Unknown',
+        rating: 5.0,
+        reviews: 0,
+        img: stakeholder.img || 'https://via.placeholder.com/150',
+        tags: stakeholder.tags || [],
+        rate: stakeholder.rate || 'Contact for rates',
+        instagram: stakeholder.instagram,
+        website: stakeholder.website,
+        bio: stakeholder.bio
+    };
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+            // Attempt DB Insert (assuming table structure matches)
+            const { data, error } = await supabase
+                .from('stakeholders')
+                .insert([{
+                    name: newStakeholder.name,
+                    role: newStakeholder.role,
+                    location: newStakeholder.location,
+                    profile_image_url: newStakeholder.img,
+                    specializations: newStakeholder.tags,
+                    instagram_handle: newStakeholder.instagram,
+                    notes: newStakeholder.bio,
+                    created_by: session.user.id
+                }])
+                .select()
+                .single();
+            
+            if (!error && data) {
+                return { ...newStakeholder, id: data.id };
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to save to DB, falling back to local storage");
+    }
+
+    // Fallback: Save to LocalStorage for Demo
+    const existing = JSON.parse(localStorage.getItem('demo_stakeholders') || '[]');
+    localStorage.setItem('demo_stakeholders', JSON.stringify([newStakeholder, ...existing]));
+    
+    return newStakeholder;
   }
 };

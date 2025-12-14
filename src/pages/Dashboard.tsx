@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { KPIGrid } from '../components/dashboard/KPIGrid';
@@ -9,8 +9,11 @@ import { DeliverablesList } from '../components/dashboard/DeliverablesList';
 import { TeamPanel } from '../components/dashboard/TeamPanel';
 import { AIInsightCard } from '../components/dashboard/AIInsightCard';
 import { StorageWidget } from '../components/dashboard/StorageWidget';
-import { BrandHealthWidget } from '../components/dashboard/BrandHealthWidget'; // Import Widget
+import { BrandHealthWidget } from '../components/dashboard/BrandHealthWidget';
 import { DashboardEmptyState } from '../components/dashboard/DashboardEmptyState';
+import { EventOverview } from '../components/dashboard/events/EventOverview';
+import { EventTimeline } from '../components/dashboard/events/EventTimeline';
+import { GuestList } from '../components/dashboard/events/GuestList';
 import { useCampaigns } from '../hooks/useCampaigns';
 import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
 import { Calendar, Camera, Loader2 } from 'lucide-react';
@@ -46,7 +49,7 @@ export const Dashboard: React.FC = () => {
      );
   }
 
-  // Construct display object for components
+  // Common Props
   const displayCampaign = activeCampaign ? {
      ...activeCampaign.data,
      id: activeCampaign.id,
@@ -91,25 +94,39 @@ export const Dashboard: React.FC = () => {
          </div>
       )}
 
-      <KPIGrid campaign={displayCampaign} />
+      {/* CONDITIONAL RENDER BASED ON TYPE */}
+      {activeCampaign?.type === 'event' ? (
+         // EVENT DASHBOARD VIEW
+         <div className="space-y-8">
+            <EventOverview />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               <EventTimeline />
+               <GuestList />
+            </div>
+         </div>
+      ) : (
+         // SHOOT DASHBOARD VIEW
+         <>
+            <KPIGrid campaign={displayCampaign} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-        
-        {/* Left Column: Activity & Actions */}
-        <div className="lg:col-span-2 space-y-8">
-           <ActionBanner />
-           <ActivityFeed campaign={displayCampaign} />
-           <DeliverablesList campaign={displayCampaign} totalShots={displayCampaign?.shotList?.length || 0} />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
+               {/* Left Column */}
+               <div className="lg:col-span-2 space-y-8">
+                  <ActionBanner />
+                  <ActivityFeed campaign={displayCampaign} />
+                  <DeliverablesList campaign={displayCampaign} totalShots={displayCampaign?.shotList?.length || 0} />
+               </div>
 
-        {/* Right Column: AI & Team */}
-        <div className="space-y-8">
-           <BrandHealthWidget /> 
-           <TeamPanel campaign={displayCampaign} />
-           <AIInsightCard />
-           <StorageWidget />
-        </div>
-      </div>
+               {/* Right Column */}
+               <div className="space-y-8">
+                  <BrandHealthWidget /> 
+                  <TeamPanel campaign={displayCampaign} />
+                  <AIInsightCard />
+                  <StorageWidget />
+               </div>
+            </div>
+         </>
+      )}
     </div>
   );
 };

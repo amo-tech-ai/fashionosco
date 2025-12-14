@@ -12,6 +12,7 @@ export const TalentWizard: React.FC = () => {
   const [url, setUrl] = useState('');
   const [roleHint, setRoleHint] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   const { addToast } = useToast();
 
@@ -30,13 +31,19 @@ export const TalentWizard: React.FC = () => {
   };
 
   const handlePublish = async () => {
-    // In a real app, this would save to DB. For now, we simulate.
-    // await StakeholderService.save(profile); 
-    setStep('success');
-    setTimeout(() => {
-        navigate('/directory');
-        addToast("Profile published to directory!", "success");
-    }, 2000);
+    setIsSaving(true);
+    try {
+        await StakeholderService.create(profile);
+        setStep('success');
+        setTimeout(() => {
+            navigate('/directory');
+            addToast("Profile published to directory!", "success");
+        }, 2000);
+    } catch (e) {
+        addToast("Failed to publish profile.", "error");
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleUpdateProfile = (field: string, value: string) => {
@@ -199,7 +206,7 @@ export const TalentWizard: React.FC = () => {
 
               <div className="flex gap-4">
                  <Button variant="secondary" onClick={() => setStep('input')} className="flex-1">Start Over</Button>
-                 <Button onClick={handlePublish} className="flex-1">Publish Profile</Button>
+                 <Button onClick={handlePublish} isLoading={isSaving} className="flex-1">Publish Profile</Button>
               </div>
            </div>
         )}

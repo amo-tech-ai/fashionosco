@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ShootWizardState, PRICING, SHOOT_TYPES } from '../types/wizard';
 
 // Initial State
@@ -37,7 +38,8 @@ type Action =
   | { type: 'NEXT_STEP' }
   | { type: 'PREV_STEP' }
   | { type: 'SET_TOTAL'; price: number; deposit: number }
-  | { type: 'RESET_WIZARD' };
+  | { type: 'RESET_WIZARD' }
+  | { type: 'LOAD_PRESET'; payload: Partial<ShootWizardState> };
 
 // Reducer
 const reducer = (state: ShootWizardState, action: Action): ShootWizardState => {
@@ -52,6 +54,8 @@ const reducer = (state: ShootWizardState, action: Action): ShootWizardState => {
       return { ...state, totalPrice: action.price, deposit: action.deposit };
     case 'RESET_WIZARD':
       return initialState;
+    case 'LOAD_PRESET':
+      return { ...state, ...action.payload, step: 2 }; // Jump to step 2 after preset load
     default:
       return state;
   }
@@ -127,6 +131,16 @@ const ShootWizardContext = createContext<{
 export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize with loadState to check for persisted data
   const [state, dispatch] = useReducer(reducer, initialState, loadState);
+  const location = useLocation();
+
+  // Handle incoming presets from Marketplace
+  useEffect(() => {
+    if (location.state && location.state.prefill) {
+        dispatch({ type: 'LOAD_PRESET', payload: location.state.prefill });
+        // Clear history state to avoid reload issues
+        window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Persistence Effect
   useEffect(() => {
@@ -137,6 +151,8 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Auto-recalculate price on state change
   useEffect(() => {
+    // If a preset loaded a fixed price, we might want to respect it, but generally wizards are dynamic.
+    // For now, we allow recalculation to ensure consistency.
     const price = calculatePrice(state);
     const deposit = Math.round(price * 0.5); // 50% deposit
     if (price !== state.totalPrice) {

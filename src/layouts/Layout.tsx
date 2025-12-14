@@ -9,8 +9,8 @@ const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
   { label: 'Directory', href: '/directory' }, 
-  { label: 'Marketplace', href: '/services' }, // Placeholder for now
-  { label: 'BTS', href: '/services/clothing-photography' }, // Redirect to a page with BTS content
+  { label: 'Marketplace', href: '/marketplace' }, 
+  { label: 'BTS', href: '/bts' }, 
 ];
 
 export const Layout: React.FC = () => {
@@ -169,7 +169,8 @@ export const Layout: React.FC = () => {
                   <li><Link to="/" className="hover:text-black transition-colors">Home</Link></li>
                   <li><Link to="/services" className="hover:text-black transition-colors">Services</Link></li>
                   <li><Link to="/directory" className="hover:text-black transition-colors">Directory</Link></li>
-                  <li><Link to="/services" className="hover:text-black transition-colors">Portfolio</Link></li>
+                  <li><Link to="/marketplace" className="hover:text-black transition-colors">Marketplace</Link></li>
+                  <li><Link to="/bts" className="hover:text-black transition-colors">BTS</Link></li>
                </ul>
             </div>
 

@@ -11,7 +11,10 @@ import { EcommercePhotography } from './pages/EcommercePhotography';
 import { CreativeStillLife } from './pages/CreativeStillLife';
 import { VideoProduction } from './pages/VideoProduction';
 import { InstagramServices } from './pages/InstagramServices';
+import { Marketplace } from './pages/Marketplace';
+import { BTS } from './pages/BTS';
 import { Dashboard } from './pages/Dashboard';
+import { BrandDashboard } from './pages/BrandDashboard';
 import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
 import { ClientGallery } from './pages/ClientGallery';
@@ -24,6 +27,7 @@ import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { TalentWizard } from './components/wizards/talent/TalentWizard';
+import { SeatingChart } from './components/dashboard/events/SeatingChart';
 
 export const Router: React.FC = () => {
   return (
@@ -39,6 +43,9 @@ export const Router: React.FC = () => {
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
         <Route path="/directory" element={<Directory />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/bts" element={<BTS />} />
+        
         {/* Wizards (Publicly accessible for leads) */}
         <Route path="/shoot-wizard" element={<ShootWizardPage />} />
         <Route path="/event-wizard" element={<EventWizardPage />} />
@@ -53,10 +60,18 @@ export const Router: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
+          <Route path="brand" element={<BrandDashboard />} />
           <Route path="shotlist" element={<ShotList />} />
           <Route path="products" element={<Products />} />
           <Route path="gallery" element={<ClientGallery />} />
           <Route path="settings" element={<Settings />} />
+          
+          {/* Event Dashboard Routes */}
+          {/* Dashboard Main View handles context switching, but these can be deep links */}
+          <Route path="timeline" element={<Dashboard />} />
+          <Route path="guests" element={<Dashboard />} />
+          <Route path="budget" element={<Dashboard />} />
+          <Route path="seating" element={<SeatingChart />} />
         </Route>
       </Route>
 
