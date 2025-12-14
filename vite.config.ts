@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -11,7 +12,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './'), // Mapping @ to root since user demanded "No nested src" in System Prompt environment
+      // Alias removed to enforce relative paths and fix runtime resolution errors
     },
   },
   server: {

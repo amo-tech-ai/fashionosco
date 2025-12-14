@@ -61,7 +61,7 @@ serve(async (req: Request) => {
     const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
-      ROLE: You are a World-Class Fashion Brand Strategist.
+      ROLE: You are a World-Class Fashion Brand Strategist and Social Media Data Scientist.
       
       TASK: Perform a "Deep Research" audit on the brand "${brandName}".
       
@@ -71,11 +71,12 @@ serve(async (req: Request) => {
       ${images && images.length > 0 ? '- Visuals: Attached lookbook images provided by the brand.' : ''}
 
       INSTRUCTIONS:
-      1.  **Research**: Google Search for "${brandName} fashion reviews", "${brandName} competitors".
-      2.  **Analyze**: Look at the website tone vs instagram tone.
-      3.  **Extract Signals**: Instead of guessing a score, determine the categorical quality of specific attributes.
+      1.  **Research**: Google Search for "${brandName} competitors" and "trending marketing strategies for [Brand Category] 2025".
+      2.  **Competitor Gap Analysis**: Identify what top competitors are doing on social media that this brand is NOT (e.g., "Competitors are using lo-fi BTS video", "Competitors use TikTok audio trends").
+      3.  **Visual Audit**: Compare the website tone (Formal/Casual) vs instagram tone.
+      4.  **Extract Signals**: Determine the categorical quality of specific attributes.
 
-      OUTPUT FORMAT (JSON Only):
+      OUTPUT FORMAT (JSON Only - No Markdown):
       {
         "brand_profile": {
           "category": "string",
@@ -95,12 +96,12 @@ serve(async (req: Request) => {
         },
         "strategic_advice": [
           { 
-            "title": "string", 
-            "description": "string", 
+            "title": "string (Specific Action)", 
+            "description": "string (Detailed advice referencing a specific competitor tactic or platform trend. Do NOT be generic. Say 'Post 3x Reels about X' instead of 'Post more video'.)", 
             "impact": "High" | "Medium" | "Low" 
           },
           { 
-            "title": "string", 
+            "title": "string (Specific Action)", 
             "description": "string", 
             "impact": "High" | "Medium" | "Low" 
           }

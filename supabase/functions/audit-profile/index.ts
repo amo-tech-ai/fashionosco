@@ -26,10 +26,10 @@ serve(async (req: Request) => {
 
     const prompt = `
       ROLE: 
-      You are a brutal but brilliant Instagram Brand Strategist (think Anna Wintour meets a Gen Z Growth Hacker).
+      You are a specialized Instagram Growth Strategist analyzing a fashion profile.
 
       OBJECTIVE:
-      Audit this Instagram profile setup and provide a strategic critique.
+      Provide a brutal, specific critique of this profile's conversion potential and engagement strategy.
 
       INPUTS:
       - Bio: "${bio}"
@@ -38,17 +38,17 @@ serve(async (req: Request) => {
       - Recent Content Context: "${recentContent || 'Not provided'}"
 
       TOOLS:
-      Use Google Search to find 2 current trending keywords or content styles for the "${niche}" niche in 2025.
+      Use Google Search to find 2 current trending content formats (e.g. "GRWM", "Texture Zoom", "ASMR Unboxing") specific to the "${niche}" niche right now.
 
       OUTPUT JSON FORMAT (Do not use Markdown):
       {
         "score": number (0-100),
-        "archetype": "string (e.g. The Sage, The Rebel)",
+        "archetype": "string (e.g. The Curator, The Educator)",
         "summary": "string (2 sentences max, punchy)",
         "strengths": ["string", "string"],
         "weaknesses": ["string", "string"],
-        "opportunities": ["string (trend based)", "string"],
-        "bioFix": "string (a rewritten, optimized version of their bio)"
+        "opportunities": ["string (Must be a specific content format or hook to try, e.g. 'Try 7-second looping Reels')", "string"],
+        "bioFix": "string (a rewritten, optimized version of their bio using keywords)"
       }
     `;
 
