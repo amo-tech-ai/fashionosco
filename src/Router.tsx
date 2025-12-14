@@ -28,6 +28,8 @@ import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { TalentWizard } from './components/wizards/talent/TalentWizard';
 import { SeatingChart } from './components/dashboard/events/SeatingChart';
+import { BuyerApplicationPage } from './pages/wholesale/BuyerApplication';
+import { WholesaleShowroom } from './pages/wholesale/WholesaleShowroom';
 
 export const Router: React.FC = () => {
   return (
@@ -51,10 +53,16 @@ export const Router: React.FC = () => {
         <Route path="/event-wizard" element={<EventWizardPage />} />
         <Route path="/brand-audit" element={<DesignerWizardPage />} />
         <Route path="/talent-wizard" element={<TalentWizard />} />
+        
+        {/* Wholesale Public */}
+        <Route path="/wholesale/apply" element={<BuyerApplicationPage />} />
       </Route>
 
       {/* Standalone Route for Login (No Header/Footer) */}
       <Route path="/login" element={<Login />} />
+
+      {/* Wholesale Protected (Simulated) */}
+      <Route path="/wholesale/showroom" element={<WholesaleShowroom />} />
 
       {/* Protected Dashboard Routes */}
       <Route element={<ProtectedRoute />}>

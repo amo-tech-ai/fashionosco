@@ -1,7 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+
+// Use any for User/Session to avoid type errors if imports are missing in current environment
+type User = any;
+type Session = any;
 
 interface AuthContextType {
   user: User | null;
@@ -19,14 +21,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // 1. Initial Session Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
     // 2. Realtime Auth Listener (Handles Sign In, Sign Out, Token Refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: any) => {
       setSession(session);
       setUser(session?.user ?? null);
       

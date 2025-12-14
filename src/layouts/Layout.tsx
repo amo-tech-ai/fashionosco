@@ -10,6 +10,7 @@ const navItems: NavItem[] = [
   { label: 'Services', href: '/services' },
   { label: 'Directory', href: '/directory' }, 
   { label: 'Marketplace', href: '/marketplace' }, 
+  { label: 'Wholesale', href: '/wholesale/apply' }, // New Link
   { label: 'BTS', href: '/bts' }, 
 ];
 
@@ -170,7 +171,7 @@ export const Layout: React.FC = () => {
                   <li><Link to="/services" className="hover:text-black transition-colors">Services</Link></li>
                   <li><Link to="/directory" className="hover:text-black transition-colors">Directory</Link></li>
                   <li><Link to="/marketplace" className="hover:text-black transition-colors">Marketplace</Link></li>
-                  <li><Link to="/bts" className="hover:text-black transition-colors">BTS</Link></li>
+                  <li><Link to="/wholesale/apply" className="hover:text-black transition-colors">Wholesale</Link></li>
                </ul>
             </div>
 

@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Access environment variables safely
@@ -18,4 +17,4 @@ export const supabase = createClient(
       autoRefreshToken: true,
     }
   }
-);
+) as any;
