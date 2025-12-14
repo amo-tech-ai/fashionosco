@@ -1,5 +1,6 @@
 
 import { BrandInput, BrandAuditResult } from '../../types/brand';
+import { compressBase64Image } from '../../utils/fileHelpers';
 
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
 
@@ -10,10 +11,13 @@ const MOCK_AUDIT_RESULT: BrandAuditResult = {
     aesthetic_keywords: ["Minimalist", "Scandinavian", "Sustainable", "Earth Tones"],
     price_positioning: "$$$ (Premium)",
     target_audience: "Urban professionals, 25-40, eco-conscious",
-    vibe_description: "Effortless elegance with a focus on natural fibers and neutral palettes."
+    vibe_description: "Effortless elegance with a focus on natural fibers and neutral palettes.",
+    visual_archetype: "The Modern Essentialist",
+    palette: ["#F5F5F5", "#D3C0AC", "#2C2C2C", "#8B9A91"]
   },
   audit_score: 78,
   content_health: 65,
+  visual_consistency_score: 82,
   strategic_advice: [
     {
       title: "Visual Consistency Gap",
@@ -35,6 +39,15 @@ const MOCK_AUDIT_RESULT: BrandAuditResult = {
   market_gap: "Affordable luxury linen with inclusive sizing."
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 export const auditBrand = async (input: BrandInput): Promise<BrandAuditResult> => {
   try {
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -42,9 +55,25 @@ export const auditBrand = async (input: BrandInput): Promise<BrandAuditResult> =
     // Fallback to Demo Mode if no backend connection
     if (!anonKey) {
       console.log('✨ Demo Mode: Generating mock brand audit');
-      // Simulate API latency for "Deep Research" feel
       return new Promise(resolve => setTimeout(() => resolve(MOCK_AUDIT_RESULT), 4000));
     }
+
+    // Process images if any
+    let images: string[] = [];
+    if (input.lookbookFiles && input.lookbookFiles.length > 0) {
+       const rawImages = await Promise.all(input.lookbookFiles.slice(0, 3).map(fileToBase64));
+       // Compress to ensure we don't hit payload limits
+       images = await Promise.all(rawImages.map(img => compressBase64Image(img, 800, 0.7)));
+       // Strip header
+       images = images.map(img => img.split(',')[1]);
+    }
+
+    const payload = {
+        brandName: input.brandName,
+        websiteUrl: input.websiteUrl,
+        instagramHandle: input.instagramHandle,
+        images: images // Send visual data
+    };
 
     const response = await fetch(`${SUPABASE_FUNCTION_URL}/audit-brand`, {
       method: 'POST',
@@ -52,7 +81,7 @@ export const auditBrand = async (input: BrandInput): Promise<BrandAuditResult> =
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${anonKey}`,
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
