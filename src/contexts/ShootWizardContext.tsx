@@ -8,6 +8,7 @@ const initialState: ShootWizardState = {
   step: 1,
   shootType: null,
   numberOfItems: 10,
+  selectedProducts: [],
   estimatedDuration: "Half Day",
   location: "studio",
   date: null,
@@ -66,8 +67,9 @@ const calculatePrice = (state: ShootWizardState) => {
   let total = 0;
 
   // 1. Base Rate (based on items/duration estimate)
-  // Simplified logic: < 20 items = Half Day, > 20 = Full Day
-  const isFullDay = state.numberOfItems > 20;
+  // Logic: If products selected, use that count. Else use slider count.
+  const itemCount = state.selectedProducts.length > 0 ? state.selectedProducts.length : state.numberOfItems;
+  const isFullDay = itemCount > 20;
   total += isFullDay ? PRICING.baseRates.fullDay : PRICING.baseRates.halfDay;
 
   // 2. Shoot Type Base Adjustment
@@ -160,7 +162,8 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [
     state.shootType, 
-    state.numberOfItems, 
+    state.numberOfItems,
+    state.selectedProducts,
     state.modelNeeded, 
     state.stylingNeeded, 
     state.hairMakeup, 

@@ -20,6 +20,7 @@ import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
 import { ClientGallery } from './pages/ClientGallery';
 import { Settings } from './pages/Settings';
+import { Calendar } from './pages/Calendar';
 import { ShootWizardPage } from './pages/ShootWizardPage'; 
 import { EventWizardPage } from './pages/EventWizardPage';
 import { DesignerWizardPage } from './pages/DesignerWizardPage';
@@ -72,6 +73,7 @@ export const Router: React.FC = () => {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="brand" element={<BrandDashboard />} />
+          <Route path="calendar" element={<Calendar />} />
           <Route path="shotlist" element={<ShotList />} />
           <Route path="products" element={<Products />} />
           <Route path="gallery" element={<ClientGallery />} />

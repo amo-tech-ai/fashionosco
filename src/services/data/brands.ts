@@ -19,7 +19,7 @@ export const BrandService = {
         if (data) {
           return {
             ...data,
-            // Map DB fields to frontend types if necessary
+            // Map DB fields to frontend types
             brandName: data.name,
             websiteUrl: data.website_url,
             instagramHandle: data.instagram_handle,
@@ -28,7 +28,7 @@ export const BrandService = {
         }
       }
     } catch (e) {
-      console.warn("Using local brand profile");
+      // Silent fail to local storage
     }
 
     // Fallback

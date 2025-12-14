@@ -15,7 +15,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { shootType, numberOfItems, vibe, referenceBrands, refinement, currentShots } = await req.json();
+    const { shootType, numberOfItems, vibe, referenceBrands, refinement, currentShots, products } = await req.json();
 
     const apiKey = Deno.env.get('API_KEY');
     if (!apiKey) {
@@ -34,7 +34,7 @@ serve(async (req: Request) => {
             type: Type.OBJECT,
             properties: {
               id: { type: Type.STRING },
-              name: { type: Type.STRING, description: "Short, punchy title of the shot (e.g. 'Hero Walking')" },
+              name: { type: Type.STRING, description: "Short, punchy title of the shot (e.g. 'Hero Walking', 'Detail: [Product Name]')" },
               description: { type: Type.STRING, description: "Detailed visual direction including focus and mood" },
               angle: { type: Type.STRING, description: "Specific camera angle (e.g. Low Angle, Overhead, Macro)" },
               lighting: { type: Type.STRING, description: "Lighting setup (e.g. Soft Window, Hard Flash, Chiaroscuro)" },
@@ -65,11 +65,21 @@ serve(async (req: Request) => {
           Modify the shot list to address the feedback. 
           - You can add, remove, or edit shots.
           - Maintain the vibe: ${vibe}.
-          - Ensure the total count remains appropriate for ${numberOfItems} items (approx ${Math.min(numberOfItems + 3, 15)} shots).
+          - Ensure the total count remains appropriate for ${numberOfItems} items.
           - Update descriptions and lighting if the feedback implies a style change.
         `;
     } else {
         // Generation Mode Prompt
+        let contextProducts = "";
+        if (products && products.length > 0) {
+            contextProducts = `
+            SPECIFIC PRODUCTS TO SHOOT:
+            ${products.map((p: any) => `- ${p.name} (Category: ${p.category || 'General'})`).join('\n')}
+            
+            INSTRUCTION: Create at least one dedicated shot for EACH product listed above. Use the product name in the shot title.
+            `;
+        }
+
         prompt = `
           You are a world-class Fashion Creative Director. 
           Generate a shot list for a ${shootType} shoot.
@@ -79,10 +89,12 @@ serve(async (req: Request) => {
           - Vibe/Aesthetic: ${vibe}
           - Brand References: ${referenceBrands}
           
+          ${contextProducts}
+          
           Instructions:
           1. Create a cohesive visual story.
           2. Mix commercial "safe" shots with high-impact "editorial" angles.
-          3. Limit to ${Math.min(numberOfItems + 3, 15)} key shots.
+          3. Limit to ${Math.min(numberOfItems + 5, 20)} key shots.
           4. Ensure lighting and props match the requested vibe.
         `;
     }

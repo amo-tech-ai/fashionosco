@@ -1,4 +1,6 @@
 
+import { Product } from './products';
+
 export interface Shot {
   id: string;
   name: string;
@@ -28,4 +30,6 @@ export interface GenerateShotListParams {
   // New fields for refinement flow
   refinement?: string;
   currentShots?: Shot[];
+  // New field for specific inventory items
+  products?: Product[];
 }

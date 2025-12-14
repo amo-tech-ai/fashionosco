@@ -47,12 +47,14 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 
   const menuItems = isEvent ? [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
     { label: 'Run of Show', href: '/dashboard/timeline', icon: Clock },
     { label: 'Guest List', href: '/dashboard/guests', icon: Users },
     { label: 'Seating', href: '/dashboard/seating', icon: Grid },
     { label: 'Budget', href: '/dashboard/budget', icon: Ticket },
   ] : [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
     { label: 'Shot List', href: '/dashboard/shotlist', icon: ListVideo },
     { label: 'Client Gallery', href: '/dashboard/gallery', icon: ImageIcon },
     { label: 'Products', href: '/dashboard/products', icon: Package },

@@ -3,7 +3,6 @@ export interface BrandInput {
   brandName: string;
   websiteUrl: string;
   instagramHandle: string;
-  description?: string;
 }
 
 export interface BrandAuditResult {
@@ -25,14 +24,14 @@ export interface BrandAuditResult {
   market_gap: string;
 }
 
+export interface CompetitorData {
+  name: string;
+  estimated_price_point: number;
+}
+
 export interface BrandProfile extends BrandInput {
   id?: string;
   userId?: string;
   auditResult?: BrandAuditResult;
   lastAuditedAt?: string;
-}
-
-export interface CompetitorData {
-  name: string;
-  estimated_price_point: number;
 }

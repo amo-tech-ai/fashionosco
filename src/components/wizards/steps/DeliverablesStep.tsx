@@ -55,6 +55,8 @@ export const DeliverablesStep: React.FC = () => {
         turnaround: state.turnaround,
         refinement: isRefinement ? refinementText : undefined,
         currentShots: isRefinement ? state.shotList : undefined,
+        // Pass selected inventory
+        products: state.selectedProducts.length > 0 ? state.selectedProducts : undefined
       });
 
       updateField('shotList', shots);
@@ -142,7 +144,7 @@ export const DeliverablesStep: React.FC = () => {
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
                 <Layers size={32} className="mb-4 opacity-50" />
                 <p className="text-xs max-w-[200px] leading-relaxed">
-                  Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your details.
+                  Click 'Generate List' to let Gemini 3 Pro draft a tailored shot list based on your {state.selectedProducts.length > 0 ? `${state.selectedProducts.length} selected products` : 'details'}.
                 </p>
               </div>
             ) : (

@@ -1,20 +1,20 @@
 
 import React from 'react';
-import { CompetitorData } from '../../../../types/brand';
 
 interface CompetitorGraphProps {
-  competitors: CompetitorData[];
+  competitors: string[];
   myBrandName: string;
 }
 
 export const CompetitorGraph: React.FC<CompetitorGraphProps> = ({ competitors, myBrandName }) => {
-  // Find range
-  const prices = competitors.map(c => c.estimated_price_point);
-  const maxPrice = Math.max(...prices, 1500) * 1.2;
-  const minPrice = 0;
-
-  // Insert "My Brand" placeholder if not present (simulated logic)
-  const myBrandPrice = prices.reduce((a,b) => a+b, 0) / prices.length * 0.8; // Assume competitive pricing
+  // Mock data simulation for visualization based on string inputs
+  const dataPoints = [
+     { name: competitors[0] || 'Competitor A', price: 80, color: 'bg-gray-300' },
+     { name: competitors[1] || 'Competitor B', price: 250, color: 'bg-gray-400' },
+     { name: myBrandName, price: 320, color: 'bg-black border-2 border-white ring-2 ring-black' },
+     { name: competitors[2] || 'Competitor C', price: 450, color: 'bg-gray-300' },
+     { name: competitors[3] || 'Competitor D', price: 890, color: 'bg-gray-300' },
+  ];
 
   return (
     <div className="bg-white p-6 rounded-xl border border-gray-200 mt-6">
@@ -30,9 +30,9 @@ export const CompetitorGraph: React.FC<CompetitorGraphProps> = ({ competitors, m
         </div>
 
         {/* Competitor Dots */}
-        {competitors.map((comp, i) => {
-           const leftPos = (i / (competitors.length)) * 80 + 10; // Distribute horizontally
-           const heightPercent = (comp.estimated_price_point / maxPrice) * 100;
+        {dataPoints.map((comp, i) => {
+           const leftPos = (i / (dataPoints.length - 1)) * 90 + 5; 
+           const heightPercent = (comp.price / 1000) * 100;
            
            return (
               <div 
@@ -41,33 +41,19 @@ export const CompetitorGraph: React.FC<CompetitorGraphProps> = ({ competitors, m
                  style={{ left: `${leftPos}%` }}
               >
                  <div 
-                    className="w-3 h-3 bg-gray-300 rounded-full mb-1 group-hover:scale-150 group-hover:bg-purple-500 transition-all cursor-pointer relative"
+                    className={`w-4 h-4 rounded-full mb-1 group-hover:scale-150 transition-all cursor-pointer relative shadow-sm ${comp.color}`}
                     style={{ marginBottom: `${heightPercent}px` }}
                  >
                     {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                       ${comp.estimated_price_point}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                       Est. ${comp.price}
                     </div>
                  </div>
                  <div className="h-full w-px bg-gray-100 absolute bottom-0 -z-10" style={{ height: `${heightPercent}px` }}></div>
-                 <span className="text-[10px] font-bold text-gray-400 uppercase mt-2">{comp.name}</span>
+                 <span className={`text-[10px] font-bold uppercase mt-2 ${comp.name === myBrandName ? 'text-black' : 'text-gray-400'}`}>{comp.name}</span>
               </div>
            );
         })}
-
-        {/* My Brand Dot (Simulated) */}
-        <div 
-           className="absolute bottom-0 flex flex-col items-center"
-           style={{ left: '50%' }}
-        >
-           <div 
-              className="w-4 h-4 bg-black border-2 border-white rounded-full mb-1 shadow-lg relative z-20"
-              style={{ marginBottom: `${(myBrandPrice / maxPrice) * 100}px` }}
-           >
-              <div className="absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-           </div>
-           <span className="text-[10px] font-bold text-black uppercase mt-2 bg-white px-1 border border-gray-200 rounded">{myBrandName}</span>
-        </div>
 
       </div>
       <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-medium uppercase tracking-widest">

@@ -1,5 +1,6 @@
 
 import { Shot, MoodBoardAnalysis } from './ai';
+import { Product } from './products';
 
 export type ShootType = "campaign" | "product" | "runway" | "lookbook" | "video" | "custom";
 export type LocationType = "studio" | "on-location" | "client-venue";
@@ -15,6 +16,7 @@ export interface ShootWizardState {
   step: number;
   shootType: ShootType | null;
   numberOfItems: number;
+  selectedProducts: Product[]; // New field for inventory linking
   estimatedDuration: string;
   location: LocationType;
   date: Date | null;
