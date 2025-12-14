@@ -15,9 +15,17 @@ const MOCK_AUDIT_RESULT: BrandAuditResult = {
     visual_archetype: "The Modern Essentialist",
     palette: ["#F5F5F5", "#D3C0AC", "#2C2C2C", "#8B9A91"]
   },
+  // Scores are now conceptually derived from signals below
   audit_score: 78,
-  content_health: 65,
-  visual_consistency_score: 82,
+  content_health: 72,
+  visual_consistency_score: 85,
+  signals: {
+    visual_quality: "High",
+    brand_voice_consistency: "Strong",
+    market_positioning: "Clear",
+    website_ux: "Modern",
+    social_presence: "Active"
+  },
   strategic_advice: [
     {
       title: "Visual Consistency Gap",

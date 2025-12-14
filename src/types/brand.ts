@@ -3,7 +3,15 @@ export interface BrandInput {
   brandName: string;
   websiteUrl: string;
   instagramHandle: string;
-  lookbookFiles: File[]; // New: For Multimodal Analysis
+  lookbookFiles: File[];
+}
+
+export interface BrandSignals {
+  visual_quality: 'High' | 'Medium' | 'Low';
+  brand_voice_consistency: 'Strong' | 'Mixed' | 'Weak';
+  market_positioning: 'Clear' | 'Vague';
+  website_ux: 'Modern' | 'Outdated' | 'Basic';
+  social_presence: 'Active' | 'Sparse' | 'None';
 }
 
 export interface BrandAuditResult {
@@ -13,12 +21,17 @@ export interface BrandAuditResult {
     price_positioning: string;
     target_audience: string;
     vibe_description: string;
-    visual_archetype?: string; // New: AI-detected visual style
-    palette?: string[]; // New: AI-detected colors
+    visual_archetype?: string;
+    palette?: string[];
   };
-  audit_score: number; // 0-100
-  content_health: number; // 0-100
-  visual_consistency_score?: number; // New: Score comparing Text vs Image vibe
+  // Deterministic Scores
+  audit_score: number; // Calculated from signals
+  content_health: number; // Calculated from signals
+  visual_consistency_score: number; // Calculated from signals
+  
+  // AI Raw Output
+  signals: BrandSignals;
+  
   strategic_advice: Array<{
     title: string;
     description: string;

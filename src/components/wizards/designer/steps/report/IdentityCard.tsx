@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Palette, Globe, Instagram } from 'lucide-react';
+import { Palette, Globe, Instagram, Activity } from 'lucide-react';
 import { BrandAuditResult, BrandInput } from '../../../../../types/brand';
 
 interface IdentityCardProps {
@@ -70,7 +70,22 @@ export const IdentityCard: React.FC<IdentityCardProps> = ({ result, input, isEdi
              </div>
           </div>
 
-          <div className="flex gap-2 text-gray-400">
+          {/* Signal Tags (New) */}
+          {result.signals && (
+             <div className="flex flex-wrap gap-2">
+                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${result.signals.visual_quality === 'High' ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-gray-400'}`}>
+                   Visuals: {result.signals.visual_quality}
+                </span>
+                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${result.signals.brand_voice_consistency === 'Strong' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-gray-400'}`}>
+                   Voice: {result.signals.brand_voice_consistency}
+                </span>
+                <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${result.signals.market_positioning === 'Clear' ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-gray-400'}`}>
+                   Pos: {result.signals.market_positioning}
+                </span>
+             </div>
+          )}
+
+          <div className="flex gap-2 text-gray-400 pt-2">
              <a href={input.websiteUrl} target="_blank" rel="noreferrer" className="hover:text-white transition-colors"><Globe size={16} /></a>
              <a href={`https://instagram.com/${input.instagramHandle.replace('@','')}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors"><Instagram size={16} /></a>
           </div>

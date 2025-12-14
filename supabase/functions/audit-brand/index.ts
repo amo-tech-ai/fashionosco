@@ -9,6 +9,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Deterministic Scoring Logic
+const calculateScores = (signals: any) => {
+  let auditScore = 50; // Base score
+  let contentHealth = 50;
+  let consistency = 50;
+
+  // 1. Visual Quality (Max 20 pts)
+  if (signals.visual_quality === 'High') {
+    auditScore += 20;
+    contentHealth += 20;
+  } else if (signals.visual_quality === 'Medium') {
+    auditScore += 10;
+    contentHealth += 10;
+  }
+
+  // 2. Consistency (Max 20 pts)
+  if (signals.brand_voice_consistency === 'Strong') {
+    auditScore += 20;
+    consistency += 40; // Heavy weight
+  } else if (signals.brand_voice_consistency === 'Mixed') {
+    auditScore += 10;
+    consistency += 10;
+  }
+
+  // 3. UX/Positioning (Max 10 pts)
+  if (signals.website_ux === 'Modern') auditScore += 5;
+  if (signals.market_positioning === 'Clear') auditScore += 5;
+
+  // Clamp values 0-100
+  return {
+    audit_score: Math.min(98, Math.max(10, auditScore)),
+    content_health: Math.min(98, Math.max(10, contentHealth)),
+    visual_consistency_score: Math.min(98, Math.max(10, consistency))
+  };
+};
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -24,9 +60,8 @@ serve(async (req: Request) => {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // Construct a prompt that enforces the exact JSON structure required by BrandAuditResult
     const prompt = `
-      ROLE: You are a World-Class Fashion Brand Strategist and Data Scientist.
+      ROLE: You are a World-Class Fashion Brand Strategist.
       
       TASK: Perform a "Deep Research" audit on the brand "${brandName}".
       
@@ -36,37 +71,29 @@ serve(async (req: Request) => {
       ${images && images.length > 0 ? '- Visuals: Attached lookbook images provided by the brand.' : ''}
 
       INSTRUCTIONS:
-      1.  **Verify & Contextualize**: Use Google Search to find the brand's official presence, press reviews, and primary product categories.
-      2.  **Reputation Check**: Look for recent news or "best of" list inclusions to gauge market standing.
-      3.  **Visual Analysis**: 
-          - Analyze the provided images (if any) or infer aesthetic from search results.
-          - Determine color palette, lighting style, and "Visual Archetype".
-      4.  **Strategic Synthesis**: 
-          - Estimate "Visual Consistency" (Do the text claims match the visual reality?).
-          - Identify a specific "Market Gap" they are ignoring.
+      1.  **Research**: Google Search for "${brandName} fashion reviews", "${brandName} competitors".
+      2.  **Analyze**: Look at the website tone vs instagram tone.
+      3.  **Extract Signals**: Instead of guessing a score, determine the categorical quality of specific attributes.
 
-      OUTPUT FORMAT:
-      Return ONLY a valid JSON object matching this schema exactly.
-      
+      OUTPUT FORMAT (JSON Only):
       {
         "brand_profile": {
           "category": "string",
           "aesthetic_keywords": ["string", "string", "string", "string"],
-          "price_positioning": "string (e.g. 'Accessible Luxury', 'High-End', 'Mass Market')",
+          "price_positioning": "string (e.g. 'Accessible Luxury')",
           "target_audience": "string",
           "vibe_description": "string",
-          "visual_archetype": "string (e.g. 'The Modern Minimalist')",
+          "visual_archetype": "string",
           "palette": ["#hex", "#hex", "#hex", "#hex"]
         },
-        "audit_score": number (0-100),
-        "content_health": number (0-100),
-        "visual_consistency_score": number (0-100),
+        "signals": {
+          "visual_quality": "High" | "Medium" | "Low",
+          "brand_voice_consistency": "Strong" | "Mixed" | "Weak",
+          "market_positioning": "Clear" | "Vague",
+          "website_ux": "Modern" | "Outdated" | "Basic",
+          "social_presence": "Active" | "Sparse" | "None"
+        },
         "strategic_advice": [
-          { 
-            "title": "string", 
-            "description": "string", 
-            "impact": "High" | "Medium" | "Low" 
-          },
           { 
             "title": "string", 
             "description": "string", 
@@ -84,46 +111,41 @@ serve(async (req: Request) => {
     `;
 
     const contents = [];
-    
-    // Add images if present
     if (images && images.length > 0) {
        images.forEach((img: string) => {
           contents.push({
-             inlineData: {
-                mimeType: 'image/jpeg',
-                data: img
-             }
+             inlineData: { mimeType: 'image/jpeg', data: img }
           });
        });
     }
-    
     contents.push({ text: prompt });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: contents,
       config: {
-        responseMimeType: 'application/json', // Force JSON structure
-        tools: [{ googleSearch: {} }], // Enable Deep Research
-        thinkingConfig: { thinkingBudget: 2048 } // Enable Reasoning for complex audit
+        responseMimeType: 'application/json',
+        tools: [{ googleSearch: {} }],
+        thinkingConfig: { thinkingBudget: 2048 }
       }
     });
 
     let text = response.text;
     if (!text) throw new Error("No response from AI");
 
-    // Clean Markdown if present (just in case model wraps JSON despite config)
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const rawData = JSON.parse(text);
 
-    let json;
-    try {
-        json = JSON.parse(text);
-    } catch (e) {
-        console.error("JSON Parse Error", text);
-        throw new Error("AI returned invalid JSON format.");
-    }
+    // Calculate Deterministic Scores
+    const scores = calculateScores(rawData.signals);
 
-    return new Response(JSON.stringify(json), {
+    // Merge Scores into Response
+    const finalResult = {
+      ...rawData,
+      ...scores
+    };
+
+    return new Response(JSON.stringify(finalResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
