@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { NavItem, ButtonVariant } from '../types';
 import { Button } from '../components/Button';
 import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
 
 export const Layout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesHovered, setIsServicesHovered] = useState(false);
 
@@ -89,10 +90,19 @@ export const Layout: React.FC = () => {
                 Log In
              </Link>
              <Link to="/create-profile">
-                <Button variant={ButtonVariant.SECONDARY} className="hidden md:inline-flex py-2 px-4 text-[10px]">Sign Up</Button>
+                <Button 
+                  variant={ButtonVariant.SECONDARY} 
+                  className="hidden md:inline-flex py-2 px-4 text-[10px] transform hover:scale-105 active:scale-95 transition-all duration-200"
+                >
+                  Sign Up
+                </Button>
              </Link>
              <Link to="/shoot-wizard">
-                <Button className="hidden md:inline-flex py-2 px-4 text-[10px]">Book a Shoot</Button>
+                <Button 
+                  className="hidden md:inline-flex py-2 px-4 text-[10px] hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200"
+                >
+                  Book a Shoot
+                </Button>
              </Link>
              
              {/* Mobile Menu Toggle */}
@@ -134,13 +144,19 @@ export const Layout: React.FC = () => {
                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium border border-gray-200 rounded-lg p-4 text-center">
                       Log In
                    </Link>
-                   <Link to="/create-profile" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium bg-black text-white rounded-lg p-4 text-center">
+                   <Link 
+                      to="/create-profile" 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      className="text-xl font-serif font-medium bg-black text-white rounded-lg p-4 text-center transform hover:scale-105 active:scale-95 transition-all duration-200"
+                   >
                       Sign Up
                    </Link>
                 </div>
                 <div className="pt-4 pb-12">
                    <Link to="/shoot-wizard" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button className="w-full justify-center py-4 text-sm">Book a Shoot</Button>
+                      <Button className="w-full justify-center py-4 text-sm hover:ring-2 hover:ring-black hover:ring-offset-1 active:scale-95 transition-all duration-200">
+                        Book a Shoot
+                      </Button>
                    </Link>
                 </div>
              </nav>
