@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Clock, MoreHorizontal, GripVertical, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Clock, MoreHorizontal, GripVertical, CheckCircle2, AlertCircle, Play } from 'lucide-react';
 import { TimelineItem } from '../../../types/event-tools';
 import { useActiveCampaign } from '../../../contexts/ActiveCampaignContext';
 import { CampaignService } from '../../../services/data/campaigns';
 import { useToast } from '../../ToastProvider';
+import { LiveShowMode } from './LiveShowMode';
 
 export const EventTimeline: React.FC = () => {
   const { activeCampaign, refreshCampaign } = useActiveCampaign();
   const { addToast } = useToast();
   const [items, setItems] = useState<TimelineItem[]>([]);
+  const [isLiveMode, setIsLiveMode] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -71,17 +73,27 @@ export const EventTimeline: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {isLiveMode && <LiveShowMode timeline={items} onClose={() => setIsLiveMode(false)} />}
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="font-serif text-2xl text-[#1A1A1A]">Run of Show</h2>
           <p className="text-sm text-gray-500">Minute-by-minute production schedule.</p>
         </div>
-        <button 
-          onClick={handleAddItem}
-          className="flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors"
-        >
-          <Plus size={14} /> Add Segment
-        </button>
+        <div className="flex gap-3">
+           <button 
+             onClick={() => setIsLiveMode(true)}
+             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm animate-pulse"
+           >
+             <Play size={14} fill="currentColor" /> Launch Live Mode
+           </button>
+           <button 
+             onClick={handleAddItem}
+             className="flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors"
+           >
+             <Plus size={14} /> Add Segment
+           </button>
+        </div>
       </div>
 
       <div className="bg-white border border-[#E5E5E5] rounded-xl shadow-sm overflow-hidden">

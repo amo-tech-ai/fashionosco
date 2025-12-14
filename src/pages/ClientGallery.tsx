@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { GalleryAsset, AssetStatus, Comment } from '../types/gallery';
 import { PhotoCard } from '../components/gallery/PhotoCard';
 import { Lightbox } from '../components/gallery/Lightbox';
-import { Download, Wand2, Grid as GridIcon, Camera, Upload, Loader2 } from 'lucide-react';
+import { Wand2, Grid as GridIcon, Camera, Upload, Loader2 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useToast } from '../components/ToastProvider';
 import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
@@ -24,7 +24,6 @@ export const ClientGallery: React.FC = () => {
   // Load Assets from Active Campaign
   useEffect(() => {
     if (activeCampaign) {
-       // If real gallery data exists, use it
        if (activeCampaign.data?.galleryAssets) {
           setAssets(activeCampaign.data.galleryAssets);
        } else if (activeCampaign.data?.moodBoardImages && activeCampaign.data.moodBoardImages.length > 0) {
@@ -59,11 +58,10 @@ export const ClientGallery: React.FC = () => {
             rejected: updatedAssets.filter(a => a.status === 'rejected').length
         };
         
-        // Pass galleryStats to update method (if API supports it, otherwise store in data)
         const updatePayload: any = { data: { ...updatedData, galleryStats: stats } };
         
         await CampaignService.update(activeCampaign.id, updatePayload);
-        refreshCampaign();
+        // refreshCampaign(); // Optional: Might cause flicker if not careful, optimistically updated above
      } catch (e) {
         console.error("Failed to save gallery", e);
      }
@@ -109,7 +107,7 @@ export const ClientGallery: React.FC = () => {
     const assetId = assets[lightboxIndex].id;
     const newComment: Comment = {
       id: Date.now().toString(),
-      user: user?.user_metadata?.full_name?.split(' ')[0] || 'User',
+      user: user?.user_metadata?.full_name?.split(' ')[0] || 'Studio User',
       text: text,
       timestamp: 'Just now',
       x,
@@ -232,7 +230,7 @@ export const ClientGallery: React.FC = () => {
             </div>
          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-               {filteredAssets.map((asset, idx) => (
+               {filteredAssets.map((asset) => (
                   <PhotoCard 
                      key={asset.id} 
                      asset={asset} 

@@ -9,20 +9,23 @@ import {
   AlertCircle,
   CheckCircle,
   Sparkles,
-  DollarSign,
-  Package
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useToast } from '../components/ToastProvider';
 import { MagicImportModal } from '../components/products/MagicImportModal';
 import { ParsedProduct } from '../services/ai/productParser';
 import { Product } from '../types/products';
+import { generateLineSheetPDF } from '../services/pdf/lineSheet';
+import { BrandService } from '../services/data/brands';
 
 export const Products: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [products, setProducts] = useState<Product[]>([]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
   const { addToast } = useToast();
 
   // Load / Initialize Data
@@ -52,6 +55,16 @@ export const Products: React.FC = () => {
       localStorage.setItem('studio_inventory', JSON.stringify(products));
     }
   }, [products]);
+
+  const toggleSelection = (id: string | number) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
 
   const handleAddProduct = () => {
     const newProduct: Product = {
@@ -97,12 +110,27 @@ export const Products: React.FC = () => {
   const handleDelete = (id: number | string) => {
     if(confirm('Delete this product?')) {
       setProducts(products.filter(p => p.id !== id));
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
       addToast("Product removed", "info");
     }
   };
 
+  const handleExportLineSheet = async () => {
+    const selectedProducts = products.filter(p => selectedIds.has(p.id));
+    if (selectedProducts.length === 0) {
+      addToast("Select products to export first.", "error");
+      return;
+    }
+    
+    addToast("Generating PDF Line Sheet...", "info");
+    const brandProfile = await BrandService.get();
+    await generateLineSheetPDF(selectedProducts, brandProfile);
+    addToast("Line Sheet Downloaded", "success");
+    setSelectedIds(new Set());
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       
       <MagicImportModal 
          isOpen={isImportModalOpen} 
@@ -114,7 +142,7 @@ export const Products: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
            <h1 className="font-serif text-3xl text-[#1A1A1A]">Products</h1>
-           <p className="text-sm text-[#6B7280]">Manage inventory for Showroom and Shoots.</p>
+           <p className="text-sm text-gray-500">Manage inventory for Showroom and Shoots.</p>
         </div>
         <div className="flex items-center space-x-3 w-full md:w-auto">
            <div className="relative flex-1 md:w-64">
@@ -168,27 +196,36 @@ export const Products: React.FC = () => {
       {viewMode === 'grid' && (
          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
-               <div key={product.id} className="group bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex flex-col">
+               <div 
+                  key={product.id} 
+                  className={`group bg-white rounded-2xl border overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex flex-col ${selectedIds.has(product.id) ? 'border-purple-500 ring-1 ring-purple-500' : 'border-[#E5E5E5]'}`}
+                  onClick={() => toggleSelection(product.id)}
+               >
                   <div className="relative aspect-[3/4] bg-[#F7F7F5] overflow-hidden">
                      <img src={product.img} className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700" alt={product.name} />
-                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-white/90 backdrop-blur rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-colors">
-                           <MoreHorizontal size={16} />
-                        </button>
+                     
+                     <div className="absolute top-3 left-3 flex gap-2">
+                        {selectedIds.has(product.id) ? (
+                           <div className="bg-purple-600 text-white p-1 rounded-full shadow-sm">
+                              <CheckCircle size={14} />
+                           </div>
+                        ) : (
+                           <div className="w-6 h-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+                        )}
                      </div>
-                     <div className="absolute top-3 left-3">
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${
-                           product.status === 'Ready' ? 'bg-[#DCFCE7]/90 text-[#166534]' :
-                           product.status === 'Missing Info' ? 'bg-[#FEE2E2]/90 text-[#991B1B]' :
-                           'bg-[#FEF3C7]/90 text-[#92400E]'
-                        }`}>
-                           {product.status}
-                        </span>
+
+                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                           onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} 
+                           className="p-2 bg-white/90 backdrop-blur rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-colors"
+                        >
+                           <Trash2 size={16} />
+                        </button>
                      </div>
                   </div>
                   
                   {editingId === product.id ? (
-                     <div className="p-5 flex-1 space-y-3 bg-gray-50">
+                     <div className="p-5 flex-1 space-y-3 bg-gray-50" onClick={e => e.stopPropagation()}>
                         <input 
                            value={product.name} 
                            onChange={e => handleUpdate(product.id, 'name', e.target.value)}
@@ -211,8 +248,13 @@ export const Products: React.FC = () => {
                         <Button onClick={() => setEditingId(null)} className="w-full h-8 text-xs">Save</Button>
                      </div>
                   ) : (
-                     <div className="p-5 flex-1 flex flex-col" onClick={() => setEditingId(product.id)}>
-                        <h3 className="font-serif text-lg text-[#1A1A1A] mb-1 truncate leading-tight">{product.name}</h3>
+                     <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-1">
+                           <h3 className="font-serif text-lg text-[#1A1A1A] truncate leading-tight flex-1">{product.name}</h3>
+                           <button onClick={(e) => { e.stopPropagation(); setEditingId(product.id); }} className="text-gray-400 hover:text-black">
+                              <MoreHorizontal size={16} />
+                           </button>
+                        </div>
                         <p className="text-xs text-gray-500 mb-4">{product.category} • {product.sku}</p>
                         
                         <div className="mt-auto grid grid-cols-2 gap-2 pt-4 border-t border-gray-100">
@@ -238,6 +280,7 @@ export const Products: React.FC = () => {
             <table className="w-full text-left border-collapse">
                <thead>
                   <tr className="border-b border-[#E5E5E5] bg-[#F7F7F5]/50">
+                     <th className="w-12 py-4 px-6"></th>
                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-[#6B7280]">Product</th>
                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-[#6B7280]">SKU</th>
                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-[#6B7280]">Category</th>
@@ -249,7 +292,14 @@ export const Products: React.FC = () => {
                </thead>
                <tbody className="divide-y divide-[#E5E5E5]">
                   {products.map((product) => (
-                     <tr key={product.id} className="group hover:bg-[#F7F7F5] transition-colors">
+                     <tr 
+                        key={product.id} 
+                        className={`group hover:bg-[#F7F7F5] transition-colors cursor-pointer ${selectedIds.has(product.id) ? 'bg-purple-50 hover:bg-purple-50' : ''}`}
+                        onClick={() => toggleSelection(product.id)}
+                     >
+                        <td className="px-6 py-4">
+                           <div className={`w-4 h-4 border rounded ${selectedIds.has(product.id) ? 'bg-purple-600 border-purple-600' : 'border-gray-300'}`}></div>
+                        </td>
                         <td className="py-4 px-6">
                            <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-lg bg-[#F7F7F5] border border-[#E5E5E5] overflow-hidden">
@@ -266,8 +316,6 @@ export const Products: React.FC = () => {
                               product.status === 'Missing Info' ? 'bg-[#FEE2E2] text-[#991B1B]' :
                               'bg-[#FEF3C7] text-[#92400E]'
                            }`}>
-                              {product.status === 'Ready' && <CheckCircle size={10} className="mr-1" />}
-                              {product.status === 'Missing Info' && <AlertCircle size={10} className="mr-1" />}
                               {product.status}
                            </span>
                         </td>
@@ -276,19 +324,48 @@ export const Products: React.FC = () => {
                         </td>
                         <td className="py-4 px-6 text-xs text-gray-500">
                            <div className="flex items-center gap-2">
-                              <span className="bg-gray-100 px-2 py-1 rounded">MOQ: {product.moq}</span>
-                              <span className="bg-gray-100 px-2 py-1 rounded">Pack: {product.casePack}</span>
+                              <span className="bg-white border border-gray-200 px-2 py-1 rounded">MOQ: {product.moq}</span>
+                              <span className="bg-white border border-gray-200 px-2 py-1 rounded">Pack: {product.casePack}</span>
                            </div>
                         </td>
                         <td className="py-4 px-6 text-right">
-                           <button onClick={() => handleDelete(product.id)} className="p-2 rounded hover:bg-white text-[#9CA3AF] hover:text-red-500 transition-colors">
-                              <MoreHorizontal size={16} />
+                           <button 
+                              onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} 
+                              className="p-2 rounded hover:bg-white text-[#9CA3AF] hover:text-red-500 transition-colors"
+                           >
+                              <Trash2 size={16} />
                            </button>
                         </td>
                      </tr>
                   ))}
                </tbody>
             </table>
+         </div>
+      )}
+
+      {/* BULK ACTION BAR */}
+      {selectedIds.size > 0 && (
+         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-4 duration-500">
+            <span className="text-xs font-bold uppercase tracking-widest">{selectedIds.size} Items Selected</span>
+            <div className="h-4 w-px bg-white/20"></div>
+            <div className="flex gap-4">
+               <button 
+                  onClick={handleExportLineSheet}
+                  className="text-xs font-medium hover:text-[#E5D7A4] transition-colors flex items-center gap-2"
+               >
+                  <FileText size={14} /> Export Line Sheet
+               </button>
+               <button className="text-xs font-medium hover:text-[#E5D7A4] transition-colors">Move to Shoot</button>
+               <button 
+                  onClick={() => {
+                     selectedIds.forEach(id => handleDelete(id));
+                     setSelectedIds(new Set());
+                  }}
+                  className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors"
+               >
+                  Delete
+               </button>
+            </div>
          </div>
       )}
 

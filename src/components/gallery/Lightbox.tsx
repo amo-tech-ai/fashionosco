@@ -21,13 +21,17 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return;
     
+    // Calculate relative coordinates (0-100%)
     const rect = imageContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     
     setPendingPin({ x, y });
-    // Focus comment input
-    document.getElementById('comment-input')?.focus();
+    
+    // Focus comment input automatically
+    setTimeout(() => {
+        document.getElementById('comment-input')?.focus();
+    }, 50);
   };
 
   const handleSubmitComment = () => {
@@ -38,7 +42,7 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
     }
   };
 
-  // Handle keydown for navigation
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === 'TEXTAREA') return;
@@ -54,46 +58,49 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, onNext, onPrev, onUpdateStatus]);
 
-  // Clear pending pin when changing assets
+  // Reset local state when sliding to next image
   useEffect(() => {
     setPendingPin(null);
     setCommentText('');
   }, [asset.id]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0a] flex animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] bg-[#0a0a0a] flex animate-in fade-in duration-200">
       
       {/* Main Image Area */}
-      <div className="flex-1 relative flex items-center justify-center p-8 group/main">
+      <div className="flex-1 relative flex items-center justify-center p-4 md:p-8 group/main">
+         {/* Clickable Container */}
          <div 
             ref={imageContainerRef}
-            className="relative inline-block max-h-full max-w-full shadow-2xl cursor-crosshair"
+            className="relative inline-block max-h-full max-w-full shadow-2xl cursor-crosshair select-none"
             onClick={handleImageClick}
          >
             <img 
                src={asset.url} 
                alt={asset.filename} 
-               className="max-h-[calc(100vh-64px)] max-w-full object-contain pointer-events-none select-none" 
+               className="max-h-[calc(100vh-64px)] max-w-full object-contain pointer-events-none" 
             />
             
-            {/* Existing Comment Pins */}
+            {/* Render Existing Pins */}
             {asset.comments.map((comment) => (
                comment.x && comment.y && (
                   <div
                      key={comment.id}
-                     className={`absolute w-6 h-6 -ml-3 -mt-3 rounded-full border-2 shadow-sm flex items-center justify-center text-[10px] font-bold transition-transform duration-200 ${
+                     className={`absolute w-6 h-6 -ml-3 -mt-3 rounded-full border-2 shadow-sm flex items-center justify-center text-[10px] font-bold transition-all duration-200 cursor-pointer z-20 ${
                         hoveredCommentId === comment.id 
-                        ? 'bg-purple-600 border-white text-white scale-125 z-20' 
-                        : 'bg-white/90 border-purple-600 text-purple-700 hover:scale-110 z-10'
+                        ? 'bg-purple-600 border-white text-white scale-125' 
+                        : 'bg-white/90 border-purple-600 text-purple-700 hover:scale-110'
                      }`}
                      style={{ left: `${comment.x}%`, top: `${comment.y}%` }}
+                     onMouseEnter={() => setHoveredCommentId(comment.id)}
+                     onMouseLeave={() => setHoveredCommentId(null)}
                   >
-                     <span className="sr-only">{comment.user}</span>
+                     <span className="sr-only">Comment location</span>
                   </div>
                )
             ))}
 
-            {/* Pending Pin */}
+            {/* Render Pending Pin */}
             {pendingPin && (
                <div
                   className="absolute w-6 h-6 -ml-3 -mt-3 rounded-full bg-purple-600 border-2 border-white shadow-lg animate-bounce z-30"
@@ -103,7 +110,7 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
             )}
          </div>
          
-         {/* Navigation Overlays */}
+         {/* Navigation Arrows */}
          <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors hover:bg-black/20 rounded-full">
             <ChevronLeft size={48} />
          </button>
@@ -111,7 +118,7 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
             <ChevronRight size={48} />
          </button>
 
-         {/* Top Bar */}
+         {/* Top Overlay */}
          <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent opacity-0 group-hover/main:opacity-100 transition-opacity pointer-events-none">
             <div className="text-white/80 font-mono text-sm pointer-events-auto">{asset.filename}</div>
             <button onClick={onClose} className="text-white hover:text-gray-300 pointer-events-auto">
@@ -120,14 +127,14 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
          </div>
       </div>
 
-      {/* Sidebar - Details & Actions */}
+      {/* Sidebar */}
       <div className="w-96 bg-[#111111] border-l border-white/10 flex flex-col shrink-0">
          <div className="p-6 border-b border-white/10">
             <h3 className="text-white font-serif text-xl mb-1">Review</h3>
-            <p className="text-gray-500 text-xs">Click image to drop a retouching pin.</p>
+            <p className="text-gray-500 text-xs">Click anywhere on the image to pin a comment.</p>
          </div>
 
-         {/* Action Buttons */}
+         {/* Actions */}
          <div className="p-6 grid grid-cols-3 gap-2 border-b border-white/10">
             <button 
                onClick={() => onUpdateStatus('rejected')}
@@ -152,79 +159,64 @@ export const Lightbox: React.FC<LightboxProps> = ({ asset, onClose, onNext, onPr
             </button>
          </div>
 
-         {/* Metadata */}
+         {/* Comments Stream */}
          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-            <div className="space-y-2">
-               <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Info size={12} /> Metadata
+            <div className="pt-0 space-y-3">
+               <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2 mb-4">
+                  <MessageSquare size={12} /> Feedback Log
                </h4>
-               <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-300">
-                  <span className="text-gray-500">Camera</span> <span>{asset.metadata.camera}</span>
-                  <span className="text-gray-500">Lens</span> <span>85mm</span>
-                  <span className="text-gray-500">Aperture</span> <span>{asset.metadata.fStop}</span>
-                  <span className="text-gray-500">ISO</span> <span>{asset.metadata.iso}</span>
-                  <span className="text-gray-500">Shutter</span> <span>{asset.metadata.shutter}</span>
-               </div>
-            </div>
-
-            <div className="pt-4 border-t border-white/10 space-y-3">
-               <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <MessageSquare size={12} /> Comments
-               </h4>
-               <div className="space-y-3">
-                  {asset.comments.length === 0 ? (
-                     <p className="text-sm text-gray-600 italic">No comments yet. Click image to add one.</p>
-                  ) : (
-                     asset.comments.map(comment => (
-                        <div 
-                           key={comment.id} 
-                           className={`p-3 rounded text-sm transition-colors cursor-default ${hoveredCommentId === comment.id ? 'bg-white/10 border-l-2 border-purple-500' : 'bg-white/5 border-l-2 border-transparent'}`}
-                           onMouseEnter={() => setHoveredCommentId(comment.id)}
-                           onMouseLeave={() => setHoveredCommentId(null)}
-                        >
-                           <div className="flex justify-between text-xs mb-1">
-                              <span className="font-bold text-white flex items-center gap-2">
-                                 {comment.x && <MapPin size={10} className="text-purple-400" />}
-                                 {comment.user}
-                              </span>
-                              <span className="text-gray-500">{comment.timestamp}</span>
-                           </div>
-                           <p className="text-gray-300">{comment.text}</p>
-                        </div>
-                     ))
-                  )}
-               </div>
                
-               <div className="pt-4 sticky bottom-0 bg-[#111111]">
-                  {pendingPin && (
-                     <div className="flex items-center gap-2 mb-2 text-xs text-purple-400 animate-in fade-in slide-in-from-bottom-2">
-                        <MapPin size={12} />
-                        Pin placed at {Math.round(pendingPin.x)}%, {Math.round(pendingPin.y)}%
-                        <button onClick={() => setPendingPin(null)} className="text-gray-500 hover:text-white ml-auto">Cancel</button>
+               {asset.comments.length === 0 ? (
+                  <p className="text-sm text-gray-600 italic">No comments yet. Be the first.</p>
+               ) : (
+                  asset.comments.map(comment => (
+                     <div 
+                        key={comment.id} 
+                        className={`p-3 rounded text-sm transition-colors cursor-default border-l-2 ${
+                           hoveredCommentId === comment.id 
+                           ? 'bg-white/10 border-purple-500' 
+                           : 'bg-white/5 border-transparent hover:bg-white/10'
+                        }`}
+                        onMouseEnter={() => setHoveredCommentId(comment.id)}
+                        onMouseLeave={() => setHoveredCommentId(null)}
+                     >
+                        <div className="flex justify-between text-xs mb-1">
+                           <span className="font-bold text-white flex items-center gap-2">
+                              {comment.x && <MapPin size={10} className="text-purple-400" />}
+                              {comment.user}
+                           </span>
+                           <span className="text-gray-500">{comment.timestamp}</span>
+                        </div>
+                        <p className="text-gray-300">{comment.text}</p>
                      </div>
-                  )}
-                  <textarea 
-                     id="comment-input"
-                     value={commentText}
-                     onChange={(e) => setCommentText(e.target.value)}
-                     placeholder={pendingPin ? "Describe the edit needed here..." : "Add a general note..."} 
-                     className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none resize-none h-20 transition-colors"
-                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitComment())}
-                  ></textarea>
-                  <button 
-                     onClick={handleSubmitComment}
-                     disabled={!commentText.trim()}
-                     className="w-full bg-white text-black py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-200 mt-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                     Post Comment
-                  </button>
-               </div>
+                  ))
+               )}
             </div>
          </div>
 
-         <div className="p-6 border-t border-white/10">
-            <button className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
-               <Download size={14} /> Download Preview
+         {/* Comment Input */}
+         <div className="p-6 bg-[#111111] border-t border-white/10">
+            {pendingPin && (
+               <div className="flex items-center gap-2 mb-2 text-xs text-purple-400 animate-in fade-in slide-in-from-bottom-2">
+                  <MapPin size={12} />
+                  <span>Pin placed at {Math.round(pendingPin.x)}%, {Math.round(pendingPin.y)}%</span>
+                  <button onClick={() => setPendingPin(null)} className="text-gray-500 hover:text-white ml-auto">Cancel</button>
+               </div>
+            )}
+            <textarea 
+               id="comment-input"
+               value={commentText}
+               onChange={(e) => setCommentText(e.target.value)}
+               placeholder={pendingPin ? "Describe correction needed..." : "Add a general note..."} 
+               className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none resize-none h-20 transition-colors"
+               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitComment())}
+            ></textarea>
+            <button 
+               onClick={handleSubmitComment}
+               disabled={!commentText.trim()}
+               className="w-full bg-white text-black py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-200 mt-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+               Post Feedback
             </button>
          </div>
       </div>
