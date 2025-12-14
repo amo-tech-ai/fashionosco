@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Camera, Scissors, ShoppingBag, Video, Play, Star, Search, Calendar, Wand2, Share2, Upload, Layers, Download, Bot, Type, Clapperboard, Sparkles } from 'lucide-react';
+import { ArrowRight, Camera, Scissors, ShoppingBag, Video, Play, Star, Search, Calendar, Wand2, Share2, Upload, Layers, Download, Bot, Type, Clapperboard, Sparkles, TrendingUp, Target, BarChart3 } from 'lucide-react';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -149,82 +149,123 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. HERITAGE */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-[1440px] mx-auto">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                <div className="lg:col-span-5 relative">
-                   <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" alt="Fashion Heritage" className="w-full h-[600px] object-cover grayscale hover:grayscale-0 transition-all duration-700" />
-                </div>
-                <div className="lg:col-span-7 flex flex-col justify-center pl-0 lg:pl-12">
-                   <span className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-4">Our Heritage</span>
-                   <h2 className="font-serif text-5xl md:text-6xl mb-8 text-black">
-                      20+ years in the <br />fashion industry.
-                   </h2>
-                   <p className="text-xl text-gray-600 mb-8 max-w-2xl font-light">
-                      From boutique labels to Fortune 500 brands, we've mastered the art of capturing fashion that sells. Our extensive portfolio includes work for fashion houses, beauty brands, jewelry designers, and lifestyle companies across the globe.
-                   </p>
-                   <ul className="space-y-4 mb-10">
-                      {[
-                         'Global runway coverage',
-                         'Campaigns for independent labels',
-                         'Ecommerce & catalog production',
-                         'Creative consultation'
-                      ].map((item, idx) => (
-                         <li key={idx} className="flex items-center text-sm font-medium">
-                            <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 text-xs">
-                               <Star className="w-3 h-3" />
-                            </span>
-                            {item}
-                         </li>
-                      ))}
-                   </ul>
-                   <div className="flex items-center space-x-2 text-xs font-bold tracking-widest uppercase cursor-pointer group">
-                      <span>See Client Stories</span>
-                      <ArrowRight className="w-4 h-4 transform group-hover:translate-x-2 transition-transform" />
-                   </div>
-                </div>
-             </div>
-        </div>
+      {/* NEW: FOR DESIGNERS / BRAND AUDIT */}
+      <section className="py-24 px-6 bg-[#111111] text-white overflow-hidden relative">
+         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none"></div>
+         <div className="max-w-[1440px] mx-auto relative z-10">
+            <div className="flex flex-col lg:flex-row gap-16 items-center">
+               <div className="lg:w-1/2 space-y-8">
+                  <div>
+                     <span className="text-xs font-bold tracking-[0.2em] uppercase text-purple-400 mb-2 block">For Brands</span>
+                     <h2 className="font-serif text-5xl md:text-6xl text-white leading-tight">
+                        Define Your <br/>Digital Identity.
+                     </h2>
+                  </div>
+                  <p className="text-gray-400 text-lg font-light leading-relaxed max-w-md">
+                     Use our AI Brand Architect to analyze your market positioning, identify competitors, and build a strategic roadmap for your next collection.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                     <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <Target className="text-purple-400 shrink-0" size={20} />
+                        <div>
+                           <h4 className="font-bold text-sm mb-1">Deep Research</h4>
+                           <p className="text-xs text-gray-500">AI scans press & social to find your niche.</p>
+                        </div>
+                     </div>
+                     <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <BarChart3 className="text-blue-400 shrink-0" size={20} />
+                        <div>
+                           <h4 className="font-bold text-sm mb-1">Competitor Intel</h4>
+                           <p className="text-xs text-gray-500">Benchmark your pricing against the market.</p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="pt-4">
+                     <Button 
+                        onClick={() => navigate('/brand-audit')}
+                        className="bg-white text-black hover:bg-gray-200 border-none px-8 py-4 text-xs font-bold uppercase tracking-widest"
+                     >
+                        <Sparkles size={16} className="mr-2" /> Start Brand Audit
+                     </Button>
+                  </div>
+               </div>
+
+               <div className="lg:w-1/2 relative">
+                  {/* Mock Interface Card */}
+                  <div className="bg-white rounded-xl shadow-2xl p-6 relative transform rotate-2 hover:rotate-0 transition-transform duration-700">
+                     <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-100">
+                        <div>
+                           <div className="text-sm font-bold text-gray-900">Atelier Noir</div>
+                           <div className="text-xs text-gray-500 uppercase tracking-widest">Brand Health</div>
+                        </div>
+                        <div className="text-3xl font-serif">85<span className="text-sm text-gray-400">/100</span></div>
+                     </div>
+                     <div className="space-y-4">
+                        <div className="flex justify-between text-xs font-medium">
+                           <span className="text-gray-500">Visual Consistency</span>
+                           <span className="text-green-600">High</span>
+                        </div>
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                           <div className="bg-green-500 h-full w-[85%]"></div>
+                        </div>
+                        <div className="flex justify-between text-xs font-medium pt-2">
+                           <span className="text-gray-500">Market Clarity</span>
+                           <span className="text-purple-600">Good</span>
+                        </div>
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                           <div className="bg-purple-500 h-full w-[72%]"></div>
+                        </div>
+                     </div>
+                     <div className="mt-8 pt-6 border-t border-gray-100 flex gap-2">
+                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Minimalist</span>
+                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Luxury</span>
+                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Sustainable</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
       </section>
 
       {/* 5. ECOMMERCE FEATURE BLOCK */}
-      <section className="py-32 bg-slate-900 text-white px-6">
+      <section className="py-32 bg-slate-50 px-6">
         <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-               <h2 className="font-serif text-4xl md:text-5xl mb-6 leading-tight">Ecommerce Product Photography.</h2>
-               <p className="text-slate-400 text-lg mb-8 max-w-md">Clean, high-fidelity product photography increases conversion and reduces returns. We provide styling, shooting, and retouching optimized for Shopify, Amazon, and luxury marketplaces.</p>
+               <h2 className="font-serif text-4xl md:text-5xl mb-6 leading-tight text-[#1A1A1A]">Ecommerce Product Photography.</h2>
+               <p className="text-gray-500 text-lg mb-8 max-w-md">Clean, high-fidelity product photography increases conversion and reduces returns. We provide styling, shooting, and retouching optimized for Shopify, Amazon, and luxury marketplaces.</p>
                <div className="space-y-6">
                   <div className="flex items-start">
                      <div className="mt-1 mr-4">
-                        <div className="w-5 h-5 rounded-full border border-slate-600 flex items-center justify-center">
-                           <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-5 h-5 rounded-full border border-gray-400 flex items-center justify-center">
+                           <div className="w-2 h-2 bg-black rounded-full"></div>
                         </div>
                      </div>
                      <div>
-                        <h4 className="font-bold text-sm">Consistent Lighting & Styling</h4>
-                        <p className="text-xs text-slate-500 mt-1">Ensure your collection looks cohesive on the grid.</p>
+                        <h4 className="font-bold text-sm text-[#1A1A1A]">Consistent Lighting & Styling</h4>
+                        <p className="text-xs text-gray-500 mt-1">Ensure your collection looks cohesive on the grid.</p>
                      </div>
                   </div>
                   <div className="flex items-start">
                      <div className="mt-1 mr-4">
-                        <div className="w-5 h-5 rounded-full border border-slate-600 flex items-center justify-center">
-                           <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-5 h-5 rounded-full border border-gray-400 flex items-center justify-center">
+                           <div className="w-2 h-2 bg-black rounded-full"></div>
                         </div>
                      </div>
                      <div>
-                        <h4 className="font-bold text-sm">On-Model, Flat-Lay, or Ghost Mannequin</h4>
-                        <p className="text-xs text-slate-500 mt-1">Versatile shooting styles to match your brand guidelines.</p>
+                        <h4 className="font-bold text-sm text-[#1A1A1A]">On-Model, Flat-Lay, or Ghost Mannequin</h4>
+                        <p className="text-xs text-gray-500 mt-1">Versatile shooting styles to match your brand guidelines.</p>
                      </div>
                   </div>
                </div>
                <div className="mt-10">
-                  <Button variant={ButtonVariant.SECONDARY} className="bg-white text-black border-none hover:bg-slate-200">View Ecommerce Packages</Button>
+                  <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/services/ecommerce')}>View Ecommerce Packages</Button>
                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-               <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2940&auto=format&fit=crop" alt="Shoe Product" className="rounded-lg opacity-80 hover:opacity-100 transition-opacity duration-500" />
-               <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2899&auto=format&fit=crop" alt="Watch Product" className="rounded-lg mt-12 opacity-80 hover:opacity-100 transition-opacity duration-500" />
+               <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2940&auto=format&fit=crop" alt="Shoe Product" className="rounded-lg opacity-90 hover:opacity-100 transition-opacity duration-500 shadow-md" />
+               <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2899&auto=format&fit=crop" alt="Watch Product" className="rounded-lg mt-12 opacity-90 hover:opacity-100 transition-opacity duration-500 shadow-md" />
             </div>
         </div>
       </section>
@@ -334,7 +375,7 @@ export const Home: React.FC = () => {
             </div>
             
             <div className="mt-12 text-center">
-               <Button variant={ButtonVariant.SECONDARY}>Browse Full Directory</Button>
+               <Button variant={ButtonVariant.SECONDARY} onClick={() => navigate('/directory')}>Browse Full Directory</Button>
             </div>
          </div>
       </section>
@@ -375,7 +416,7 @@ export const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* 10. ULTRA-PREMIUM USER JOURNEY FLOW (Refined) */}
+      {/* 10. USER JOURNEY FLOW */}
       <section className="py-32 px-6 relative overflow-hidden bg-slate-50">
         {/* Soft Ambient Background */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -441,114 +482,6 @@ export const Home: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* 11. AI SERVICES (New Section) */}
-      <section className="py-24 px-6 bg-white">
-         <div className="max-w-[1440px] mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16">
-               <div>
-                  <span className="text-xs font-bold tracking-widest uppercase text-purple-600 mb-2 block">Intelligence</span>
-                  <h2 className="font-serif text-4xl md:text-5xl font-medium">FashionOS AI Suite</h2>
-               </div>
-               <p className="text-gray-500 max-w-sm mt-4 md:mt-0">
-                  Proprietary tools designed to accelerate creative direction and post-production.
-               </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-               {[
-                  { icon: Sparkles, title: "Photo Enhancer", desc: "Upscale & retouch in seconds." },
-                  { icon: Bot, title: "Creative Assistant", desc: "Generate concepts & moodboards." },
-                  { icon: Type, title: "Caption Generator", desc: "SEO-optimized social copy." },
-                  { icon: Clapperboard, title: "Storyboard Builder", desc: "Visualize video flows instantly." }
-               ].map((tool, i) => (
-                  <div key={i} className="group relative p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:border-transparent transition-all overflow-hidden">
-                     {/* Gradient Border Effect on Hover */}
-                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                     <div className="absolute inset-0 border-2 border-transparent group-hover:border-purple-100 rounded-2xl pointer-events-none transition-colors"></div>
-                     
-                     <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-black mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10">
-                        <tool.icon size={24} strokeWidth={1} />
-                     </div>
-                     <h3 className="font-bold text-lg mb-2 relative z-10">{tool.title}</h3>
-                     <p className="text-sm text-gray-500 leading-relaxed relative z-10">{tool.desc}</p>
-                     
-                     {/* Decorative abstract shape */}
-                     <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-purple-100 rounded-full blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500"></div>
-                  </div>
-               ))}
-            </div>
-         </div>
-      </section>
-
-      {/* 12. AI WORKFLOW DIAGRAM (New Section) */}
-      <section className="py-24 px-6 bg-slate-900 text-white">
-         <div className="max-w-[1440px] mx-auto">
-            <div className="text-center mb-16">
-               <h2 className="font-serif text-3xl md:text-4xl mb-6">AI Processing Pipeline</h2>
-               <p className="text-slate-400">Automated enhancement at enterprise scale.</p>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
-               {/* Step 1 */}
-               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                     <Upload size={20} className="text-blue-400" />
-                  </div>
-                  <h4 className="font-bold text-sm">Upload RAW</h4>
-               </div>
-
-               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
-               <div className="md:hidden h-8 w-px bg-slate-700"></div>
-
-               {/* Step 2 */}
-               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-purple-500/10 animate-pulse"></div>
-                  <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center mb-4 relative z-10">
-                     <Wand2 size={20} className="text-purple-400" />
-                  </div>
-                  <h4 className="font-bold text-sm relative z-10">AI Enhance</h4>
-               </div>
-
-               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
-               <div className="md:hidden h-8 w-px bg-slate-700"></div>
-
-               {/* Step 3 */}
-               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                     <Layers size={20} className="text-pink-400" />
-                  </div>
-                  <h4 className="font-bold text-sm">Apply Style</h4>
-               </div>
-
-               <ArrowRight className="hidden md:block text-slate-600 rotate-90 md:rotate-0" />
-               <div className="md:hidden h-8 w-px bg-slate-700"></div>
-
-               {/* Step 4 */}
-               <div className="w-full md:w-64 bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                     <Download size={20} className="text-green-400" />
-                  </div>
-                  <h4 className="font-bold text-sm">Export HD</h4>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* 13. BEHIND THE SCENES */}
-      <section className="relative h-[80vh] bg-fixed bg-cover bg-center flex items-center justify-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2942&auto=format&fit=crop')" }}>
-         <div className="absolute inset-0 bg-black/40"></div>
-         <div className="relative z-10 text-center text-white">
-             <div className="w-20 h-20 rounded-full border-2 border-white flex items-center justify-center mx-auto mb-8 cursor-pointer hover:bg-white hover:text-black transition-colors duration-300">
-                <Play className="w-8 h-8 ml-1" fill="currentColor" />
-             </div>
-             <h2 className="font-serif text-5xl md:text-7xl mb-4">Behind the scenes.</h2>
-             <p className="text-xl max-w-md mx-auto opacity-90">Take a peek at how we plan, light, and shoot your campaigns.</p>
-             <div className="mt-8">
-               <button className="bg-white text-black px-8 py-3 text-xs font-bold uppercase tracking-widest">Watch The Studio Tour</button>
-             </div>
-         </div>
       </section>
 
       {/* 14. CTA */}

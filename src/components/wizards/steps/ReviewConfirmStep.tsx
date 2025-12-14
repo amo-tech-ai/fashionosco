@@ -9,82 +9,75 @@ import { generateCallSheetPDF } from '../../../services/pdf/callSheet';
 import { CampaignService, Campaign } from '../../../services/data/campaigns';
 import { StorageService } from '../../../services/storage';
 import { useAuth } from '../../../contexts/AuthContext';
+import { PaymentModal } from '../../commerce/PaymentModal';
 
 export const ReviewConfirmStep: React.FC = () => {
   const { state, prevStep, resetWizard } = useShootWizard();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { user } = useAuth();
 
-  const handleSubmit = async () => {
+  const handleBookClick = () => {
     if (!user) {
         addToast("Please log in to book a shoot.", "error");
         navigate('/login', { state: { returnTo: '/shoot-wizard' } });
         return;
     }
+    // Open Payment Modal instead of immediate submit
+    setShowPayment(true);
+  };
 
+  const handlePaymentSuccess = async (invoiceId: string) => {
     setIsSubmitting(true);
     
     try {
-        // 1. Process Images via Storage Service (if any new files are present)
+        // 1. Process Images via Storage Service
         let savedImageUrls: string[] = [];
         if (state.moodBoardImages.length > 0) {
-            // Check if items are actually Files or strings (URLs)
             const filesToUpload = state.moodBoardImages.filter(img => img instanceof File) as File[];
             const existingUrls = state.moodBoardImages.filter(img => typeof img === 'string') as unknown as string[];
             
             if (filesToUpload.length > 0) {
-               const newUrls = await StorageService.uploadFiles(
-                   filesToUpload, 
-                   'moodboards', 
-                   user.id
-               );
+               const newUrls = await StorageService.uploadFiles(filesToUpload, 'moodboards', user.id);
                savedImageUrls = [...existingUrls, ...newUrls];
             } else {
                savedImageUrls = existingUrls;
             }
         }
 
-        // 2. Prepare Data State (Swap File objects for URLs)
-        const campaignData = {
-            ...state,
-            moodBoardImages: savedImageUrls 
-        };
-
-        // 3. Prepare Campaign Object
+        // 2. Prepare Campaign Data
         const newCampaign: Campaign = {
             id: `SHOOT-${Date.now().toString().slice(-6)}`,
             type: 'shoot',
             title: `${state.shootType ? state.shootType.charAt(0).toUpperCase() + state.shootType.slice(1) : 'Custom'} Shoot`,
-            status: 'Planning', // 'Planning' maps to 'planning' in DB service
+            status: 'Pre-Production', // Promoted from 'Planning' because they paid
             client: user.email || 'FashionOS User',
             date: state.date ? state.date.toISOString() : null,
-            progress: 15,
-            data: campaignData,
-            totalPrice: state.totalPrice, // Pass directly for service to map to total_price column
+            progress: 25, // Higher progress due to payment
+            data: { ...state, moodBoardImages: savedImageUrls, invoiceId },
+            totalPrice: state.totalPrice,
             location: state.location,
             createdAt: new Date().toISOString(),
             lastUpdated: new Date().toISOString(),
             user_id: user.id
         };
 
-        // 4. Save via Service
+        // 3. Save
         const saved = await CampaignService.save(newCampaign);
         
-        // 5. Set Active Campaign immediately so dashboard shows it
         if (saved && saved.id) {
             localStorage.setItem('active_campaign_id', saved.id);
         }
         
         localStorage.removeItem('wizard_state');
         setIsSuccess(true);
-        addToast("Booking request submitted successfully!", "success");
 
     } catch (error) {
         console.error("Booking failed", error);
-        addToast("Failed to submit booking. Please try again.", "error");
+        addToast("Failed to finalize booking record. Contact support.", "error");
     } finally {
         setIsSubmitting(false);
     }
@@ -107,7 +100,7 @@ export const ReviewConfirmStep: React.FC = () => {
            </div>
            <h2 className="font-serif text-4xl mb-4 text-gray-900">Booking Confirmed!</h2>
            <p className="text-gray-500 mb-8 max-w-md mx-auto text-lg font-light">
-              Your shoot has been reserved. Our production team has received your AI-generated brief and will contact you shortly.
+              Payment received. Your shoot is now in pre-production. Our team will review your AI brief and confirm the crew within 24 hours.
            </p>
            <div className="flex gap-4">
               <Button variant="secondary" onClick={handleDownloadPDF} className="flex items-center gap-2">
@@ -121,6 +114,15 @@ export const ReviewConfirmStep: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      <PaymentModal 
+         isOpen={showPayment} 
+         onClose={() => setShowPayment(false)} 
+         amount={state.deposit} 
+         description={`${state.shootType} Shoot Deposit`}
+         onSuccess={handlePaymentSuccess}
+      />
+
       <div>
         <h2 className="font-serif text-3xl md:text-4xl text-gray-900 mb-2">Review & Confirm.</h2>
         <p className="text-gray-500 font-light">Please check your details before proceeding to payment.</p>
@@ -217,8 +219,8 @@ export const ReviewConfirmStep: React.FC = () => {
 
       <div className="flex justify-between pt-8 border-t border-gray-100">
         <Button variant="secondary" onClick={prevStep}>Back</Button>
-        <Button onClick={handleSubmit} isLoading={isSubmitting} className="px-8">
-            {user ? 'Pay Deposit & Book' : 'Log In to Book'}
+        <Button onClick={handleBookClick} isLoading={isSubmitting} className="px-8">
+            {user ? `Pay Deposit $${state.deposit}` : 'Log In to Book'}
         </Button>
       </div>
     </div>

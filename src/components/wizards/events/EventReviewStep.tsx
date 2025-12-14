@@ -7,6 +7,7 @@ import { useToast } from '../../ToastProvider';
 import { CampaignService, Campaign } from '../../../services/data/campaigns';
 import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { PaymentModal } from '../../commerce/PaymentModal';
 
 export const EventReviewStep: React.FC = () => {
   const { state, reset } = useEventWizard();
@@ -14,14 +15,18 @@ export const EventReviewStep: React.FC = () => {
   const { addToast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleBookClick = () => {
     if (!user) {
         addToast("Please log in to book an event.", "error");
         navigate('/login', { state: { returnTo: '/event-wizard' } });
         return;
     }
+    setShowPayment(true);
+  };
 
+  const handlePaymentSuccess = async (invoiceId: string) => {
     setIsSubmitting(true);
     
     try {
@@ -29,11 +34,11 @@ export const EventReviewStep: React.FC = () => {
             id: `EVT-${Date.now().toString().slice(-6)}`,
             type: 'event',
             title: state.eventName,
-            status: 'Planning',
+            status: 'Confirmed', // Paid status
             client: user.email || 'FashionOS User',
             date: state.date ? state.date.toISOString() : null,
-            progress: 10,
-            data: state, // Persist full wizard state
+            progress: 20, // Events start at 20% when paid
+            data: { ...state, invoiceId }, 
             totalPrice: state.totalPrice,
             location: state.venueType || 'TBD',
             createdAt: new Date().toISOString(),
@@ -47,8 +52,8 @@ export const EventReviewStep: React.FC = () => {
             localStorage.setItem('active_campaign_id', saved.id);
         }
         
-        addToast("Event brief created successfully!", "success");
-        reset(); // Clear wizard context
+        addToast("Event secured! Check your dashboard.", "success");
+        reset(); 
         navigate('/dashboard');
     } catch (error) {
         console.error("Failed to save event", error);
@@ -60,6 +65,14 @@ export const EventReviewStep: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+      <PaymentModal 
+         isOpen={showPayment} 
+         onClose={() => setShowPayment(false)} 
+         amount={state.deposit} 
+         description={`${state.eventName} - Event Deposit`}
+         onSuccess={handlePaymentSuccess}
+      />
+
       <div className="text-center">
         <h2 className="font-serif text-4xl mb-2">Review & Confirm</h2>
         <p className="text-gray-500">Your event production brief.</p>
@@ -101,13 +114,13 @@ export const EventReviewStep: React.FC = () => {
       </div>
 
       <div className="flex justify-center pt-8">
-         <Button onClick={handleSubmit} disabled={isSubmitting} className="px-12 py-4">
+         <Button onClick={handleBookClick} disabled={isSubmitting} className="px-12 py-4">
             {isSubmitting ? (
                 <span className="flex items-center gap-2">
                     <Loader2 className="animate-spin" size={16} /> Processing...
                 </span>
             ) : (
-                'Submit Brief & Pay Deposit'
+                `Secure Date - Pay $${state.deposit.toLocaleString()}`
             )}
          </Button>
       </div>

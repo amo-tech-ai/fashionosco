@@ -26,6 +26,20 @@ export const BuyerApplicationPage: React.FC = () => {
       const data = await vetBuyerApplication(formData);
       setResult(data);
       setStep('result');
+      
+      // PERSIST APPLICATION FOR CRM VISIBILITY
+      // In production, this would be a Supabase Insert
+      const newApp = {
+         id: `app-${Date.now()}`,
+         ...formData,
+         ...data,
+         status: data.verdict === 'Approve' ? 'Approved' : 'Pending',
+         date: new Date().toISOString()
+      };
+      
+      const existingApps = JSON.parse(localStorage.getItem('retailer_applications') || '[]');
+      localStorage.setItem('retailer_applications', JSON.stringify([newApp, ...existingApps]));
+
     } catch (e) {
       setStep('form');
     }

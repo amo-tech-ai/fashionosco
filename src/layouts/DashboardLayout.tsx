@@ -18,10 +18,12 @@ import {
   Clock,
   Ticket,
   Grid,
-  Briefcase
+  Briefcase,
+  CreditCard
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { ActiveCampaignProvider, useActiveCampaign } from '../contexts/ActiveCampaignContext';
+import { useToast } from '../components/ToastProvider';
 
 // We separate the sidebar component to use the context inside the provider
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
@@ -146,9 +148,17 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
           <span className="text-xs font-semibold uppercase tracking-wider text-[#6B7280]">Workspace</span>
         </div>
         <Link
+          to="/dashboard/billing"
+          onClick={onClose}
+          className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${location.pathname === '/dashboard/billing' ? 'bg-[#F7F7F5] text-[#1A1A1A]' : 'text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#1A1A1A]'}`}
+        >
+          <CreditCard size={18} className="mr-3 text-[#9CA3AF] group-hover:text-[#1A1A1A]" />
+          Billing & Invoices
+        </Link>
+        <Link
           to="/dashboard/settings"
           onClick={onClose}
-          className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#1A1A1A] transition-all duration-200"
+          className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${location.pathname === '/dashboard/settings' ? 'bg-[#F7F7F5] text-[#1A1A1A]' : 'text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#1A1A1A]'}`}
         >
           <Settings size={18} className="mr-3 text-[#9CA3AF] group-hover:text-[#1A1A1A]" />
           Settings
@@ -177,6 +187,12 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 
 export const DashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { addToast } = useToast();
+
+  const handleNotifications = () => {
+    // Simple mock notification logic
+    addToast("No new notifications.", "info");
+  };
 
   return (
     <ActiveCampaignProvider>
@@ -216,7 +232,11 @@ export const DashboardLayout: React.FC = () => {
               </div>
               <div className="flex items-center space-x-6">
                   <div className="relative">
-                      <Bell size={20} className="text-[#6B7280] hover:text-[#1A1A1A] cursor-pointer transition-colors" />
+                      <Bell 
+                        size={20} 
+                        className="text-[#6B7280] hover:text-[#1A1A1A] cursor-pointer transition-colors" 
+                        onClick={handleNotifications}
+                      />
                       <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#F7F7F5]"></div>
                   </div>
                   <Link to="/" className="text-sm font-medium text-[#6B7280] hover:text-[#1A1A1A] transition-colors flex items-center gap-2">

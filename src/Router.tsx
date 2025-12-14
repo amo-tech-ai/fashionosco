@@ -15,6 +15,7 @@ import { Marketplace } from './pages/Marketplace';
 import { BTS } from './pages/BTS';
 import { Dashboard } from './pages/Dashboard';
 import { BrandDashboard } from './pages/BrandDashboard';
+import { Billing } from './pages/Billing';
 import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
 import { ClientGallery } from './pages/ClientGallery';
@@ -72,10 +73,10 @@ export const Router: React.FC = () => {
           <Route path="shotlist" element={<ShotList />} />
           <Route path="products" element={<Products />} />
           <Route path="gallery" element={<ClientGallery />} />
+          <Route path="billing" element={<Billing />} />
           <Route path="settings" element={<Settings />} />
           
           {/* Event Dashboard Routes */}
-          {/* Dashboard Main View handles context switching, but these can be deep links */}
           <Route path="timeline" element={<Dashboard />} />
           <Route path="guests" element={<Dashboard />} />
           <Route path="budget" element={<Dashboard />} />

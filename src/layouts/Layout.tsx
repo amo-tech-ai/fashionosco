@@ -190,6 +190,7 @@ export const Layout: React.FC = () => {
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">For Creators</h4>
                <ul className="space-y-4 text-sm text-gray-500">
+                  <li><Link to="/brand-audit" className="hover:text-black transition-colors font-bold text-black">Brand Architect</Link></li>
                   <li><Link to="/shoot-wizard" className="hover:text-black transition-colors font-bold text-black">Start Booking</Link></li>
                   <li><Link to="/login" className="hover:text-black transition-colors">Studio Login</Link></li>
                   <li><Link to="/directory" className="hover:text-black transition-colors">Join Directory</Link></li>

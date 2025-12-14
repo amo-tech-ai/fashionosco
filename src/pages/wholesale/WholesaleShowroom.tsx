@@ -1,27 +1,33 @@
 
 import React, { useState, useEffect } from 'react';
 import { WholesaleHeader } from '../../components/wholesale/WholesaleHeader';
-import { WholesaleProduct, CartItem } from '../../types/wholesale';
+import { CartItem } from '../../types/wholesale';
 import { ShoppingBag, Filter, ArrowRight, Minus, Plus, Sparkles, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
 import { analyzeCart, MerchandisingAnalysis } from '../../services/ai/merchandising';
 import { generatePurchaseOrderPDF } from '../../services/pdf/purchaseOrder';
+import { Product } from '../../types/products';
 
 export const WholesaleShowroom: React.FC = () => {
-  const [products, setProducts] = useState<WholesaleProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [analysis, setAnalysis] = useState<MerchandisingAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('All');
   const { addToast } = useToast();
 
   useEffect(() => {
-    // Load products
-    setProducts([
-      { id: '1', name: 'Silk Charmeuse Dress', sku: 'DRS-001', wholesalePrice: 180, rrp: 450, moq: 4, casePack: 2, image: 'https://images.unsplash.com/photo-1596462502278-27bfdd403348?q=80&w=2787&auto=format&fit=crop', category: 'Dresses', stock: 120 },
-      { id: '2', name: 'Oversized Linen Blazer', sku: 'OUT-022', wholesalePrice: 145, rrp: 360, moq: 4, casePack: 1, image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=2836&auto=format&fit=crop', category: 'Outerwear', stock: 85 },
-      { id: '3', name: 'Pleated Wool Trouser', sku: 'BTM-105', wholesalePrice: 110, rrp: 275, moq: 6, casePack: 2, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2788&auto=format&fit=crop', category: 'Bottoms', stock: 200 },
-      { id: '4', name: 'Cashmere Knit Sweater', sku: 'KNT-009', wholesalePrice: 160, rrp: 395, moq: 5, casePack: 1, image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=2864&auto=format&fit=crop', category: 'Knitwear', stock: 90 },
-    ]);
+    // Connect to Global Inventory
+    const loadInventory = () => {
+       const saved = localStorage.getItem('studio_inventory');
+       if (saved) {
+          const parsed = JSON.parse(saved);
+          // Filter only items that have wholesale price set
+          const readyForB2B = parsed.filter((p: Product) => p.wholesalePrice && p.wholesalePrice > 0);
+          setProducts(readyForB2B);
+       }
+    };
+    loadInventory();
   }, []);
 
   // Auto-analyze cart when it changes significantly
@@ -32,16 +38,33 @@ export const WholesaleShowroom: React.FC = () => {
       } else {
         setAnalysis(null);
       }
-    }, 2000); // Debounce analysis
+    }, 2000); 
     return () => clearTimeout(timer);
   }, [cart]);
 
-  const addToCart = (product: WholesaleProduct) => {
+  const addToCart = (product: Product) => {
     const existing = cart.find(c => c.id === product.id);
+    const casePack = product.casePack || 1;
+    const moq = product.moq || 1;
+
     if (existing) {
-      updateQuantity(product.id, existing.quantity + product.casePack);
+      updateQuantity(String(product.id), existing.quantity + casePack);
     } else {
-      setCart([...cart, { ...product, quantity: Math.max(product.moq, product.casePack) }]);
+      // Map to CartItem type
+      const newItem: CartItem = {
+         id: String(product.id),
+         name: product.name,
+         sku: product.sku,
+         wholesalePrice: product.wholesalePrice || 0,
+         rrp: parseFloat(product.price.replace('$','')) || 0,
+         moq: moq,
+         casePack: casePack,
+         image: product.img,
+         category: product.category || 'Apparel',
+         stock: 100, // Mock stock
+         quantity: Math.max(moq, casePack)
+      };
+      setCart([...cart, newItem]);
       addToast(`Added ${product.name}`, "success");
     }
   };
@@ -62,8 +85,10 @@ export const WholesaleShowroom: React.FC = () => {
   const handleCreateOrder = () => {
     generatePurchaseOrderPDF(cart, cartTotal);
     addToast("Purchase Order generated! Check your downloads.", "success");
-    // In a real app, this would also POST to the backend
   };
+
+  const filteredProducts = activeCategory === 'All' ? products : products.filter(p => p.category === activeCategory);
+  const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'Other')))];
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] pt-20 flex">
@@ -74,13 +99,17 @@ export const WholesaleShowroom: React.FC = () => {
             
             {/* Collection Header */}
             <div className="mb-12">
-               <h1 className="font-serif text-4xl mb-4 text-[#1A1A1A]">SS25: Desert Haze</h1>
+               <h1 className="font-serif text-4xl mb-4 text-[#1A1A1A]">SS25 Collection</h1>
                <p className="text-gray-500 max-w-2xl font-light text-lg">
-                  Inspired by the muted tones of the Mojave at dusk. Natural fibers, relaxed tailoring, and effortless transitions from day to night.
+                  Explore our latest drops available for immediate wholesale order.
                </p>
-               <div className="flex gap-2 mt-6">
-                  {['All', 'Dresses', 'Outerwear', 'Knitwear'].map(cat => (
-                     <button key={cat} className="px-4 py-2 rounded-full border border-gray-200 text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors">
+               <div className="flex flex-wrap gap-2 mt-6">
+                  {categories.map(cat => (
+                     <button 
+                        key={cat} 
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-4 py-2 rounded-full border text-xs font-bold uppercase tracking-widest transition-colors ${activeCategory === cat ? 'bg-black text-white border-black' : 'border-gray-200 hover:bg-gray-100'}`}
+                     >
                         {cat}
                      </button>
                   ))}
@@ -88,32 +117,40 @@ export const WholesaleShowroom: React.FC = () => {
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
-               {products.map(p => (
-                  <div key={p.id} className="group">
-                     <div className="aspect-[3/4] bg-gray-100 rounded-sm overflow-hidden mb-4 relative cursor-pointer">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                        <button 
-                           onClick={() => addToCart(p)}
-                           className="absolute bottom-4 right-4 bg-white text-black px-6 py-3 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-lg hover:bg-black hover:text-white"
-                        >
-                           Add to Order
-                        </button>
-                     </div>
-                     <div className="flex justify-between items-start">
-                        <div>
-                           <h3 className="font-serif text-lg leading-tight">{p.name}</h3>
-                           <p className="text-xs text-gray-500 mt-1">{p.sku} • Case Pack: {p.casePack}</p>
+            {products.length === 0 ? (
+                <div className="text-center py-20 text-gray-400">
+                    <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
+                    <p className="text-lg">Showroom is empty.</p>
+                    <p className="text-sm">Go to Products Dashboard to add items with Wholesale pricing.</p>
+                </div>
+            ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+                  {filteredProducts.map(p => (
+                     <div key={p.id} className="group">
+                        <div className="aspect-[3/4] bg-gray-100 rounded-sm overflow-hidden mb-4 relative cursor-pointer">
+                           <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                           <button 
+                              onClick={() => addToCart(p)}
+                              className="absolute bottom-4 right-4 bg-white text-black px-6 py-3 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-lg hover:bg-black hover:text-white"
+                           >
+                              Add to Order
+                           </button>
                         </div>
-                        <div className="text-right">
-                           <div className="font-bold text-lg">${p.wholesalePrice}</div>
-                           <div className="text-[10px] text-gray-400 uppercase tracking-widest">WSP</div>
+                        <div className="flex justify-between items-start">
+                           <div>
+                              <h3 className="font-serif text-lg leading-tight truncate max-w-[200px]">{p.name}</h3>
+                              <p className="text-xs text-gray-500 mt-1">{p.sku} • Case: {p.casePack || 1}</p>
+                           </div>
+                           <div className="text-right">
+                              <div className="font-bold text-lg">${p.wholesalePrice}</div>
+                              <div className="text-[10px] text-gray-400 uppercase tracking-widest">WSP</div>
+                           </div>
                         </div>
                      </div>
-                  </div>
-               ))}
-            </div>
+                  ))}
+               </div>
+            )}
          </div>
       </main>
 
@@ -175,6 +212,9 @@ export const WholesaleShowroom: React.FC = () => {
                            <span className="text-sm font-mono">{item.quantity}</span>
                            <button onClick={() => updateQuantity(item.id, item.quantity + item.casePack)} className="p-1 hover:bg-gray-100 rounded"><Plus size={12}/></button>
                         </div>
+                        {item.quantity < item.moq && (
+                           <p className="text-[10px] text-red-500 mt-1">MOQ: {item.moq}</p>
+                        )}
                      </div>
                   </div>
                ))
