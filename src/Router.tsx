@@ -11,28 +11,28 @@ import { EcommercePhotography } from './pages/EcommercePhotography';
 import { CreativeStillLife } from './pages/CreativeStillLife';
 import { VideoProduction } from './pages/VideoProduction';
 import { InstagramServices } from './pages/InstagramServices';
-import { Marketplace } from './pages/Marketplace';
-import { BTS } from './pages/BTS';
 import { Dashboard } from './pages/Dashboard';
-import { BrandDashboard } from './pages/BrandDashboard';
-import { Billing } from './pages/Billing';
 import { ShotList } from './pages/ShotList';
 import { Products } from './pages/Products';
-import { ClientGallery } from './pages/ClientGallery';
-import { Settings } from './pages/Settings';
-import { Calendar } from './pages/Calendar';
-import { ShootWizardPage } from './pages/ShootWizardPage'; 
-import { EventWizardPage } from './pages/EventWizardPage';
-import { DesignerWizardPage } from './pages/DesignerWizardPage';
-import { Directory } from './pages/Directory';
-import { TalentProfile } from './pages/TalentProfile';
-import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { DesignerWizardPage } from './pages/DesignerWizardPage';
+import { ShootWizardPage } from './pages/ShootWizardPage';
+import { Directory } from './pages/Directory';
+import { Marketplace } from './pages/Marketplace';
+import { BTS } from './pages/BTS';
+import { Login } from './pages/Login';
+import { BuyerApplicationPage } from './pages/wholesale/BuyerApplication';
+import { TalentProfile } from './pages/TalentProfile';
+import { EventWizardPage } from './pages/EventWizardPage';
+import { BrandDashboard } from './pages/BrandDashboard';
+import { Calendar } from './pages/Calendar';
+import { ClientGallery } from './pages/ClientGallery';
+import { Billing } from './pages/Billing';
+import { Settings } from './pages/Settings';
 import { TalentWizard } from './components/wizards/talent/TalentWizard';
 import { SeatingChart } from './components/dashboard/events/SeatingChart';
-import { BuyerApplicationPage } from './pages/wholesale/BuyerApplication';
 import { WholesaleShowroom } from './pages/wholesale/WholesaleShowroom';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export const Router: React.FC = () => {
   return (
@@ -47,41 +47,39 @@ export const Router: React.FC = () => {
         <Route path="/services/creative-still-life" element={<CreativeStillLife />} />
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
+        
+        {/* Core Feature Routes */}
+        <Route path="/create-profile" element={<DesignerWizardPage />} />
+        <Route path="/shoot-wizard" element={<ShootWizardPage />} />
+        <Route path="/event-wizard" element={<EventWizardPage />} />
+        <Route path="/talent-wizard" element={<TalentWizard />} />
+        
         <Route path="/directory" element={<Directory />} />
         <Route path="/directory/:id" element={<TalentProfile />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/bts" element={<BTS />} />
-        
-        {/* Wizards (Publicly accessible for leads) */}
-        <Route path="/shoot-wizard" element={<ShootWizardPage />} />
-        <Route path="/event-wizard" element={<EventWizardPage />} />
-        {/* Updated Route per Spec */}
-        <Route path="/create-profile" element={<DesignerWizardPage />} />
-        <Route path="/talent-wizard" element={<TalentWizard />} />
-        
-        {/* Wholesale Public */}
         <Route path="/wholesale/apply" element={<BuyerApplicationPage />} />
       </Route>
 
-      {/* Standalone Route for Login (No Header/Footer) */}
+      {/* Auth Routes */}
       <Route path="/login" element={<Login />} />
 
       {/* Wholesale Protected (Simulated) */}
       <Route path="/wholesale/showroom" element={<WholesaleShowroom />} />
 
-      {/* Protected Dashboard Routes */}
+      {/* Dashboard Routes wrapped in Dashboard Layout */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="brand" element={<BrandDashboard />} />
-          <Route path="calendar" element={<Calendar />} />
           <Route path="shotlist" element={<ShotList />} />
           <Route path="products" element={<Products />} />
           <Route path="gallery" element={<ClientGallery />} />
+          <Route path="calendar" element={<Calendar />} />
           <Route path="billing" element={<Billing />} />
           <Route path="settings" element={<Settings />} />
           
-          {/* Event Dashboard Routes */}
+          {/* Event Specific Sub-routes */}
           <Route path="timeline" element={<Dashboard />} />
           <Route path="guests" element={<Dashboard />} />
           <Route path="budget" element={<Dashboard />} />
