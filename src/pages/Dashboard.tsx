@@ -9,6 +9,7 @@ import { DeliverablesList } from '../components/dashboard/DeliverablesList';
 import { TeamPanel } from '../components/dashboard/TeamPanel';
 import { AIInsightCard } from '../components/dashboard/AIInsightCard';
 import { StorageWidget } from '../components/dashboard/StorageWidget';
+import { BrandHealthWidget } from '../components/dashboard/BrandHealthWidget'; // Import Widget
 import { DashboardEmptyState } from '../components/dashboard/DashboardEmptyState';
 import { useCampaigns } from '../hooks/useCampaigns';
 import { useActiveCampaign } from '../contexts/ActiveCampaignContext';
@@ -103,6 +104,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Right Column: AI & Team */}
         <div className="space-y-8">
+           <BrandHealthWidget /> 
            <TeamPanel campaign={displayCampaign} />
            <AIInsightCard />
            <StorageWidget />

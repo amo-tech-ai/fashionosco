@@ -18,10 +18,12 @@ import { ClientGallery } from './pages/ClientGallery';
 import { Settings } from './pages/Settings';
 import { ShootWizardPage } from './pages/ShootWizardPage'; 
 import { EventWizardPage } from './pages/EventWizardPage';
+import { DesignerWizardPage } from './pages/DesignerWizardPage';
 import { Directory } from './pages/Directory';
 import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { TalentWizard } from './components/wizards/talent/TalentWizard';
 
 export const Router: React.FC = () => {
   return (
@@ -37,9 +39,11 @@ export const Router: React.FC = () => {
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
         <Route path="/directory" element={<Directory />} />
-        {/* Wizards (Publicly accessible for leads, but might require auth to finish) */}
+        {/* Wizards (Publicly accessible for leads) */}
         <Route path="/shoot-wizard" element={<ShootWizardPage />} />
         <Route path="/event-wizard" element={<EventWizardPage />} />
+        <Route path="/brand-audit" element={<DesignerWizardPage />} />
+        <Route path="/talent-wizard" element={<TalentWizard />} />
       </Route>
 
       {/* Standalone Route for Login (No Header/Footer) */}

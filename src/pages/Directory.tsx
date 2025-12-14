@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Filter, Instagram, Globe, Check, Loader2 } from 'lucide-react';
+import { Search, MapPin, Star, Filter, Instagram, Globe, Check, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ButtonVariant } from '../types';
 import { useToast } from '../components/ToastProvider';
 import { Stakeholder, StakeholderService } from '../services/data/stakeholders';
+import { useNavigate } from 'react-router-dom';
 
 export const Directory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
-  const [applied, setApplied] = useState(false);
   const [talentData, setTalentData] = useState<Stakeholder[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTalent = async () => {
@@ -35,11 +36,6 @@ export const Directory: React.FC = () => {
      t.location.toLowerCase().includes(searchTerm.toLowerCase()) || 
      t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
   );
-
-  const handleApply = () => {
-    setApplied(true);
-    addToast("Application received! We will review your portfolio shortly.", "success");
-  };
 
   return (
     <div className="bg-white min-h-screen pt-20">
@@ -150,17 +146,12 @@ export const Directory: React.FC = () => {
       <section className="bg-black text-white py-20 px-6 text-center">
          <div className="max-w-2xl mx-auto space-y-6">
             <h2 className="font-serif text-4xl">Join the Network.</h2>
-            <p className="text-gray-400 font-light">Are you a creative professional? Apply to join our curated directory.</p>
+            <p className="text-gray-400 font-light">Are you a creative professional? Use our AI agent to build your verified portfolio in seconds.</p>
             <Button 
-                onClick={handleApply} 
-                disabled={applied}
-                className={`bg-white text-black hover:bg-gray-200 border-none transition-all ${applied ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => navigate('/talent-wizard')} 
+                className="bg-white text-black hover:bg-gray-200 border-none"
             >
-                {applied ? (
-                    <span className="flex items-center gap-2"><Check size={16}/> Application Sent</span>
-                ) : (
-                    'Apply Now'
-                )}
+                <span className="flex items-center gap-2"><Sparkles size={16}/> Auto-Build Profile</span>
             </Button>
          </div>
       </section>

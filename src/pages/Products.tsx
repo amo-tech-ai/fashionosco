@@ -9,23 +9,29 @@ import {
   Plus, 
   AlertCircle,
   CheckCircle,
-  Tag
+  Tag,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { useToast } from '../components/ToastProvider';
+import { MagicImportModal } from '../components/products/MagicImportModal';
+import { ParsedProduct } from '../services/ai/productParser';
 
 interface Product {
-  id: number;
+  id: number | string;
   name: string;
   sku: string;
   price: string;
   status: 'Ready' | 'Missing Info' | 'In Transit';
   img: string;
+  category?: string;
+  description?: string;
 }
 
 export const Products: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [products, setProducts] = useState<Product[]>([]);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { addToast } = useToast();
 
   // Load / Initialize Data
@@ -70,7 +76,23 @@ export const Products: React.FC = () => {
     addToast("New product added to inventory", "success");
   };
 
-  const handleDelete = (id: number) => {
+  const handleMagicImport = (parsedItems: ParsedProduct[]) => {
+    const newProducts: Product[] = parsedItems.map((p, i) => ({
+        id: `imported-${Date.now()}-${i}`,
+        name: p.name,
+        sku: p.sku,
+        price: p.price,
+        status: p.status === 'Ready' ? 'Ready' : 'Missing Info',
+        category: p.category,
+        description: p.description,
+        img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" // Placeholder for now, ideally would be crop from original image
+    }));
+    
+    setProducts([...newProducts, ...products]);
+    addToast(`Successfully imported ${newProducts.length} items from line sheet.`, "success");
+  };
+
+  const handleDelete = (id: number | string) => {
     if(confirm('Delete this product?')) {
       setProducts(products.filter(p => p.id !== id));
       addToast("Product removed", "info");
@@ -80,6 +102,12 @@ export const Products: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
+      <MagicImportModal 
+         isOpen={isImportModalOpen} 
+         onClose={() => setIsImportModalOpen(false)} 
+         onImport={handleMagicImport}
+      />
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -109,6 +137,9 @@ export const Products: React.FC = () => {
                  <List size={16} />
               </button>
            </div>
+           <Button onClick={() => setIsImportModalOpen(true)} variant="secondary" className="py-2 px-4 text-xs h-[38px] border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100">
+              <Sparkles size={14} className="mr-2" /> Magic Import
+           </Button>
            <Button onClick={handleAddProduct} className="py-2 px-4 text-xs h-[38px] bg-[#1A1A1A] text-white">
               <Plus size={16} className="mr-2" /> Add Product
            </Button>
@@ -191,7 +222,7 @@ export const Products: React.FC = () => {
                            </div>
                         </td>
                         <td className="py-4 px-6 font-mono text-xs text-[#6B7280]">{product.sku}</td>
-                        <td className="py-4 px-6 text-sm text-[#4A4F5B]">Apparel</td>
+                        <td className="py-4 px-6 text-sm text-[#4A4F5B]">{product.category || 'Apparel'}</td>
                         <td className="py-4 px-6">
                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               product.status === 'Ready' ? 'bg-[#DCFCE7] text-[#166534]' :
