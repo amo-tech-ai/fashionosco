@@ -1,15 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrandPulse } from '../components/brand/BrandPulse';
 import { MarketIntel } from '../components/brand/MarketIntel';
 import { PricingCalculator } from '../components/brand/PricingCalculator';
 import { Products } from './Products';
 import { StrategyCopilot } from '../components/brand/StrategyCopilot';
 import { RetailerCRM } from '../components/brand/RetailerCRM';
-import { LayoutDashboard, Globe, DollarSign, Package, ShoppingCart, Users } from 'lucide-react';
+import { LayoutDashboard, Globe, DollarSign, Package, ShoppingCart, Users, AlertCircle } from 'lucide-react';
+import { BrandService } from '../services/data/brands';
+import { useNavigate } from 'react-router-dom';
 
 export const BrandDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pulse' | 'inventory' | 'market' | 'pricing' | 'retailers'>('pulse');
+  const [hasProfile, setHasProfile] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    BrandService.get().then(profile => {
+      setHasProfile(!!profile);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] p-6 md:p-10 font-sans relative">
@@ -17,6 +27,25 @@ export const BrandDashboard: React.FC = () => {
       
       <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500">
          
+         {/* Profile Warning */}
+         {!hasProfile && (
+            <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl flex items-center justify-between shadow-sm animate-in slide-in-from-top-4">
+               <div className="flex items-center gap-3">
+                  <AlertCircle className="text-purple-600" />
+                  <div>
+                     <h4 className="font-bold text-sm text-purple-900">Setup Required</h4>
+                     <p className="text-xs text-purple-700">Complete your brand profile to unlock full AI strategic insights.</p>
+                  </div>
+               </div>
+               <button 
+                  onClick={() => navigate('/create-profile')}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-purple-700 transition-colors"
+               >
+                  Complete Setup
+               </button>
+            </div>
+         )}
+
          {/* Header */}
          <div className="flex flex-col md:flex-row justify-between items-end pb-6 border-b border-gray-200">
             <div>

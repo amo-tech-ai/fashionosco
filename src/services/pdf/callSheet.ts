@@ -83,25 +83,27 @@ export const generateCallSheetPDF = async (rawData: any) => {
      // Process first 4 images
      const imagesToProcess = state.moodBoardImages.slice(0, 4);
      
-     try {
-       for (const item of imagesToProcess) {
-         let base64 = "";
+     for (const item of imagesToProcess) {
+       let base64 = "";
+       try {
          if (item instanceof File) {
             base64 = await fileToBase64(item);
          } else if (typeof item === 'string') {
             // Check if it's a URL or base64
             if (item.startsWith('http')) {
-                // If it's a remote URL, we try to fetch and convert (might fail due to CORS)
+                // Wrap fetch in try/catch to avoid CORS crash
                 try {
                     const resp = await fetch(item);
+                    if (!resp.ok) throw new Error('Network error');
                     const blob = await resp.blob();
                     base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onloadend = () => resolve(reader.result as string);
                         reader.readAsDataURL(blob);
                     });
-                } catch (e) {
-                    console.warn("Could not load remote image for PDF", item);
+                } catch (err) {
+                    console.warn("Could not fetch remote image for PDF (CORS likely):", item);
+                    // No base64, skips drawing
                 }
             } else {
                 base64 = item;
@@ -114,13 +116,11 @@ export const generateCallSheetPDF = async (rawData: any) => {
             doc.addImage(base64, type, xPos, yPos, imageSize, imageSize, undefined, 'FAST');
             xPos += imageSize + gap;
          }
+       } catch (e) {
+         console.warn("Skipping invalid image in PDF gen", e);
        }
-       yPos += imageSize + 10;
-     } catch (e) {
-       console.error("Error adding images to PDF", e);
-       doc.text("(Images could not be loaded)", margin, yPos + 10);
-       yPos += 20;
      }
+     yPos += imageSize + 10;
   }
 
   // --- Color Palette ---

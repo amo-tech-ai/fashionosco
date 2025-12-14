@@ -55,7 +55,8 @@ export const Router: React.FC = () => {
         {/* Wizards (Publicly accessible for leads) */}
         <Route path="/shoot-wizard" element={<ShootWizardPage />} />
         <Route path="/event-wizard" element={<EventWizardPage />} />
-        <Route path="/brand-audit" element={<DesignerWizardPage />} />
+        {/* Updated Route per Spec */}
+        <Route path="/create-profile" element={<DesignerWizardPage />} />
         <Route path="/talent-wizard" element={<TalentWizard />} />
         
         {/* Wholesale Public */}

@@ -107,7 +107,9 @@ export const Marketplace: React.FC = () => {
   const navigate = useNavigate();
 
   const handleBook = (pkg: any) => {
-      // Clear existing wizard state if needed (handled by Context useEffect)
+      // Clear existing wizard state to ensure clean slate
+      localStorage.removeItem('wizard_state');
+      // Pass prefill configuration
       navigate('/shoot-wizard', { state: { prefill: pkg.config } });
   };
 
@@ -187,7 +189,10 @@ export const Marketplace: React.FC = () => {
               </p>
               <Button 
                 variant={ButtonVariant.SECONDARY} 
-                onClick={() => navigate('/shoot-wizard')}
+                onClick={() => {
+                    localStorage.removeItem('wizard_state');
+                    navigate('/shoot-wizard');
+                }}
                 className="bg-white text-black hover:bg-gray-200"
               >
                  Start Custom Brief <ArrowRight size={16} className="ml-2" />

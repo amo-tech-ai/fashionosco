@@ -71,7 +71,7 @@ export const ClientGallery: React.FC = () => {
     if (!e.target.files || e.target.files.length === 0 || !activeCampaign) return;
     
     setIsUploading(true);
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files) as File[];
     
     try {
         // Upload to Storage

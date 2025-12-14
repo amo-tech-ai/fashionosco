@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
-import { User, GripVertical, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, GripVertical, Plus, Save, RotateCcw } from 'lucide-react';
 import { useActiveCampaign } from '../../../contexts/ActiveCampaignContext';
+import { CampaignService } from '../../../services/data/campaigns';
 import { useToast } from '../../ToastProvider';
 
 interface Seat {
@@ -20,37 +21,39 @@ interface Table {
 }
 
 export const SeatingChart: React.FC = () => {
-  const { activeCampaign } = useActiveCampaign();
+  const { activeCampaign, refreshCampaign } = useActiveCampaign();
   const { addToast } = useToast();
   
-  // Mock Guest Pool (Usually comes from GuestList)
-  const [guests] = useState([
-    { id: 'g1', name: 'Anna Wintour' },
-    { id: 'g2', name: 'Edward Enninful' },
-    { id: 'g3', name: 'Bella Hadid' },
-    { id: 'g4', name: 'Gigi Hadid' },
-    { id: 'g5', name: 'Donatella Versace' },
-    { id: 'g6', name: 'Pierpaolo Piccioli' },
-  ]);
+  const [guests, setGuests] = useState<any[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const [tables, setTables] = useState<Table[]>([
-    { 
-      id: 't1', 
-      name: 'Table 1 (VIP)', 
-      type: 'round', 
-      seats: Array(8).fill(null).map((_, i) => ({ id: `t1-s${i}` })),
-      x: 50,
-      y: 50
-    },
-    { 
-      id: 't2', 
-      name: 'Table 2 (Press)', 
-      type: 'rect', 
-      seats: Array(10).fill(null).map((_, i) => ({ id: `t2-s${i}` })),
-      x: 300,
-      y: 50
+  // Load Data
+  useEffect(() => {
+    if (activeCampaign?.data?.seatingChart) {
+        setTables(activeCampaign.data.seatingChart.tables || []);
+    } else {
+        // Default Tables
+        setTables([
+            { id: 't1', name: 'Table 1 (VIP)', type: 'round', seats: Array(8).fill(null).map((_, i) => ({ id: `t1-s${i}` })), x: 50, y: 50 },
+            { id: 't2', name: 'Table 2 (Press)', type: 'rect', seats: Array(10).fill(null).map((_, i) => ({ id: `t2-s${i}` })), x: 300, y: 50 }
+        ]);
     }
-  ]);
+
+    if (activeCampaign?.data?.guests) {
+        setGuests(activeCampaign.data.guests);
+    } else {
+        // Mock Guests if none exist
+        setGuests([
+            { id: 'g1', name: 'Anna Wintour' },
+            { id: 'g2', name: 'Edward Enninful' },
+            { id: 'g3', name: 'Bella Hadid' },
+            { id: 'g4', name: 'Gigi Hadid' },
+            { id: 'g5', name: 'Donatella Versace' },
+            { id: 'g6', name: 'Pierpaolo Piccioli' },
+        ]);
+    }
+  }, [activeCampaign?.id]);
 
   const [draggedGuest, setDraggedGuest] = useState<any>(null);
 
@@ -66,8 +69,7 @@ export const SeatingChart: React.FC = () => {
     setTables(prev => prev.map(t => {
       if (t.id === tableId) {
         const newSeats = [...t.seats];
-        // Remove guest from other seats if already seated (simplified logic)
-        
+        // Ensure guest isn't duplicated in this table (simplified)
         newSeats[seatIndex] = { 
           ...newSeats[seatIndex], 
           guestId: draggedGuest.id, 
@@ -78,8 +80,24 @@ export const SeatingChart: React.FC = () => {
       return t;
     }));
     
-    addToast(`${draggedGuest.name} seated at ${tables.find(t => t.id === tableId)?.name}`, "success");
+    setHasChanges(true);
     setDraggedGuest(null);
+  };
+
+  const handleSave = async () => {
+      if (!activeCampaign) return;
+      try {
+          const updatedData = { 
+              ...activeCampaign.data, 
+              seatingChart: { tables } 
+          };
+          await CampaignService.update(activeCampaign.id, { data: updatedData });
+          setHasChanges(false);
+          addToast("Seating chart saved.", "success");
+          refreshCampaign();
+      } catch (e) {
+          addToast("Failed to save.", "error");
+      }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -93,16 +111,26 @@ export const SeatingChart: React.FC = () => {
           <h2 className="font-serif text-2xl text-[#1A1A1A]">Seating Chart</h2>
           <p className="text-sm text-gray-500">Drag and drop guests to assign seats.</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors">
-           <Plus size={14} /> Add Table
-        </button>
+        <div className="flex gap-2">
+            {hasChanges && (
+                <button 
+                    onClick={handleSave}
+                    className="flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors"
+                >
+                    <Save size={14} /> Save Changes
+                </button>
+            )}
+            <button className="flex items-center gap-2 bg-white border border-[#E5E5E5] text-[#1A1A1A] px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors">
+                <Plus size={14} /> Add Table
+            </button>
+        </div>
       </div>
 
       <div className="flex flex-1 h-[600px] gap-6 overflow-hidden">
         {/* Sidebar: Guests */}
         <div className="w-64 bg-white border border-[#E5E5E5] rounded-xl flex flex-col overflow-hidden">
            <div className="p-4 border-b border-[#E5E5E5] bg-[#F7F7F5]">
-              <h3 className="font-bold text-sm">Unseated Guests</h3>
+              <h3 className="font-bold text-sm">Guest List</h3>
            </div>
            <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {guests.map(guest => (
@@ -125,7 +153,7 @@ export const SeatingChart: React.FC = () => {
            {tables.map(table => (
               <div 
                  key={table.id}
-                 className="absolute bg-white border border-gray-300 rounded-xl shadow-sm p-4 flex flex-col items-center"
+                 className="absolute bg-white border border-gray-300 rounded-xl shadow-sm p-4 flex flex-col items-center transition-all hover:shadow-md"
                  style={{ left: table.x, top: table.y, minWidth: table.type === 'rect' ? '300px' : '200px' }}
               >
                  <div className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-500">{table.name}</div>
@@ -141,7 +169,7 @@ export const SeatingChart: React.FC = () => {
                           title={seat.guestName || "Empty Seat"}
                        >
                           {seat.guestName ? (
-                             <span className="leading-tight px-1">{seat.guestName.split(' ')[0]}</span>
+                             <span className="leading-tight px-1 text-[8px]">{seat.guestName.split(' ')[0]}</span>
                           ) : (
                              <span className="opacity-50">{idx + 1}</span>
                           )}

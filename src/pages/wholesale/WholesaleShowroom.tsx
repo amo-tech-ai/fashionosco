@@ -20,12 +20,25 @@ export const WholesaleShowroom: React.FC = () => {
     // Connect to Global Inventory
     const loadInventory = () => {
        const saved = localStorage.getItem('studio_inventory');
+       let inventory: Product[] = [];
+
        if (saved) {
-          const parsed = JSON.parse(saved);
-          // Filter only items that have wholesale price set
-          const readyForB2B = parsed.filter((p: Product) => p.wholesalePrice && p.wholesalePrice > 0);
-          setProducts(readyForB2B);
+          inventory = JSON.parse(saved);
+       } else {
+          // Pre-seed if empty (Demo Experience)
+          inventory = [
+            { id: 101, name: "Silk Evening Gown", sku: "DRS-001", price: "450", wholesalePrice: 180, moq: 4, casePack: 1, status: "Ready", category: "Dresses", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2820&auto=format&fit=crop" },
+            { id: 102, name: "Leather Tote Bag", sku: "ACC-023", price: "295", wholesalePrice: 120, moq: 5, casePack: 1, status: "Ready", category: "Accessories", img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=2835&auto=format&fit=crop" },
+            { id: 103, name: "Gold Plated Cuff", sku: "JWL-105", price: "120", wholesalePrice: 45, moq: 10, casePack: 5, status: "Ready", category: "Jewelry", img: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2940&auto=format&fit=crop" },
+            { id: 104, name: "Summer Sandals", sku: "SHS-009", price: "180", wholesalePrice: 75, moq: 8, casePack: 2, status: "Ready", category: "Footwear", img: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=2960&auto=format&fit=crop" },
+            { id: 105, name: "Linen Blazer", sku: "OUT-044", price: "320", wholesalePrice: 140, moq: 6, casePack: 1, status: "Ready", category: "Outerwear", img: "https://images.unsplash.com/photo-1550614000-4b9519e02d48?q=80&w=2788&auto=format&fit=crop" },
+          ];
+          localStorage.setItem('studio_inventory', JSON.stringify(inventory));
        }
+
+       // Filter only items that have wholesale price set
+       const readyForB2B = inventory.filter((p: Product) => p.wholesalePrice && p.wholesalePrice > 0);
+       setProducts(readyForB2B);
     };
     loadInventory();
   }, []);
@@ -43,7 +56,7 @@ export const WholesaleShowroom: React.FC = () => {
   }, [cart]);
 
   const addToCart = (product: Product) => {
-    const existing = cart.find(c => c.id === product.id);
+    const existing = cart.find(c => c.id === String(product.id));
     const casePack = product.casePack || 1;
     const moq = product.moq || 1;
 

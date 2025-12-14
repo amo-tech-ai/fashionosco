@@ -34,22 +34,22 @@ export const CampaignService = {
           .order('created_at', { ascending: false });
           
         if (error) {
-          console.error('Supabase fetch error:', error);
+          console.warn('Supabase fetch error (using fallback):', error.message);
           throw error;
         }
         
         // Map DB fields to Campaign Interface
         return data.map((item: any) => ({
            id: item.id,
-           type: (item.shoot_type as 'shoot' | 'event') || 'shoot',
-           title: item.title || 'Untitled Shoot',
+           type: mapDbTypeToUiType(item.shoot_type),
+           title: item.title || 'Untitled Project',
            status: mapDbStatusToUi(item.status),
-           client: 'FashionOS User', // In a real app, join with profiles table
+           client: 'FashionOS User', 
            date: item.booking_date,
            location: item.location,
            totalPrice: item.total_price,
            progress: calculateProgress(item.status),
-           data: item.brief_data || {}, // The full JSON blob from the wizard
+           data: item.brief_data || {}, 
            thumbnail: item.brief_data?.moodBoardImages?.[0] || undefined,
            createdAt: item.created_at,
            lastUpdated: item.updated_at,
@@ -57,7 +57,7 @@ export const CampaignService = {
         }));
       }
     } catch (e) {
-      console.warn("Offline/Demo Mode or Fetch Error: Using LocalStorage fallback", e);
+      // Silent fail to LocalStorage for Demo Mode/Offline
     }
 
     // Fallback for Demo/Offline
@@ -71,16 +71,20 @@ export const CampaignService = {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
+        // Safe mapping for DB Enum constraints
+        // If it's an event, we might need to store it as 'custom' if 'event' isn't in the enum
+        const dbShootType = campaign.type === 'event' ? 'custom' : campaign.type;
+
         const payload = {
            title: campaign.title,
-           shoot_type: campaign.type,
+           shoot_type: dbShootType,
            status: campaign.status.toLowerCase().replace(' ', '_'), 
            booking_date: campaign.date,
            location: campaign.data.location || campaign.location,
            total_price: campaign.totalPrice || campaign.data.totalPrice,
            deposit_amount: campaign.data.deposit,
            deposit_paid: true, 
-           brief_data: campaign.data, 
+           brief_data: campaign.data, // Stores full state including real 'type'
            client_id: session.user.id,
            updated_at: new Date().toISOString()
         };
@@ -89,12 +93,14 @@ export const CampaignService = {
         
         let query = supabase.from('shoots');
         
-        // @ts-ignore
         const { data, error } = isNew 
             ? await query.insert(payload).select().single()
             : await query.update(payload).eq('id', campaign.id).select().single();
 
-        if (error) throw error;
+        if (error) {
+            console.error("DB Write Error:", error);
+            throw error; // Fallback to local
+        }
 
         if (data) {
             return {
@@ -106,45 +112,36 @@ export const CampaignService = {
         }
       }
     } catch (e) {
-      console.error("Supabase Save Failed:", e);
+      console.warn("Saving to LocalStorage (Offline/Demo Mode)");
       saveToLocalStorage(campaign);
     }
     return campaign;
   },
 
-  // Update specific fields of a campaign (e.g. shotList inside brief_data)
+  // Update specific fields of a campaign
   update: async (id: string, updates: Partial<Campaign>): Promise<void> => {
       try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-              // Local storage update
-              const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-              const index = campaigns.findIndex((c: Campaign) => c.id === id);
-              if (index >= 0) {
-                  campaigns[index] = { ...campaigns[index], ...updates, lastUpdated: new Date().toISOString() };
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
-                  window.dispatchEvent(new Event('campaignsUpdated'));
-              }
-              return;
+          
+          if (session) {
+              const payload: any = { updated_at: new Date().toISOString() };
+              if (updates.status) payload.status = updates.status.toLowerCase().replace(' ', '_');
+              if (updates.data) payload.brief_data = updates.data;
+              
+              const { error } = await supabase.from('shoots').update(payload).eq('id', id);
+              if (error) throw error;
+          } else {
+              throw new Error("No session");
           }
-
-          // DB Update
-          // We need to merge the updates into the existing DB row structure
-          // This assumes 'data' in updates maps to 'brief_data' in DB
-          const payload: any = { updated_at: new Date().toISOString() };
-          
-          if (updates.status) payload.status = updates.status.toLowerCase().replace(' ', '_');
-          if (updates.data) payload.brief_data = updates.data;
-          
-          // If we are just updating the data (shot list etc), we often need to fetch first to deep merge, 
-          // or just overwrite brief_data if we are confident the frontend has the latest state.
-          // For this MVP, we assume the frontend sends the complete updated 'data' object.
-
-          const { error } = await supabase.from('shoots').update(payload).eq('id', id);
-          if (error) throw error;
-
       } catch (e) {
-          console.error("Update failed", e);
+          // Local storage update fallback
+          const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          const index = campaigns.findIndex((c: Campaign) => c.id === id);
+          if (index >= 0) {
+              campaigns[index] = { ...campaigns[index], ...updates, lastUpdated: new Date().toISOString() };
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+              window.dispatchEvent(new Event('campaignsUpdated'));
+          }
       }
   },
 
@@ -153,7 +150,6 @@ export const CampaignService = {
     if (legacy) {
       try {
         const data = JSON.parse(legacy);
-        // Only migrate if it has meaningful data
         if (data.title) {
             saveToLocalStorage({
                 id: `legacy-${Date.now()}`,
@@ -180,9 +176,12 @@ const saveToLocalStorage = (campaign: Campaign) => {
     const campaigns = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const index = campaigns.findIndex((c: Campaign) => c.id === campaign.id);
     
+    // Safety: Remove huge base64 strings if present to avoid QuotaExceeded
     const safeCampaign = { ...campaign };
-    if (safeCampaign.data?.moodBoardImages?.some((img: any) => typeof img === 'string' && img.length > 1000)) {
-        safeCampaign.data.moodBoardImages = []; 
+    if (safeCampaign.data?.moodBoardImages) {
+        safeCampaign.data.moodBoardImages = safeCampaign.data.moodBoardImages.map((img: any) => 
+            (typeof img === 'string' && img.length > 5000) ? 'placeholder_image_url' : img
+        );
     }
 
     if (index >= 0) {
@@ -204,6 +203,12 @@ const mapDbStatusToUi = (status: string): string => {
         'completed': 'Completed'
     };
     return map[status] || status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const mapDbTypeToUiType = (type: string): 'shoot' | 'event' => {
+    // If DB stores 'custom', we check brief_data in the main object, 
+    // but for the list view, we default to 'shoot' unless strictly 'event'
+    return type === 'event' ? 'event' : 'shoot'; 
 };
 
 const calculateProgress = (status: string): number => {

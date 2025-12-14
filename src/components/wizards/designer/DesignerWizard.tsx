@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { BrandInput } from '../../../types/brand';
 import { InputStep } from './steps/InputStep';
@@ -12,6 +11,7 @@ export const DesignerWizard: React.FC = () => {
     brandName: '',
     websiteUrl: '',
     instagramHandle: '',
+    lookbookFiles: [],
   });
   const navigate = useNavigate();
 

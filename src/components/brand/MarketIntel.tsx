@@ -7,6 +7,7 @@ import { getDeepMarketAudit, MarketAuditResult } from '../../services/ai/market'
 export const MarketIntel: React.FC = () => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
+  const [pricePoint, setPricePoint] = useState('Contemporary');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<MarketAuditResult | null>(null);
 
@@ -14,7 +15,7 @@ export const MarketIntel: React.FC = () => {
     if (!query || !category) return;
     setIsAnalyzing(true);
     try {
-      const data = await getDeepMarketAudit(query, category);
+      const data = await getDeepMarketAudit(query, category, pricePoint);
       setResult(data);
     } catch (e) {
       console.error(e);
@@ -29,7 +30,7 @@ export const MarketIntel: React.FC = () => {
          <h2 className="font-serif text-2xl mb-2">Competitor Watch & Trend Spotting</h2>
          <p className="text-gray-500 text-sm mb-6">Deploy autonomous agents to scan the market for pricing and aesthetic trends.</p>
          
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 block mb-2">Category</label>
                <input 
@@ -46,9 +47,21 @@ export const MarketIntel: React.FC = () => {
                   type="text" 
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g. Pricing strategy for sustainable brands"
+                  placeholder="e.g. Pricing strategy..."
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:border-black focus:outline-none"
                />
+            </div>
+            <div>
+               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 block mb-2">Price Tier</label>
+               <select 
+                  value={pricePoint}
+                  onChange={(e) => setPricePoint(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:border-black focus:outline-none"
+               >
+                  <option value="Mass Market">Mass Market</option>
+                  <option value="Contemporary">Contemporary</option>
+                  <option value="Luxury">Luxury</option>
+               </select>
             </div>
          </div>
          

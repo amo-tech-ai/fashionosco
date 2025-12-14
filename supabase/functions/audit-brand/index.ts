@@ -24,47 +24,62 @@ serve(async (req: Request) => {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    let prompt = `
+    // Construct a prompt that enforces the exact JSON structure required by BrandAuditResult
+    const prompt = `
       ROLE: You are a World-Class Fashion Brand Strategist and Data Scientist.
       
       TASK: Perform a "Deep Research" audit on the brand "${brandName}".
       
       INPUTS:
-      - Website: ${websiteUrl} (Use Google Search to find and read key pages like About, Shop, Journal)
-      - Social: ${instagramHandle} (Use Google Search to find recent sentiment/posts)
+      - Website: ${websiteUrl}
+      - Social: ${instagramHandle}
       ${images && images.length > 0 ? '- Visuals: Attached lookbook images provided by the brand.' : ''}
 
       INSTRUCTIONS:
-      1.  **Verify & Contextualize**: Search for the brand to confirm its existence and primary product categories.
-      2.  **Reputation Check**: Look for reviews, press mentions, or "best of" list inclusions to gauge market standing.
+      1.  **Verify & Contextualize**: Use Google Search to find the brand's official presence, press reviews, and primary product categories.
+      2.  **Reputation Check**: Look for recent news or "best of" list inclusions to gauge market standing.
       3.  **Visual Analysis**: 
-          - If images are provided, analyze them for color palette, lighting style, and "Visual Archetype".
-          - If NO images, infer the aesthetic from the text descriptions found on their site/socials.
-          - Compare the "Visual Vibe" with the "Text Vibe". Are they consistent?
-      4.  **Strategic Synthesis**: Determine their likely price positioning and target audience demographics.
+          - Analyze the provided images (if any) or infer aesthetic from search results.
+          - Determine color palette, lighting style, and "Visual Archetype".
+      4.  **Strategic Synthesis**: 
+          - Estimate "Visual Consistency" (Do the text claims match the visual reality?).
+          - Identify a specific "Market Gap" they are ignoring.
 
       OUTPUT FORMAT:
-      Return ONLY a valid JSON object. Do NOT include markdown code blocks.
+      Return ONLY a valid JSON object matching this schema exactly.
       
-      JSON STRUCTURE:
       {
         "brand_profile": {
-          "category": "Specific Category (e.g. Sustainable Knitwear)",
-          "aesthetic_keywords": ["Keyword1", "Keyword2", "Keyword3", "Keyword4"],
-          "price_positioning": "Tier (e.g. Accessible Luxury, Mass Market, High-End)",
-          "target_audience": "Specific Persona (e.g. Gen Z Urban Creatives)",
-          "vibe_description": "A 2-sentence summary of the brand's mood and ethos.",
-          "visual_archetype": "string (e.g. 'The Modern Minimalist' or 'Y2K Maximalist')",
+          "category": "string",
+          "aesthetic_keywords": ["string", "string", "string", "string"],
+          "price_positioning": "string (e.g. 'Accessible Luxury', 'High-End', 'Mass Market')",
+          "target_audience": "string",
+          "vibe_description": "string",
+          "visual_archetype": "string (e.g. 'The Modern Minimalist')",
           "palette": ["#hex", "#hex", "#hex", "#hex"]
         },
-        "audit_score": number (0-100, based on clarity of proposition),
-        "content_health": number (0-100, estimated based on consistency),
-        "visual_consistency_score": number (0-100, compares stated values vs visual reality),
+        "audit_score": number (0-100),
+        "content_health": number (0-100),
+        "visual_consistency_score": number (0-100),
         "strategic_advice": [
-          { "title": "Punchy Headline", "description": "Actionable insight based on market gaps or visual dissonance.", "impact": "High" | "Medium" }
+          { 
+            "title": "string", 
+            "description": "string", 
+            "impact": "High" | "Medium" | "Low" 
+          },
+          { 
+            "title": "string", 
+            "description": "string", 
+            "impact": "High" | "Medium" | "Low" 
+          },
+          { 
+            "title": "string", 
+            "description": "string", 
+            "impact": "High" | "Medium" | "Low" 
+          }
         ],
-        "competitors": ["Competitor 1", "Competitor 2", "Competitor 3"],
-        "market_gap": "A specific opportunity they are missing."
+        "competitors": ["string", "string", "string"],
+        "market_gap": "string"
       }
     `;
 
@@ -88,15 +103,16 @@ serve(async (req: Request) => {
       model: 'gemini-3-pro-preview',
       contents: contents,
       config: {
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 2048 } // Allocated budget for deep reasoning
+        responseMimeType: 'application/json', // Force JSON structure
+        tools: [{ googleSearch: {} }], // Enable Deep Research
+        thinkingConfig: { thinkingBudget: 2048 } // Enable Reasoning for complex audit
       }
     });
 
     let text = response.text;
     if (!text) throw new Error("No response from AI");
 
-    // Clean Markdown
+    // Clean Markdown if present (just in case model wraps JSON despite config)
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let json;

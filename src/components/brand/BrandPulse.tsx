@@ -1,16 +1,28 @@
 
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Users, ShoppingBag, AlertCircle, ArrowUpRight, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, AlertCircle, ArrowUpRight, Loader2, ArrowRight } from 'lucide-react';
 import { BrandService } from '../../services/data/brands';
 import { getBrandPulse, BrandPulseData } from '../../services/ai/brandPulse';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../Button';
 
 export const BrandPulse: React.FC = () => {
   const [data, setData] = useState<BrandPulseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasProfile, setHasProfile] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
       const profile = await BrandService.get();
+      
+      if (!profile) {
+         setHasProfile(false);
+         setLoading(false);
+         return;
+      }
+
+      setHasProfile(true);
       const pulse = await getBrandPulse(profile);
       setData(pulse);
       setLoading(false);
@@ -18,12 +30,35 @@ export const BrandPulse: React.FC = () => {
     loadData();
   }, []);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64 animate-in fade-in">
         <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
       </div>
     );
+  }
+
+  // EMPTY STATE: No Brand Profile
+  if (!hasProfile || !data) {
+     return (
+        <div className="flex flex-col items-center justify-center h-96 text-center space-y-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-10 animate-in fade-in slide-in-from-bottom-4">
+           <div className="w-24 h-24 bg-gradient-to-br from-purple-50 to-blue-50 rounded-full flex items-center justify-center">
+              <TrendingUp className="w-10 h-10 text-purple-600" />
+           </div>
+           <div className="max-w-md">
+              <h3 className="font-serif text-2xl text-[#1A1A1A] mb-2">Initialize Your Brand OS</h3>
+              <p className="text-gray-500 font-light mb-8">
+                 We need to learn about your brand identity before we can generate strategic insights.
+                 Complete the AI audit to unlock your dashboard.
+              </p>
+              <Button onClick={() => navigate('/create-profile')} className="px-8 py-4">
+                 <span className="flex items-center gap-2">
+                    Create Brand Profile <ArrowRight size={16} />
+                 </span>
+              </Button>
+           </div>
+        </div>
+     );
   }
 
   const metrics = [

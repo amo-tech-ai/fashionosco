@@ -32,7 +32,7 @@ export const BrandHealthWidget: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1 max-w-[200px] mx-auto">Get an AI analysis of your market position and visual strategy.</p>
         </div>
         <button 
-          onClick={() => navigate('/brand-audit')}
+          onClick={() => navigate('/create-profile')}
           className="text-xs font-bold uppercase tracking-widest text-black border-b border-black pb-1 hover:text-gray-600 transition-colors"
         >
           Start Audit
@@ -74,7 +74,7 @@ export const BrandHealthWidget: React.FC = () => {
             <span className="font-bold">{content_health}%</span>
           </div>
           <button 
-            onClick={() => navigate('/brand-audit')}
+            onClick={() => navigate('/dashboard/brand')}
             className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-1 hover:gap-2 transition-all mt-4"
           >
             View Full Report <ArrowRight size={12} />

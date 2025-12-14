@@ -21,15 +21,19 @@ serve(async (req: Request) => {
 
     const ai = new GoogleGenAI({ apiKey });
 
+    // Dynamic date to ensure recent trends
+    const currentDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
     const prompt = `
       ROLE: You are the Chief Strategy Officer for a fashion brand called "${brandName || 'Emerging Label'}" in the "${category || 'Contemporary'}" sector.
+      DATE: ${currentDate}
       
-      TASK: Generate a "Daily Pulse" briefing.
+      TASK: Generate a "Daily Pulse" briefing based on REAL-TIME market conditions.
       
       STEPS:
-      1.  **Analyze Trends**: Identify 1 highly relevant micro-trend for this category (e.g., "Eco-packaging", "Digital-only drops").
-      2.  **Simulate Notifications**: Create 3 realistic business updates (Sales, Press, or Inventory) that a brand manager would care about.
-      3.  **Strategic Insight**: Provide one actionable piece of advice based on the trend.
+      1.  **Search Trends**: Use Google Search to find 1 specific, currently trending topic for ${category} in ${currentDate} (e.g. "Peach Fuzz color trend", "Digital ID regulations").
+      2.  **Simulate Notifications**: Create 3 realistic business updates.
+      3.  **Strategic Insight**: Provide one actionable piece of advice based on the search result.
 
       OUTPUT JSON FORMAT (No Markdown):
       {
@@ -39,8 +43,8 @@ serve(async (req: Request) => {
           "sell_through": "string (e.g. 68%)"
         },
         "insight": {
-          "title": "string",
-          "description": "string (2 sentences)",
+          "title": "string (The trend headline)",
+          "description": "string (Why it matters now)",
           "action": "string (Button label)"
         },
         "notifications": [
@@ -59,6 +63,7 @@ serve(async (req: Request) => {
       contents: prompt,
       config: {
         responseMimeType: "application/json",
+        tools: [{ googleSearch: {} }], // Added Search for real-time trends
         thinkingConfig: { thinkingBudget: 1024 }
       }
     });

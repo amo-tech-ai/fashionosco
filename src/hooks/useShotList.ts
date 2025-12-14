@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../components/ToastProvider';
 import { generateShotList } from '../services/ai/shotList';
 import { CampaignService } from '../services/data/campaigns';

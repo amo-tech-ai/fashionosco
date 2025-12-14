@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { NavItem } from '../types';
+import { NavItem, ButtonVariant } from '../types';
 import { Button } from '../components/Button';
 import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
 
@@ -10,7 +10,7 @@ const navItems: NavItem[] = [
   { label: 'Services', href: '/services' },
   { label: 'Directory', href: '/directory' }, 
   { label: 'Marketplace', href: '/marketplace' }, 
-  { label: 'Wholesale', href: '/wholesale/apply' }, // New Link
+  { label: 'Wholesale', href: '/wholesale/apply' }, 
   { label: 'BTS', href: '/bts' }, 
 ];
 
@@ -88,6 +88,9 @@ export const Layout: React.FC = () => {
              <Link to="/login" className="hidden md:block text-xs uppercase tracking-widest font-semibold hover:text-gray-600">
                 Log In
              </Link>
+             <Link to="/create-profile">
+                <Button variant={ButtonVariant.SECONDARY} className="hidden md:inline-flex py-2 px-4 text-[10px]">Sign Up</Button>
+             </Link>
              <Link to="/shoot-wizard">
                 <Button className="hidden md:inline-flex py-2 px-4 text-[10px]">Book a Shoot</Button>
              </Link>
@@ -127,10 +130,15 @@ export const Layout: React.FC = () => {
                       )}
                    </div>
                 ))}
-                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif font-medium border-b border-gray-100 pb-4 block">
-                   Log In
-                </Link>
-                <div className="pt-8 pb-12">
+                <div className="grid grid-cols-2 gap-4">
+                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium border border-gray-200 rounded-lg p-4 text-center">
+                      Log In
+                   </Link>
+                   <Link to="/create-profile" onClick={() => setIsMobileMenuOpen(false)} className="text-xl font-serif font-medium bg-black text-white rounded-lg p-4 text-center">
+                      Sign Up
+                   </Link>
+                </div>
+                <div className="pt-4 pb-12">
                    <Link to="/shoot-wizard" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button className="w-full justify-center py-4 text-sm">Book a Shoot</Button>
                    </Link>
@@ -190,8 +198,8 @@ export const Layout: React.FC = () => {
             <div>
                <h4 className="text-xs font-bold uppercase tracking-widest mb-6">For Creators</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                  <li><Link to="/brand-audit" className="hover:text-black transition-colors font-bold text-black">Create Brand Profile</Link></li>
-                  <li><Link to="/shoot-wizard" className="hover:text-black transition-colors font-bold text-black">Start Booking</Link></li>
+                  <li><Link to="/create-profile" className="hover:text-black transition-colors font-bold text-black">Create Your Profile</Link></li>
+                  <li><Link to="/shoot-wizard" className="hover:text-black transition-colors">Book a Shoot</Link></li>
                   <li><Link to="/login" className="hover:text-black transition-colors">Studio Login</Link></li>
                   <li><Link to="/directory" className="hover:text-black transition-colors">Join Directory</Link></li>
                </ul>
