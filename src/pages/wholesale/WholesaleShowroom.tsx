@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { WholesaleHeader } from '../../components/wholesale/WholesaleHeader';
 import { CartItem } from '../../types/wholesale';
-import { ShoppingBag, Filter, ArrowRight, Minus, Plus, Sparkles, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Filter, ArrowRight, Minus, Plus, Sparkles, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '../../components/ToastProvider';
 import { analyzeCart, MerchandisingAnalysis } from '../../services/ai/merchandising';
 import { generatePurchaseOrderPDF } from '../../services/pdf/purchaseOrder';
 import { Product } from '../../types/products';
+import { OrderService } from '../../services/data/orders';
 
 export const WholesaleShowroom: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,6 +15,7 @@ export const WholesaleShowroom: React.FC = () => {
   const [analysis, setAnalysis] = useState<MerchandisingAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [isOrdering, setIsOrdering] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -95,9 +97,23 @@ export const WholesaleShowroom: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleCreateOrder = () => {
-    generatePurchaseOrderPDF(cart, cartTotal);
-    addToast("Purchase Order generated! Check your downloads.", "success");
+  const handleCreateOrder = async () => {
+    setIsOrdering(true);
+    try {
+        // 1. Generate PDF
+        generatePurchaseOrderPDF(cart, cartTotal);
+        
+        // 2. Persist Order Logic
+        await OrderService.create(cart, cartTotal, "Selfridges Buyer (Demo)");
+        
+        addToast("PO Submitted successfully.", "success");
+        setCart([]); // Clear cart
+        setAnalysis(null);
+    } catch (e) {
+        addToast("Failed to submit order", "error");
+    } finally {
+        setIsOrdering(false);
+    }
   };
 
   const filteredProducts = activeCategory === 'All' ? products : products.filter(p => p.category === activeCategory);
@@ -243,9 +259,17 @@ export const WholesaleShowroom: React.FC = () => {
             <button 
                onClick={handleCreateOrder}
                className="w-full bg-black text-white py-4 text-xs font-bold uppercase tracking-widest hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-               disabled={cartTotal < 2000}
+               disabled={cartTotal < 2000 || isOrdering}
             >
-               {cartTotal < 2000 ? `Add $${(2000 - cartTotal).toLocaleString()} to Checkout` : <><FileText size={16} /> Create Purchase Order</>}
+               {isOrdering ? (
+                  <>
+                     <Loader2 className="animate-spin" size={16} /> Processing PO...
+                  </>
+               ) : cartTotal < 2000 ? (
+                  `Add $${(2000 - cartTotal).toLocaleString()} to Checkout`
+               ) : (
+                  <><FileText size={16} /> Create Purchase Order</>
+               )}
             </button>
          </div>
       </div>
