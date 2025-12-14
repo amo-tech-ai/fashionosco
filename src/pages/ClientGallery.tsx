@@ -103,7 +103,7 @@ export const ClientGallery: React.FC = () => {
     }
   };
 
-  const handleAddComment = (text: string) => {
+  const handleAddComment = (text: string, x?: number, y?: number) => {
     if (lightboxIndex === null) return;
     
     const assetId = assets[lightboxIndex].id;
@@ -111,7 +111,9 @@ export const ClientGallery: React.FC = () => {
       id: Date.now().toString(),
       user: user?.user_metadata?.full_name?.split(' ')[0] || 'User',
       text: text,
-      timestamp: 'Just now'
+      timestamp: 'Just now',
+      x,
+      y
     };
 
     const updated = assets.map(a => {

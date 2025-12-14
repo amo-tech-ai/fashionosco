@@ -90,7 +90,11 @@ export const Directory: React.FC = () => {
             <>
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredTalent.map(talent => (
-                     <div key={talent.id} className="group border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 bg-white">
+                     <div 
+                        key={talent.id} 
+                        className="group border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 bg-white cursor-pointer"
+                        onClick={() => navigate(`/directory/${talent.id}`)}
+                     >
                         <div className="aspect-[4/3] overflow-hidden relative">
                            <img src={talent.img} alt={talent.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm shadow-sm">
@@ -104,7 +108,7 @@ export const Directory: React.FC = () => {
                         
                         <div className="p-6">
                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-serif text-xl font-bold text-[#1A1A1A]">{talent.name}</h3>
+                              <h3 className="font-serif text-xl font-bold text-[#1A1A1A] group-hover:text-purple-600 transition-colors">{talent.name}</h3>
                               <div className="flex items-center gap-1 text-xs font-bold bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
                                  <Star size={12} fill="currentColor" /> {talent.rating}
                               </div>
@@ -124,7 +128,13 @@ export const Directory: React.FC = () => {
 
                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                               <span className="text-sm font-medium text-gray-900">{talent.rate}</span>
-                              <Button variant={ButtonVariant.SECONDARY} className="text-xs py-2 h-auto" onClick={() => addToast("Contact request sent.", "info")}>Contact</Button>
+                              <Button 
+                                variant={ButtonVariant.SECONDARY} 
+                                className="text-xs py-2 h-auto" 
+                                onClick={(e) => { e.stopPropagation(); addToast("Contact request sent.", "info"); }}
+                              >
+                                Quick Contact
+                              </Button>
                            </div>
                         </div>
                      </div>

@@ -24,6 +24,7 @@ import { ShootWizardPage } from './pages/ShootWizardPage';
 import { EventWizardPage } from './pages/EventWizardPage';
 import { DesignerWizardPage } from './pages/DesignerWizardPage';
 import { Directory } from './pages/Directory';
+import { TalentProfile } from './pages/TalentProfile';
 import { Login } from './pages/Login';
 import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -46,6 +47,7 @@ export const Router: React.FC = () => {
         <Route path="/services/video-production" element={<VideoProduction />} />
         <Route path="/services/instagram" element={<InstagramServices />} />
         <Route path="/directory" element={<Directory />} />
+        <Route path="/directory/:id" element={<TalentProfile />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/bts" element={<BTS />} />
         

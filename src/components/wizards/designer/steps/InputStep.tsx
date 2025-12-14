@@ -14,9 +14,9 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center space-y-4">
-        <h2 className="font-serif text-4xl md:text-5xl text-[#1A1A1A]">Let's Audit Your Brand.</h2>
+        <h2 className="font-serif text-4xl md:text-5xl text-[#1A1A1A]">Designer Onboarding.</h2>
         <p className="text-gray-500 font-light text-lg max-w-xl mx-auto">
-          Enter your digital touchpoints. Our AI Agent will perform a deep scan of your public presence to build your strategic profile.
+          Create your brand profile in seconds. Enter your website and social links, and our AI will automatically build your portfolio and strategic profile.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export const InputStep: React.FC<InputStepProps> = ({ data, onChange, onNext }) 
           disabled={!data.brandName || !data.websiteUrl}
           className="w-full justify-center py-4 text-sm mt-4"
         >
-          Start Deep Analysis
+          Create Profile
         </Button>
       </div>
     </div>
