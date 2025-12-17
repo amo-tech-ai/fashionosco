@@ -11,8 +11,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // FLAT ROOT: Map @ to the root directory
-      '@': path.resolve(__dirname, './'),
+      // Map @ to the src directory where code resides
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {

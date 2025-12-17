@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// FLAT ROOT: Import directly from root, not src/
-import App from './App';
+// Import App from src directory
+import App from './src/App';
 import './index.css'; 
 
 const rootElement = document.getElementById('root');
