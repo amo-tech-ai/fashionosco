@@ -1,25 +1,16 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Sparkles, Loader2, Zap, ArrowRight, MousePointer2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Sparkles, X, ArrowRight, MousePointer2, Zap } from 'lucide-react';
 import { BrandProfile } from '../../types/brand';
 import { BrandService } from '../../services/data/brands';
-import { startCopilotStream, CopilotMessage } from '../../services/ai/copilot';
-import { useShootWizard } from '../../contexts/ShootWizardContext';
-import { useToast } from '../ToastProvider';
+import { useCopilotStream } from '../../hooks/useCopilotStream';
 
 export const StrategyCopilot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<any[]>([
-    { id: '1', role: 'model', content: "Strategist online. How can I refine your production flow today?" }
-  ]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [profile, setProfile] = useState<BrandProfile | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  const navigate = useNavigate();
-  const { addToast } = useToast();
-  const { dispatch: wizardDispatch } = useShootWizard();
+  const { messages, isTyping, sendMessage } = useCopilotStream(profile);
 
   useEffect(() => {
     BrandService.get().then(setProfile);
@@ -27,140 +18,79 @@ export const StrategyCopilot: React.FC = () => {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages, isOpen, isTyping]);
 
-  const handleToolCall = (call: any) => {
-    const { name, args } = call;
-    console.log(`AI Tool Interaction: ${name}`, args);
-
-    switch (name) {
-      case 'navigateTo':
-        addToast(`AI navigating to ${args.path}...`, "info");
-        navigate(args.path);
-        setIsOpen(false);
-        break;
-      case 'updateProjectField':
-        addToast(`AI updating brief: ${args.field} -> ${args.value}`, "success");
-        wizardDispatch({ type: 'SET_FIELD', field: args.field, value: args.value });
-        break;
-      case 'generateAsset':
-        addToast(`AI triggering ${args.assetType} generation...`, "info");
-        // Logic to open specific generation tools
-        break;
-      default:
-        console.warn('Unknown tool call:', name);
-    }
+  const handleSend = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput('');
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
-
-    const userText = input;
-    const userMsg = { id: Date.now().toString(), role: 'user', content: userText };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setIsTyping(true);
-
-    // Prepare History for Gemini API format
-    const history: CopilotMessage[] = messages
-      .filter(m => m.id !== '1') // Skip initial greeting for clean context
-      .map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      }));
-
-    const brandContext = profile ? {
-      brandName: profile.brandName,
-      category: profile.auditResult?.brand_profile?.category,
-      vibe: profile.auditResult?.brand_profile?.vibe_description
-    } : {};
-
-    try {
-      const responseStream = await startCopilotStream(userText, history, brandContext);
-      
-      let fullText = '';
-      const modelMsgId = (Date.now() + 1).toString();
-      
-      // Initialize model message
-      setMessages(prev => [...prev, { id: modelMsgId, role: 'model', content: '' }]);
-
-      for await (const chunk of responseStream) {
-        if (chunk.text) {
-          fullText += chunk.text;
-          setMessages(prev => prev.map(m => 
-            m.id === modelMsgId ? { ...m, content: fullText } : m
-          ));
-        }
-
-        if (chunk.functionCalls) {
-          chunk.functionCalls.forEach(handleToolCall);
-        }
-      }
-    } catch (error) {
-      console.error('Copilot Stream Error:', error);
-      addToast("Connection to Strategist lost.", "error");
-    } finally {
-      setIsTyping(false);
-    }
+  const handleQuickAction = (text: string) => {
+    sendMessage(text);
   };
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 z-40 bg-black text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 group ${isOpen ? 'hidden' : 'flex'}`}
+        className={`fixed bottom-10 right-10 z-[60] bg-black text-white p-5 rounded-full shadow-[0_20px_60px_rgba(0,0,0,0.3)] hover:scale-110 transition-all group ${isOpen ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}`}
+        aria-label="Open Strategy Assistant"
       >
-        <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full animate-pulse"></div>
-        <Sparkles className="w-6 h-6 relative z-10" />
+        <Sparkles className="w-6 h-6 animate-pulse" />
+        <div className="absolute inset-0 rounded-full border-2 border-purple-500/20 scale-125 animate-ping"></div>
       </button>
 
       <div 
-         className={`fixed bottom-8 right-8 z-50 w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-500 origin-bottom-right ${
-            isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-10 pointer-events-none'
+         className={`fixed bottom-10 right-10 z-[70] w-full max-w-md bg-white rounded-[3rem] shadow-[0_30px_90px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden flex flex-col transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+            isOpen ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-90 pointer-events-none'
          }`}
-         style={{ height: '650px', maxHeight: '85vh' }}
+         style={{ height: '750px', maxHeight: '85vh' }}
       >
-         {/* Premium Header */}
-         <div className="bg-[#0A0A0A] text-white p-6 flex justify-between items-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+         <div className="bg-[#0A0A0A] text-white p-8 flex justify-between items-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/10 rounded-full blur-[70px]"></div>
             <div className="flex items-center gap-4 relative z-10">
                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                  <Sparkles size={20} className="text-purple-400" />
+                  <Sparkles size={22} className="text-purple-400" />
                </div>
                <div>
-                  <h3 className="font-serif text-xl font-bold tracking-tight">Strategy Copilot</h3>
+                  <h3 className="font-serif text-xl font-bold tracking-tight text-white">Strategy Copilot</h3>
                   <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-purple-400">
-                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                     Interactions API Live
+                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                     Intelligence Live
                   </div>
                </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-white transition-colors p-2 relative z-10">
-               <X size={20} />
+               <X size={24} />
             </button>
          </div>
 
-         {/* Chat Area */}
-         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#FCFBFA] hide-scrollbar" ref={scrollRef}>
+         <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-[#FCFBFA] hide-scrollbar" ref={scrollRef}>
             {messages.map((msg) => (
-               <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2`}>
+               <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
                   <div 
-                     className={`max-w-[90%] p-4 rounded-3xl text-sm leading-relaxed ${
+                     className={`max-w-[85%] p-6 rounded-[2.2rem] text-[13px] leading-relaxed shadow-sm ${
                         msg.role === 'user' 
-                        ? 'bg-[#1A1A1A] text-white rounded-br-none shadow-xl' 
-                        : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none shadow-sm font-light'
+                        ? 'bg-[#1A1A1A] text-white rounded-tr-none shadow-xl' 
+                        : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none font-light'
                      }`}
                   >
-                     <p className="whitespace-pre-wrap">{msg.content || (msg.role === 'model' && !isTyping ? '...' : '')}</p>
+                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                  <span className="text-[9px] uppercase font-bold text-gray-300 mt-2 tracking-widest">{msg.role === 'user' ? 'You' : 'FashionOS AI'}</span>
+                  <span className="text-[9px] uppercase font-black text-gray-300 mt-4 tracking-[0.2em] px-4">
+                    {msg.role === 'user' ? 'Directives' : 'FashionOS Logic'}
+                  </span>
                </div>
             ))}
-            {isTyping && !messages[messages.length - 1].content && (
+            {isTyping && (
                <div className="flex justify-start">
-                  <div className="bg-white border border-gray-100 p-4 rounded-3xl rounded-bl-none shadow-sm flex items-center gap-1.5">
+                  <div className="bg-white border border-gray-100 p-5 rounded-full shadow-sm flex items-center gap-2">
                      <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce"></span>
                      <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                      <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
@@ -169,20 +99,19 @@ export const StrategyCopilot: React.FC = () => {
             )}
          </div>
 
-         {/* Action Bar / Input */}
-         <div className="p-6 bg-white border-t border-gray-50">
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+         <div className="p-8 bg-white border-t border-gray-50">
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                 <button 
-                  onClick={() => setInput("Take me to the shot list")}
-                  className="shrink-0 px-3 py-1.5 rounded-full border border-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-all flex items-center gap-1.5"
+                  onClick={() => handleQuickAction("Analyze current market gap")}
+                  className="shrink-0 px-4 py-2 rounded-full border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-all flex items-center gap-2 bg-white"
                 >
-                  <MousePointer2 size={10} /> Navigate to Shots
+                  <Zap size={12} /> Strategic Gap
                 </button>
                 <button 
-                  onClick={() => setInput("Suggest a moodier vibe")}
-                  className="shrink-0 px-3 py-1.5 rounded-full border border-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-all flex items-center gap-1.5"
+                  onClick={() => handleQuickAction("Suggest a campaign color story")}
+                  className="shrink-0 px-4 py-2 rounded-full border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-all flex items-center gap-2 bg-white"
                 >
-                  <Zap size={10} /> Refine Vibe
+                  <MousePointer2 size={12} /> Palette Suggestion
                 </button>
             </div>
             
@@ -192,15 +121,15 @@ export const StrategyCopilot: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Direct your strategist..."
-                  className="w-full bg-[#F7F7F5] border-none rounded-2xl py-4 pl-5 pr-12 text-sm focus:ring-1 focus:ring-black outline-none transition-all"
+                  placeholder="Direct your AI strategist..."
+                  className="w-full bg-[#F7F7F5] border-none rounded-[1.8rem] py-5 pl-6 pr-14 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400 shadow-inner"
                />
                <button 
                   onClick={handleSend}
                   disabled={!input.trim() || isTyping}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black text-white rounded-xl hover:bg-gray-800 disabled:opacity-20 transition-all"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-3 bg-[#0A0A0A] text-white rounded-full shadow-2xl hover:bg-black disabled:opacity-20 transition-all active:scale-95"
                >
-                  <ArrowRight size={18} />
+                  <ArrowRight size={20} />
                </button>
             </div>
          </div>
