@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+
+import React from 'react';
 import { 
   Mail, FileCheck, Calendar, Eye, 
   AlertCircle, Sparkles, ArrowUpRight, MoreHorizontal 
 } from 'lucide-react';
 import { SalesActivityEvent, SalesEventType } from '../../types/sales';
-import { useSalesRealtime } from '../../../hooks/useSalesRealtime';
 
 interface SalesActivityFeedProps {
   events: SalesActivityEvent[];
@@ -21,15 +21,7 @@ const EventIcon = ({ type }: { type: SalesEventType }) => {
   }
 };
 
-export const SalesActivityFeed: React.FC<SalesActivityFeedProps> = ({ events: initialEvents }) => {
-  const { events: realTimeEvents } = useSalesRealtime();
-  const [allEvents, setAllEvents] = useState<SalesActivityEvent[]>([]);
-
-  useEffect(() => {
-    // Merge real-time events with initial mock/loaded data
-    setAllEvents([...realTimeEvents, ...initialEvents]);
-  }, [realTimeEvents, initialEvents]);
-
+export const SalesActivityFeed: React.FC<SalesActivityFeedProps> = ({ events }) => {
   return (
     <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm h-full flex flex-col">
       <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-[#FAFAFA]/50">
@@ -43,16 +35,16 @@ export const SalesActivityFeed: React.FC<SalesActivityFeedProps> = ({ events: in
       </div>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar">
-        {allEvents.length === 0 ? (
+        {events.length === 0 ? (
           <div className="p-12 text-center text-gray-300 italic text-sm font-light">
             Awaiting signal ingestion...
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {allEvents.map((event) => (
+            {events.map((event) => (
               <div 
                 key={event.id} 
-                className={`p-6 hover:bg-[#FDFCFB] transition-all group relative animate-in slide-in-from-top-2 ${event.isHighPriority ? 'bg-red-50/10' : ''}`}
+                className={`p-6 hover:bg-[#FDFCFB] transition-all group relative ${event.isHighPriority ? 'bg-red-50/10' : ''}`}
               >
                 {event.isHighPriority && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>

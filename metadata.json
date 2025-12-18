@@ -2,7 +2,6 @@
   "name": "FashionOS",
   "description": "Premium AI Operating System for the Fashion Industry",
   "requestFramePermissions": [
-    "microphone",
     "geolocation",
     "camera"
   ]

@@ -11,9 +11,9 @@ export interface TalentStatus {
 }
 
 export interface ProductionCue extends TimelineItem {
-  audioCue?: string;
-  lightingCue?: string;
-  stageCue?: string;
+  audioCue: string;
+  lightingCue: string;
+  stageCue: string;
   isComplete: boolean;
 }
 

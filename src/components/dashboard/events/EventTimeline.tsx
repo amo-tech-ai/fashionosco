@@ -1,23 +1,20 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Clock, MoreHorizontal, GripVertical, CheckCircle2, Play, Sparkles, Loader2, FileText, Trash2, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Clock, GripVertical, CheckCircle2, Sparkles, Loader2, FileText, Trash2, Send, Zap, Volume2, Radio } from 'lucide-react';
 import { TimelineItem } from '../../../types/event-tools';
 import { useActiveCampaign } from '../../../contexts/ActiveCampaignContext';
 import { CampaignService } from '../../../services/data/campaigns';
 import { useToast } from '../../ToastProvider';
-import { LiveShowMode } from './LiveShowMode';
 import { generateEventSchedule } from '../../../services/ai/eventSchedule';
 import { generateEventSchedulePDF } from '../../../services/pdf/eventSchedule';
 
 export const EventTimeline: React.FC = () => {
-  const { activeCampaign, refreshCampaign } = useActiveCampaign();
+  const { activeCampaign } = useActiveCampaign();
   const { addToast } = useToast();
-  const [items, setItems] = useState<TimelineItem[]>([]);
-  const [isLiveMode, setIsLiveMode] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [refinement, setRefinement] = useState('');
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeCampaign?.data?.timeline) {
@@ -25,9 +22,9 @@ export const EventTimeline: React.FC = () => {
     } else {
       setItems([]);
     }
-  }, [activeCampaign?.id]);
+  }, [activeCampaign?.id, activeCampaign?.data?.timeline]);
 
-  const saveTimeline = async (newItems: TimelineItem[]) => {
+  const saveTimeline = async (newItems: any[]) => {
     setItems(newItems);
     if (activeCampaign) {
       try {
@@ -39,20 +36,9 @@ export const EventTimeline: React.FC = () => {
     }
   };
 
-  const handleAddItem = () => {
-    const lastItem = items[items.length - 1];
-    const newItem: TimelineItem = {
-      id: Date.now().toString(),
-      time: lastItem ? lastItem.time : '18:00',
-      duration: '15m',
-      title: 'New Segment',
-      description: 'Add department notes...',
-      category: 'logistics',
-      status: 'pending'
-    };
-    const updated = [...items, newItem];
+  const handleUpdateField = (id: string, field: string, value: string) => {
+    const updated = items.map(item => item.id === id ? { ...item, [field]: value } : item);
     saveTimeline(updated);
-    addToast("Segment added", "info");
   };
 
   const handleGenerateAI = async (isRefinement = false) => {
@@ -61,18 +47,21 @@ export const EventTimeline: React.FC = () => {
     try {
         const generated = await generateEventSchedule(
             activeCampaign.title || 'Fashion Event',
-            activeCampaign.data.guestCount || 100,
+            activeCampaign.data?.guestCount || 100,
             '19:00',
             isRefinement ? refinement : undefined,
             isRefinement ? items : undefined
         );
-        saveTimeline(generated);
-        if (isRefinement) {
-          setRefinement('');
-          addToast("Timeline refined by Gemini", "success");
-        } else {
-          addToast("Run of Show generated", "success");
-        }
+        // Fix: Cast TimelineItem to any to access cue properties that are added during the enrichment process.
+        const cues = generated.map(i => ({
+            ...i,
+            audioCue: (i as any).audioCue || 'Standard Audio Loop',
+            lightingCue: (i as any).lightingCue || 'Full House Wash',
+            stageCue: (i as any).stageCue || 'Ready Models'
+        }));
+        saveTimeline(cues);
+        setRefinement('');
+        addToast("Run of Show updated", "success");
     } catch (e) {
         addToast("AI action failed", "error");
     } finally {
@@ -80,242 +69,86 @@ export const EventTimeline: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (items.length === 0) {
-      addToast("No timeline items to export", "error");
-      return;
-    }
-    const title = activeCampaign?.title || "FashionOS Event";
-    const date = activeCampaign?.date ? new Date(activeCampaign.date).toLocaleDateString() : "TBD";
-    generateEventSchedulePDF(items, title, date);
-    addToast("Exporting PDF...", "success");
-  };
-
-  const handleStatusToggle = (id: string) => {
-    const updated = items.map(item => 
-      item.id === id ? { ...item, status: item.status === 'confirmed' ? 'pending' : 'confirmed' } : item
-    ) as TimelineItem[];
-    saveTimeline(updated);
-  };
-
-  // --- Drag and Drop ---
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-    const newItems = [...items];
-    const [movedItem] = newItems.splice(draggedIndex, 1);
-    newItems.splice(targetIndex, 0, movedItem);
-    
-    saveTimeline(newItems);
-    setDraggedIndex(null);
-  };
-
-  const getCategoryColor = (cat: string) => {
-    switch(cat) {
-      case 'runway': return 'text-purple-600 bg-purple-50 border-purple-100';
-      case 'hospitality': return 'text-orange-600 bg-orange-50 border-orange-100';
-      case 'media': return 'text-blue-600 bg-blue-50 border-blue-100';
-      default: return 'text-gray-400 bg-gray-50 border-gray-100';
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {isLiveMode && <LiveShowMode timeline={items} onClose={() => { setIsLiveMode(false); refreshCampaign(); }} />}
-
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-           <div className="bg-black text-white p-3 rounded-xl shadow-lg">
-              <Clock size={24} strokeWidth={1.5} />
-           </div>
-           <div>
-              <h2 className="font-serif text-2xl text-[#1A1A1A]">Run of Show</h2>
-              <p className="text-sm text-gray-500">Live production timeline & department cues.</p>
-           </div>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-           <button 
-             onClick={handleDownloadPDF}
-             className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:border-black hover:text-black transition-all"
-           >
-             <FileText size={14} /> Export PDF
-           </button>
-           
-           <button 
-             onClick={() => setIsLiveMode(true)}
-             disabled={items.length === 0}
-             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-           >
-             <Play size={14} fill="currentColor" /> Go Live
-           </button>
-           
-           <button 
-             onClick={handleAddItem}
-             className="flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors"
-           >
-             <Plus size={14} /> Add
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6 pt-6">
+        <h2 className="font-serif text-2xl">Timeline Configuration</h2>
+        <div className="flex gap-2">
+           <button onClick={() => handleGenerateAI(false)} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <Sparkles size={14} /> Re-Generate
            </button>
         </div>
       </div>
 
-      {/* AI Refinement Bar */}
-      {items.length > 0 && (
-        <div className="bg-white border border-purple-100 rounded-xl p-3 flex gap-3 shadow-sm items-center transition-all focus-within:ring-2 focus-within:ring-purple-200">
-          <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
-            <Sparkles size={16} />
-          </div>
-          <input 
-            type="text" 
-            value={refinement}
-            onChange={(e) => setRefinement(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && refinement && handleGenerateAI(true)}
-            placeholder="Ask AI: 'Add a 15m buffer for the finale' or 'Reschedule to start at 8PM'..."
-            className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
-          />
-          <button 
-            onClick={() => handleGenerateAI(true)}
-            disabled={!refinement || isGenerating}
-            className="text-purple-600 hover:text-purple-800 disabled:opacity-50 px-2"
-          >
-            {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
-        </div>
-      )}
-
-      <div 
-        ref={scrollContainerRef}
-        className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px] transition-all"
-      >
-        {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-300">
-                   <Clock size={32} />
-                </div>
-                <h3 className="font-serif text-xl mb-2 text-gray-900">Your schedule is empty</h3>
-                <p className="text-sm text-gray-500 max-w-xs mb-8">
-                   Use AI to generate a detailed production schedule for your event.
-                </p>
-                <div className="flex gap-4">
+      <div className="divide-y divide-gray-50 bg-white">
+        {items.map((item, index) => (
+          <div key={item.id} className={`p-6 transition-all ${editingId === item.id ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}>
+            <div className="flex items-start gap-4">
+              <div className="w-20 shrink-0">
+                <input 
+                  value={item.time} 
+                  onChange={(e) => handleUpdateField(item.id, 'time', e.target.value)}
+                  className="font-mono text-base font-bold bg-transparent border-none focus:outline-none w-full"
+                />
+                <span className="text-[10px] text-gray-400 font-bold uppercase block mt-1">{item.duration}</span>
+              </div>
+              
+              <div className="flex-1 space-y-4">
+                <div className="flex justify-between items-start">
+                   <input 
+                      value={item.title}
+                      onChange={(e) => handleUpdateField(item.id, 'title', e.target.value)}
+                      className="font-bold text-lg bg-transparent border-none focus:outline-none w-full"
+                   />
                    <button 
-                    onClick={() => handleGenerateAI(false)} 
-                    disabled={isGenerating}
-                    className="bg-purple-600 text-white px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-purple-700 transition-all flex items-center gap-2"
+                     onClick={() => setEditingId(editingId === item.id ? null : item.id)}
+                     className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest transition-all ${editingId === item.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}`}
                    >
-                      {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-                      Generate Schedule
+                     {editingId === item.id ? 'Close Technical' : 'Edit Tech Cues'}
                    </button>
                 </div>
-            </div>
-        ) : (
-            <div className="divide-y divide-gray-50">
-               {items.map((item, index) => (
-                  <div 
-                    key={item.id} 
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragOver={handleDragOver}
-                    /* Fixed botched onDrop handler syntax */
-                    onDrop={(e) => handleDrop(e, index)}
-                    className={`group flex items-start gap-4 p-5 hover:bg-[#F7F7F5] transition-all relative ${draggedIndex === index ? 'opacity-30 border-2 border-dashed border-purple-200' : ''}`}
-                  >
-                     {/* Time Column */}
-                     <div className="w-20 shrink-0">
-                        <input 
-                           type="text" 
-                           value={item.time} 
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], time: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="font-mono text-base font-bold text-[#1A1A1A] bg-transparent border-none focus:outline-none w-full"
-                        />
-                        <input 
-                           type="text" 
-                           value={item.duration} 
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], duration: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-transparent border-none focus:outline-none w-full mt-1"
-                        />
-                     </div>
 
-                     {/* Visual Connector Thread */}
-                     <div className="flex flex-col items-center self-stretch w-4 pt-1">
-                        <div 
-                          onClick={() => handleStatusToggle(item.id)}
-                          className={`w-3.5 h-3.5 rounded-full border-2 cursor-pointer z-10 transition-all ${
-                            item.status === 'confirmed' ? 'bg-green-500 border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-white border-gray-200'
-                          }`}
-                        ></div>
-                        {index !== items.length - 1 && <div className="w-px bg-gray-100 flex-1 my-1"></div>}
-                     </div>
-
-                     {/* Content Column */}
-                     <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                           <div className="flex-1">
-                              <input 
-                                 type="text" 
-                                 value={item.title}
-                                 onChange={(e) => {
-                                    const newItems = [...items];
-                                    newItems[index] = { ...newItems[index], title: e.target.value };
-                                    saveTimeline(newItems);
-                                 }}
-                                 className="w-full font-bold text-[#1A1A1A] bg-transparent border-none focus:outline-none placeholder:text-gray-300"
-                                 placeholder="Segment Title"
-                              />
-                           </div>
-                           <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${getCategoryColor(item.category)}`}>
-                                {item.category}
-                              </span>
-                              <button 
-                                 onClick={() => {
-                                    const newItems = items.filter(i => i.id !== item.id);
-                                    saveTimeline(newItems);
-                                    addToast("Segment removed", "info");
-                                 }}
-                                 className="text-gray-300 hover:text-red-500"
-                              >
-                                 <Trash2 size={16} />
-                              </button>
-                           </div>
-                        </div>
-                        <textarea 
-                           value={item.description}
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], description: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="w-full text-sm text-gray-500 bg-transparent border-none focus:outline-none resize-none overflow-hidden h-6 hover:h-auto focus:h-auto transition-all"
-                           rows={1}
-                           placeholder="Segment description and department cues..."
-                        />
-                     </div>
-
-                     {/* Drag Handle */}
-                     <div className="self-center text-gray-200 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 p-2">
-                        <GripVertical size={16} />
-                     </div>
+                {editingId === item.id && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-500 flex items-center gap-2">
+                          <Volume2 size={12}/> Audio
+                       </label>
+                       <textarea 
+                          value={item.audioCue}
+                          onChange={(e) => handleUpdateField(item.id, 'audioCue', e.target.value)}
+                          className="w-full bg-white border border-gray-200 rounded-lg p-3 text-xs focus:border-blue-500 outline-none"
+                          rows={2}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-yellow-600 flex items-center gap-2">
+                          <Zap size={12}/> Lighting
+                       </label>
+                       <textarea 
+                          value={item.lightingCue}
+                          onChange={(e) => handleUpdateField(item.id, 'lightingCue', e.target.value)}
+                          className="w-full bg-white border border-gray-200 rounded-lg p-3 text-xs focus:border-yellow-500 outline-none"
+                          rows={2}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-600 flex items-center gap-2">
+                          <Radio size={12}/> Stage
+                       </label>
+                       <textarea 
+                          value={item.stageCue}
+                          onChange={(e) => handleUpdateField(item.id, 'stageCue', e.target.value)}
+                          className="w-full bg-white border border-gray-200 rounded-lg p-3 text-xs focus:border-purple-500 outline-none"
+                          rows={2}
+                       />
+                    </div>
                   </div>
-               ))}
+                )}
+              </div>
             </div>
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );
