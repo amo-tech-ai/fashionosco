@@ -1,4 +1,3 @@
-
 import { TimelineItem } from '../../types/event-tools';
 
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || 'http://localhost:54321/functions/v1';
@@ -14,7 +13,7 @@ const MOCK_TIMELINE: TimelineItem[] = [
 ];
 
 export const generateEventSchedule = async (
-  eventType: string, 
+  eventTitle: string, 
   guestCount: number, 
   startTime: string = '19:00',
   refinement?: string,
@@ -30,7 +29,7 @@ export const generateEventSchedule = async (
           id: `refine-${Date.now()}`,
           time: '21:30',
           duration: '30m',
-          title: `Refined: ${refinement.substring(0, 20)}`,
+          title: `Refined Segment`,
           description: `AI addition based on: ${refinement}`,
           category: 'logistics',
           status: 'pending'
@@ -46,7 +45,7 @@ export const generateEventSchedule = async (
         'Authorization': `Bearer ${anonKey}`,
       },
       body: JSON.stringify({ 
-        eventType, 
+        eventType: 'runway', 
         guestCount, 
         startTime,
         refinement,

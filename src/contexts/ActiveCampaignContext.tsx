@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Campaign } from '../services/data/campaigns';
 import { useCampaigns } from '../hooks/useCampaigns';
