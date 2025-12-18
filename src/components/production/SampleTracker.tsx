@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { QrCode, CheckCircle2, Package, AlertCircle, Sparkles, X, Camera } from 'lucide-react';
+
+import React, { useState, useRef } from 'react';
+import { QrCode, CheckCircle2, Package, AlertCircle, Sparkles, X, Camera, RefreshCw } from 'lucide-react';
 import { ProductSample } from '../../types/production';
+import { useToast } from '../ToastProvider';
 
 interface SampleTrackerProps {
   samples: ProductSample[];
@@ -9,7 +11,9 @@ interface SampleTrackerProps {
 
 export const SampleTracker: React.FC<SampleTrackerProps> = ({ samples, onUpdateStatus }) => {
   const [isScanning, setIsScanning] = useState(false);
-  const [activeScanId, setActiveScanId] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { addToast } = useToast();
 
   const stats = {
     total: samples.length,
@@ -18,22 +22,64 @@ export const SampleTracker: React.FC<SampleTrackerProps> = ({ samples, onUpdateS
     returned: samples.filter(s => s.status === 'returned').length
   };
 
-  const heroPending = samples.filter(s => s.isHero && s.status !== 'shot');
+  const handleStartScan = async () => {
+    setIsCameraActive(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      addToast("Optical Engine Initialized.", "info");
+      
+      // Simulate a scan after 3 seconds
+      setTimeout(() => {
+        const pending = samples.find(s => s.status === 'on-set');
+        if (pending) {
+          onUpdateStatus(pending.id, 'shot');
+          addToast(`SKU Verified: ${pending.sku}`, "success");
+        }
+        handleStopScan();
+      }, 3000);
 
-  const handleSimulatedScan = (id: string) => {
-    setActiveScanId(id);
-    setIsScanning(true);
-    // Simulate API delay for "Syncing with OS"
-    setTimeout(() => {
-      onUpdateStatus(id, 'shot');
-      setIsScanning(false);
-      setActiveScanId(null);
-    }, 1200);
+    } catch (err) {
+      addToast("Camera access denied.", "error");
+      setIsCameraActive(false);
+    }
+  };
+
+  const handleStopScan = () => {
+    const stream = videoRef.current?.srcObject as MediaStream;
+    stream?.getTracks().forEach(track => track.stop());
+    setIsCameraActive(false);
   };
 
   return (
     <div className="space-y-6 pb-20">
-      {/* High-Contrast Status Bar */}
+      {/* Set Scanning Interface */}
+      {isCameraActive && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
+           <div className="w-full max-w-md aspect-[3/4] bg-gray-900 rounded-[3rem] border-4 border-white/20 relative overflow-hidden shadow-2xl">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+              <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+                 <div className="w-full h-full border-2 border-purple-500 rounded-2xl relative">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[moveDown_2s_infinite]"></div>
+                 </div>
+              </div>
+              <div className="absolute bottom-8 inset-x-0 text-center">
+                 <span className="bg-black/60 backdrop-blur px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white animate-pulse">
+                    Scanning for FashionOS Tags...
+                 </span>
+              </div>
+           </div>
+           <button 
+            onClick={handleStopScan}
+            className="mt-8 w-16 h-16 bg-white text-black rounded-full flex items-center justify-center shadow-2xl"
+           >
+             <X size={24} />
+           </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total SKUs', value: stats.total, color: 'text-gray-900' },
@@ -48,23 +94,16 @@ export const SampleTracker: React.FC<SampleTrackerProps> = ({ samples, onUpdateS
         ))}
       </div>
 
-      {/* AI Hero Priority Alert */}
-      {heroPending.length > 0 && (
-        <div className="bg-orange-50 border border-orange-100 p-5 rounded-2xl flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 shrink-0">
-                <AlertCircle size={20} className="animate-pulse" />
-             </div>
-             <div>
-                <p className="text-xs font-bold text-orange-900 uppercase tracking-widest">AI Capture Priority</p>
-                <p className="text-sm text-orange-800/80 font-light">{heroPending.length} hero items are currently pending capture.</p>
-             </div>
-          </div>
-          <button className="text-xs font-bold text-orange-600 underline uppercase tracking-widest">View List</button>
-        </div>
-      )}
+      <div className="flex justify-between items-center">
+         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Inventory Ledger</h3>
+         <button 
+           onClick={handleStartScan}
+           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-900/20 transition-all"
+         >
+           <QrCode size={14} /> Open Scanner
+         </button>
+      </div>
 
-      {/* Sample List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {samples.map((sample) => (
           <div 
@@ -73,13 +112,6 @@ export const SampleTracker: React.FC<SampleTrackerProps> = ({ samples, onUpdateS
               sample.status === 'shot' ? 'bg-green-50/20 border-green-100' : 'bg-white'
             }`}
           >
-            {isScanning && activeScanId === sample.id && (
-              <div className="absolute inset-0 bg-white/90 z-20 flex items-center justify-center gap-2 animate-in fade-in">
-                <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-purple-600">Syncing SKU...</span>
-              </div>
-            )}
-
             <div className="w-20 h-24 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 relative">
                <img src={sample.image} className="w-full h-full object-cover" alt={sample.name} />
                {sample.isHero && (
@@ -98,30 +130,26 @@ export const SampleTracker: React.FC<SampleTrackerProps> = ({ samples, onUpdateS
                
                <div className="flex gap-2">
                   <button 
-                    onClick={() => handleSimulatedScan(sample.id)}
+                    onClick={() => onUpdateStatus(sample.id, 'shot')}
                     disabled={sample.status === 'shot'}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                      sample.status === 'shot' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-500 hover:bg-black hover:text-white'
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      sample.status === 'shot' ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-400 hover:text-black'
                     }`}
                   >
-                    <QrCode size={14} /> {sample.status === 'shot' ? 'Captured ✓' : 'Scan SKU'}
-                  </button>
-                  <button className="p-2 bg-gray-50 text-gray-300 rounded-xl hover:text-black transition-all">
-                     <Camera size={14} />
+                    {sample.status === 'shot' ? 'Verified ✓' : 'Verify Capture'}
                   </button>
                </div>
-            </div>
-
-            <div className={`text-[9px] font-black uppercase tracking-widest self-start pt-1 ${
-               sample.status === 'shot' ? 'text-green-600' : 
-               sample.status === 'returned' ? 'text-blue-600' : 
-               'text-gray-300'
-            }`}>
-               {sample.status}
             </div>
           </div>
         ))}
       </div>
+      
+      <style>{`
+        @keyframes moveDown {
+          from { transform: translateY(-100%); }
+          to { transform: translateY(100%); }
+        }
+      `}</style>
     </div>
   );
 };

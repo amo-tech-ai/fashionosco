@@ -20,7 +20,7 @@ const VENUE_STYLES = [
   { id: 'industrial', label: 'Industrial Warehouse', desc: 'Raw concrete, high ceilings, exposed piping.', img: 'https://images.unsplash.com/photo-1512100356956-c1b47f4b8a21?q=80&w=400&auto=format&fit=crop' },
   { id: 'modern', label: 'Modern Gallery', desc: 'White cube, minimalist, clean lines, recessed lighting.', img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=400&auto=format&fit=crop' },
   { id: 'historical', label: 'Historical Palace', desc: 'Ornate moldings, gold leaf, marble floors, crystal.', img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=400&auto=format&fit=crop' },
-  { id: 'outdoor', label: 'Architectural Garden', desc: 'Brutalist structures meeting lush organic greenery.', img: 'https://images.unsplash.com/photo-1506619216599-9d16d0903dfd?q=80&w=400&auto=format&fit=crop' }
+  { id: 'outdoor', label: 'Architectural Garden', desc: 'Brutalist structures meeting lush organic greenery.', img: 'https://images.unsplash.com/photo-1506619216599-9d1e07e534b4?q=80&w=400&auto=format&fit=crop' }
 ];
 
 export const VenueVisualizer: React.FC = () => {
@@ -53,10 +53,9 @@ export const VenueVisualizer: React.FC = () => {
         },
       });
 
-      const bytes = response.generatedImages[0].image.imageBytes;
-      const base64String = btoa(
-        new Uint8Array(bytes).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
+      // Fix: imageBytes for Imagen models is already a base64 encoded string according to @google/genai guidelines.
+      // Do not attempt to process it as a byte array to avoid type errors and redundant conversion.
+      const base64String = response.generatedImages[0].image.imageBytes;
       
       setGeneratedImage(`data:image/jpeg;base64,${base64String}`);
       addToast("Venue visualization ready.", "success");

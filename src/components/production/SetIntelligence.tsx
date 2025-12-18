@@ -1,61 +1,172 @@
 
-import React from 'react';
-import { Zap, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Zap, 
+  Activity, 
+  Target, 
+  Shield, 
+  CheckCircle2, 
+  TrendingDown, 
+  Sun, 
+  Loader2, 
+  RefreshCw, 
+  Clock 
+} from 'lucide-react';
+import { getSetMitigation, ProductionMitigation } from '../../services/ai/productionAgents';
 
 interface SetIntelligenceProps {
   latency: number;
   progress: number;
   isBehind: boolean;
+  health: 'optimal' | 'warning' | 'critical';
+  remainingShots: number;
+  requiredVelocity: number;
 }
 
-export const SetIntelligence: React.FC<SetIntelligenceProps> = ({ latency, progress, isBehind }) => {
+export const SetIntelligence: React.FC<SetIntelligenceProps> = ({ 
+  latency, 
+  progress, 
+  isBehind, 
+  health,
+  remainingShots,
+  requiredVelocity
+}) => {
+  const [mitigation, setMitigation] = useState<ProductionMitigation | null>(null);
+  const [isConsulting, setIsConsulting] = useState(false);
+
+  useEffect(() => {
+    // Only trigger if behind and we haven't already generated a mitigation for this specific risk level
+    if (isBehind && !mitigation) {
+      handleConsultShowrunner();
+    }
+    if (!isBehind) setMitigation(null);
+  }, [isBehind, health, mitigation]);
+
+  const handleConsultShowrunner = async () => {
+    setIsConsulting(true);
+    try {
+      const result = await getSetMitigation(latency, remainingShots, { weather: 'Cloudy' }, requiredVelocity);
+      setMitigation(result);
+    } finally {
+      setIsConsulting(false);
+    }
+  };
+
+  const statusColors = {
+    optimal: 'border-l-green-500 bg-green-50/10 text-green-700',
+    warning: 'border-l-orange-500 bg-orange-50/10 text-orange-700',
+    critical: 'border-l-red-500 bg-red-50/10 text-red-700'
+  };
+
   return (
-    <div className={`luxury-card p-6 border-l-4 transition-all duration-700 ${
-      isBehind ? 'border-l-red-500 bg-red-50/10' : 'border-l-purple-500 bg-purple-50/10'
-    }`}>
-      <div className="flex justify-between items-start mb-6">
+    <div className={`luxury-card p-6 border-l-4 transition-all duration-700 ${statusColors[health]}`}>
+      <div className="flex justify-between items-start mb-8">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${isBehind ? 'bg-red-500 text-white' : 'bg-purple-600 text-white'}`}>
+          <div className={`p-2.5 rounded-xl shadow-lg ${
+            health === 'optimal' ? 'bg-green-600' : 
+            health === 'warning' ? 'bg-orange-600' : 'bg-red-600'
+          } text-white transition-colors duration-500`}>
             <Activity size={18} />
           </div>
           <div>
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Set Intelligence</h3>
-            <div className="text-lg font-serif font-bold text-gray-900">
-              {isBehind ? 'Velocity Critical' : 'Optimal Pace'}
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Ops Intelligence</h3>
+            <div className="text-xl font-serif font-bold text-gray-900 leading-tight">
+              {health === 'critical' ? 'Velocity Terminal' : 
+               health === 'warning' ? 'Schedule Drift' : 'Peak Flow'}
             </div>
           </div>
         </div>
         <div className="text-right">
-           <div className={`text-2xl font-mono font-bold ${isBehind ? 'text-red-600' : 'text-purple-600'}`}>
-             {isBehind ? `+${latency}m` : 'On Track'}
+           <div className={`text-3xl font-mono font-bold ${isBehind ? 'text-red-600' : 'text-green-600'}`}>
+             {isBehind ? `+${latency}m` : '0m'}
            </div>
-           <span className="text-[10px] font-bold text-gray-400 uppercase">Schedule Delta</span>
+           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Temporal Delta</span>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between text-[10px] font-bold uppercase text-gray-500">
-          <span>Overall Progress</span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-1000 ${isBehind ? 'bg-red-500' : 'bg-purple-600'}`}
-            style={{ width: `${progress}%` }}
-          ></div>
+      <div className="space-y-6">
+        <div className="space-y-2">
+           <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+              <span className="text-gray-400">Total Progress</span>
+              <span className="text-gray-900">{Math.round(progress)}%</span>
+           </div>
+           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={`h-full transition-all duration-1000 ${
+                  health === 'critical' ? 'bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 
+                  health === 'warning' ? 'bg-orange-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${progress}%` }}
+              ></div>
+           </div>
         </div>
 
         {isBehind && (
-          <div className="bg-red-600 text-white p-4 rounded-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap size={14} fill="currentColor" />
-              <span className="text-[10px] font-black uppercase tracking-widest">AI Strategy Active</span>
+          <div className="bg-[#0A0A0A] text-white p-6 rounded-2xl shadow-2xl relative overflow-hidden group animate-in fade-in zoom-in-95">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl group-hover:bg-purple-600/20 transition-all duration-1000"></div>
+            
+            <div className="relative z-10">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                     <Zap size={14} className="text-purple-400 animate-pulse" fill="currentColor" />
+                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400">Showrunner Logic</span>
+                  </div>
+                  {mitigation && (
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest ${
+                      mitigation.riskLevel === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {mitigation.riskLevel} Risk
+                    </span>
+                  )}
+               </div>
+
+               {isConsulting ? (
+                 <div className="space-y-3 py-4">
+                    <div className="h-3 bg-white/5 rounded-full w-full animate-pulse"></div>
+                    <div className="h-3 bg-white/5 rounded-full w-4/5 animate-pulse"></div>
+                 </div>
+               ) : mitigation ? (
+                 <div className="space-y-4">
+                    <p className="text-xs leading-relaxed text-gray-300 font-light italic border-l border-purple-500/50 pl-3">
+                      "{mitigation.strategy}"
+                    </p>
+                    <div className="space-y-2">
+                       {mitigation.steps.slice(0, 3).map((step, i) => (
+                         <div key={i} className="flex items-start gap-2 text-[10px] text-gray-500">
+                            <CheckCircle2 size={12} className="text-purple-500 shrink-0 mt-0.5" />
+                            <span>{step}</span>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+               ) : null}
+
+               <button 
+                onClick={handleConsultShowrunner}
+                disabled={isConsulting}
+                className="mt-6 w-full py-2.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+               >
+                 {isConsulting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                 Refresh Strategy
+               </button>
             </div>
-            <p className="text-xs leading-relaxed font-medium">
-              "Behind by {latency}m. I've prioritized Hero Samples only. Recommend skipping 20m of BTS B-Roll to recover the sunset window."
-            </p>
           </div>
         )}
+
+        <div className="grid grid-cols-2 gap-3 pt-2">
+           <div className="bg-white/50 border border-gray-100 p-4 rounded-xl flex flex-col gap-1">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Required Velocity</span>
+              <span className="text-sm font-bold flex items-center gap-1.5">
+                 <Clock size={12} className="text-blue-500" /> {Math.round(requiredVelocity)}m <span className="text-[10px] font-normal text-gray-400">/look</span>
+              </span>
+           </div>
+           <div className="bg-white/50 border border-gray-100 p-4 rounded-xl flex flex-col gap-1">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Atmosphere</span>
+              <span className="text-sm font-bold flex items-center gap-1.5">
+                 <Sun size={12} className="text-orange-400" /> Golden Hour <span className="text-[10px] font-normal text-gray-400">17:40</span>
+              </span>
+           </div>
+        </div>
       </div>
     </div>
   );

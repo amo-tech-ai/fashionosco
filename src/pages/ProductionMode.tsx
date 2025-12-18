@@ -9,6 +9,7 @@ import { SetIntelligence } from '../components/production/SetIntelligence';
 import { UsageRightsTracker } from '../components/production/UsageRightsTracker';
 import { ProductSample, UsageRight, CallSheetBlock, EnvironmentalSignals } from '../types/production';
 import { useProductionState } from '../hooks/useProductionState';
+import { useAutonomousAssistant } from '../hooks/useAutonomousAssistant';
 
 const MOCK_SAMPLES: ProductSample[] = [
   { id: '1', name: 'Silk Charmeuse Gown', sku: 'FW25-DR-001', status: 'on-set', isHero: true, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=300' },
@@ -40,21 +41,24 @@ export const ProductionMode: React.FC = () => {
     setCallSheet 
   } = useProductionState(MOCK_SAMPLES, MOCK_CALLSHEET);
 
+  // Initialize Autonomous Intelligence
+  const remainingShots = samples.filter(s => s.status !== 'shot').length;
+  useAutonomousAssistant(stats, remainingShots);
+
   const signals: EnvironmentalSignals = {
-    weather: { condition: 'rain', temp: '18°C', icon: 'cloud-rain' },
-    travelRisk: 'Medium'
+    weather: { condition: 'overcast', temp: '19°C', icon: 'cloud' },
+    travelRisk: 'Low'
   };
 
   const handleApplyStrategy = () => {
-     // Re-order call sheet logic
      const updated = [...callSheet];
      const outdoorIdx = updated.findIndex(item => item.is_outdoor);
      const indoorIdx = updated.findIndex(item => !item.is_outdoor && item.category === 'runway');
      
      if (outdoorIdx > -1 && indoorIdx > -1) {
         const temp = { ...updated[outdoorIdx] };
-        updated[outdoorIdx] = { ...updated[indoorIdx], time: temp.time, ai_note: 'Prioritized for Weather' };
-        updated[indoorIdx] = { ...temp, time: updated[indoorIdx].time, ai_note: 'Delayed for Weather' };
+        updated[outdoorIdx] = { ...updated[indoorIdx], time: temp.time, ai_note: 'Prioritized for Lighting' };
+        updated[indoorIdx] = { ...temp, time: updated[indoorIdx].time, ai_note: 'Delayed for Safety' };
         setCallSheet(updated);
         setHasIntervention(false);
      }
@@ -66,30 +70,37 @@ export const ProductionMode: React.FC = () => {
 
       <main className="flex-1 max-w-[1440px] mx-auto w-full px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* Sidebar */}
+        {/* Sidebar Intelligence */}
         <div className="lg:col-span-3 space-y-6">
            <ProductionSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
            <SetIntelligence 
              latency={stats.latency} 
              progress={stats.progress} 
              isBehind={stats.isBehind} 
+             health={stats.health}
+             remainingShots={remainingShots}
+             requiredVelocity={stats.requiredMinutesPerLook}
            />
         </div>
 
-        {/* Dynamic Content */}
+        {/* Dynamic Operational Content */}
         <section className="lg:col-span-9 animate-in fade-in slide-in-from-right-4 duration-500">
-           <div className="mb-8 flex justify-between items-end">
+           <div className="mb-12 flex justify-between items-end">
               <div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-2">Live Production Command</span>
-                 <h2 className="font-serif text-4xl text-[#1A1A1A]">
-                    {activeTab === 'samples' && 'Inventory Control'}
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 block mb-3">Live Production Command</span>
+                 <h2 className="font-serif text-5xl text-[#1A1A1A]">
+                    {activeTab === 'samples' && 'Inventory Ledger'}
                     {activeTab === 'rights' && 'Licensing Guardian'}
-                    {activeTab === 'callsheet' && 'Dynamic Timeline'}
+                    {activeTab === 'callsheet' && 'Reactive Timeline'}
                  </h2>
               </div>
               <div className="flex gap-3">
-                 <button className="p-3 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-black transition-all shadow-sm"><Share2 size={18} /></button>
-                 <button className="p-3 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-black transition-all shadow-sm"><Download size={18} /></button>
+                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black hover:border-black transition-all shadow-sm group">
+                    <Share2 size={20} className="group-hover:scale-110 transition-transform" />
+                 </button>
+                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black hover:border-black transition-all shadow-sm group">
+                    <Download size={20} className="group-hover:translate-y-1 transition-transform" />
+                 </button>
               </div>
            </div>
 

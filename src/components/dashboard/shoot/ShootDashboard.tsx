@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { KPIGrid } from '../KPIGrid';
 import { ActionBanner } from '../ActionBanner';
@@ -7,6 +8,7 @@ import { TeamPanel } from '../TeamPanel';
 import { AIInsightCard } from '../AIInsightCard';
 import { StorageWidget } from '../StorageWidget';
 import { BrandHealthWidget } from '../BrandHealthWidget';
+import { CastingMatchmaker } from './CastingMatchmaker';
 import { Button } from '../../Button';
 import { Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -37,14 +39,17 @@ export const ShootDashboard: React.FC<ShootDashboardProps> = ({ campaign }) => {
 
       <KPIGrid campaign={campaign} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
+        {/* Main Intelligence Stream */}
+        <div className="lg:col-span-8 space-y-8">
+          <CastingMatchmaker vibe={campaign?.vibe || 'minimalist'} />
           <ActionBanner />
           <ActivityFeed campaign={campaign} />
           <DeliverablesList campaign={campaign} totalShots={campaign?.shotList?.length || 0} />
         </div>
 
-        <div className="space-y-8">
+        {/* Tactical Sidebar */}
+        <div className="lg:col-span-4 space-y-8">
           <BrandHealthWidget /> 
           <TeamPanel campaign={campaign} />
           <AIInsightCard />

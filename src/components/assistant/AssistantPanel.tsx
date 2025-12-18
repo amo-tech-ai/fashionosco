@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, Send, ChevronRight, Search, Bot, Loader2, Maximize2, Minimize2, Activity, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, Send, ChevronRight, Search, Bot, Loader2, Maximize2, Minimize2, Activity, Zap, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAssistant } from '../../contexts/AssistantContext';
 import { ConciergeAction } from '../../services/ai/concierge';
@@ -41,14 +41,14 @@ export const AssistantPanel: React.FC = () => {
 
   return (
     <div className={`
-      fixed inset-y-0 right-0 z-[100] bg-white/95 backdrop-blur-2xl border-l border-gray-100 flex flex-col 
+      fixed inset-y-0 right-0 z-[100] bg-white/80 backdrop-blur-2xl border-l border-gray-100 flex flex-col 
       shadow-[0_0_80px_rgba(0,0,0,0.1)] transition-all duration-500 ease-in-out font-sans
       ${isExpanded ? 'w-full sm:w-[700px]' : 'w-full sm:w-[450px]'}
       animate-in slide-in-from-right
     `}>
-      {/* Header Container */}
-      <div className="flex flex-col border-b border-gray-100 bg-white/50">
-        <div className="h-24 flex items-center justify-between px-8">
+      {/* Editorial Header */}
+      <div className="flex flex-col">
+        <div className="h-24 flex items-center justify-between px-8 bg-white/50 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div className="relative group">
               <div className="w-14 h-14 bg-[#0A0A0A] rounded-full flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
@@ -61,7 +61,7 @@ export const AssistantPanel: React.FC = () => {
               <div className="flex items-center gap-3 text-[10px] uppercase font-black tracking-[0.2em] text-purple-600">
                  <span className="flex items-center gap-1.5">
                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse"></div>
-                   Tactical Intelligence Active
+                   Tactical Intelligence
                  </span>
               </div>
             </div>
@@ -70,40 +70,39 @@ export const AssistantPanel: React.FC = () => {
             <button 
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hidden sm:block"
-              title={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
             </button>
-            <button onClick={closeAssistant} className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400" title="Close">
+            <button onClick={closeAssistant} className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400">
               <X size={24} />
             </button>
           </div>
         </div>
 
-        {/* Production Mode Context Strip */}
+        {/* Context Strip: Global production health awareness */}
         {isProductionMode && (
           <div className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-between shadow-lg z-10 animate-in slide-in-from-top-full">
              <div className="flex items-center gap-3">
                 <Activity size={14} className="animate-pulse" />
-                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Live Set Telemetry Monitoring Active</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Monitoring Set Velocity & Atmospheric Risk</span>
              </div>
              <div className="flex items-center gap-2">
                 <ShieldCheck size={12} fill="currentColor" />
-                <span className="text-[9px] font-bold uppercase">Enterprise Encryption</span>
+                <span className="text-[9px] font-bold uppercase">Safe Mode Active</span>
              </div>
           </div>
         )}
       </div>
 
-      {/* Message Stream */}
-      <div className="flex-1 overflow-y-auto p-10 space-y-12 scroll-smooth hide-scrollbar">
+      {/* Message Container */}
+      <div className="flex-1 overflow-y-auto p-10 space-y-12 scroll-smooth hide-scrollbar" ref={scrollRef}>
         {messages.map((m) => (
           <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-6 duration-500`}>
             <div className={`
-              max-w-[95%] p-6 text-base leading-relaxed tracking-tight shadow-sm
+              max-w-[95%] p-6 text-base leading-relaxed tracking-tight
               ${m.role === 'user' 
                 ? 'bg-[#0A0A0A] text-white rounded-[2.5rem] rounded-tr-none shadow-2xl' 
-                : 'bg-white border border-gray-100 text-[#1A1A1A] rounded-[2.5rem] rounded-tl-none font-light'}
+                : 'bg-white border border-gray-100 text-[#1A1A1A] rounded-[2.5rem] rounded-tl-none shadow-sm font-light'}
             `}>
               {m.text}
             </div>
@@ -124,7 +123,7 @@ export const AssistantPanel: React.FC = () => {
             )}
             
             <span className={`text-[9px] uppercase font-black tracking-[0.3em] mt-4 opacity-20 ${m.role === 'user' ? 'mr-6' : 'ml-6'}`}>
-               {m.role === 'user' ? 'Producer Directive' : 'AI Strategic Logic'}
+               {m.role === 'user' ? 'DIRECTIVE' : 'LOGIC'}
             </span>
           </div>
         ))}
@@ -137,7 +136,7 @@ export const AssistantPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Input Architecture */}
+      {/* Command Input Area */}
       <div className="p-10 bg-white/90 backdrop-blur-xl border-t border-gray-100">
         <div className="relative group">
           <input 
@@ -145,7 +144,7 @@ export const AssistantPanel: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={isProductionMode ? "Command: 'Shift outdoor looks', 'Update catering'..." : "Ask for strategic direction or navigate OS..."}
+            placeholder={isProductionMode ? "Command Set: 'Update crew call', 'Refine show order'..." : "Ask for strategic or operational direction..."}
             className="w-full pl-8 pr-16 py-6 bg-[#F9F8F6] border-none rounded-[2.5rem] text-base focus:ring-1 focus:ring-[#0A0A0A] focus:bg-white transition-all duration-300 outline-none text-[#1A1A1A] placeholder:text-gray-400 shadow-inner"
           />
           <button 
@@ -157,9 +156,9 @@ export const AssistantPanel: React.FC = () => {
           </button>
         </div>
         <div className="mt-6 flex justify-center gap-8 text-[10px] font-black uppercase tracking-[0.25em] text-gray-300">
-            <span className="flex items-center gap-2 hover:text-black transition-colors cursor-help"><Search size={14} strokeWidth={3}/> Directory Scout</span>
+            <span className="flex items-center gap-2 hover:text-black transition-colors cursor-help"><Search size={14} strokeWidth={3}/> Project Scout</span>
             <span className="flex items-center gap-2 hover:text-black transition-colors cursor-help"><Bot size={14} strokeWidth={3}/> Gemini Reasoning</span>
-            <span className="flex items-center gap-2 hover:text-black transition-colors cursor-help"><Activity size={14} strokeWidth={3}/> Telemetry</span>
+            <span className="flex items-center gap-2 hover:text-black transition-colors cursor-help"><Activity size={14} strokeWidth={3}/> Set Telemetry</span>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
   "description": "Premium AI Operating System for the Fashion Industry",
   "requestFramePermissions": [
     "geolocation",
-    "camera"
+    "camera",
+    "microphone"
   ]
 }
