@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Share2, Download, Play, Zap, Clock, Package, ShieldCheck } from 'lucide-react';
+import { Share2, Download, Play, Zap, Clock, Loader2 } from 'lucide-react';
 import { ProductionHeader } from '../components/production/ProductionHeader';
 import { ProductionSidebar } from '../components/production/ProductionSidebar';
 import { ProductionCallSheet } from '../components/production/ProductionCallSheet';
-import { SampleTracker } from '../components/production/SampleTracker';
+import { InventoryLedger } from '../components/production/InventoryLedger';
 import { SetIntelligence } from '../components/production/SetIntelligence';
 import { UsageRightsTracker } from '../components/production/UsageRightsTracker';
 import { ProductSample, UsageRight, CallSheetBlock, EnvironmentalSignals } from '../types/production';
@@ -31,18 +31,19 @@ const MOCK_RIGHTS: UsageRight[] = [
 export const ProductionMode: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'samples' | 'rights' | 'callsheet'>('samples');
   const [hasIntervention, setHasIntervention] = useState(true);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   const { 
     samples, 
     callSheet, 
     stats, 
     updateSampleStatus, 
-    confirmTimelineItem,
     setCallSheet 
   } = useProductionState(MOCK_SAMPLES, MOCK_CALLSHEET);
 
-  // Initialize Autonomous Intelligence
   const remainingShots = samples.filter(s => s.status !== 'shot').length;
+  
+  // Connect Autonomous AI Oversight
   useAutonomousAssistant(stats, remainingShots);
 
   const signals: EnvironmentalSignals = {
@@ -68,9 +69,9 @@ export const ProductionMode: React.FC = () => {
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans selection:bg-purple-200">
       <ProductionHeader signals={signals} />
 
-      <main className="flex-1 max-w-[1440px] mx-auto w-full px-8 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <main className="flex-1 max-w-[1440px] mx-auto w-full px-6 md:px-12 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* Sidebar Intelligence */}
+        {/* Left Col: Intel & Nav */}
         <div className="lg:col-span-3 space-y-6">
            <ProductionSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
            <SetIntelligence 
@@ -83,37 +84,45 @@ export const ProductionMode: React.FC = () => {
            />
         </div>
 
-        {/* Dynamic Operational Content */}
+        {/* Right Col: Operations */}
         <section className="lg:col-span-9 animate-in fade-in slide-in-from-right-4 duration-500">
-           <div className="mb-12 flex justify-between items-end">
+           <div className="mb-12 flex justify-between items-end gap-4">
               <div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 block mb-3">Live Production Command</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 block mb-3">Master Production Sequence</span>
                  <h2 className="font-serif text-5xl text-[#1A1A1A]">
                     {activeTab === 'samples' && 'Inventory Ledger'}
                     {activeTab === 'rights' && 'Licensing Guardian'}
-                    {activeTab === 'callsheet' && 'Reactive Timeline'}
+                    {activeTab === 'callsheet' && 'Set Timeline'}
                  </h2>
               </div>
-              <div className="flex gap-3">
-                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black hover:border-black transition-all shadow-sm group">
+              <div className="flex gap-2">
+                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black transition-all shadow-sm group">
                     <Share2 size={20} className="group-hover:scale-110 transition-transform" />
                  </button>
-                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black hover:border-black transition-all shadow-sm group">
+                 <button className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-black transition-all shadow-sm group">
                     <Download size={20} className="group-hover:translate-y-1 transition-transform" />
                  </button>
               </div>
            </div>
 
-           {activeTab === 'samples' && <SampleTracker samples={samples} onUpdateStatus={updateSampleStatus} />}
-           {activeTab === 'rights' && <UsageRightsTracker rights={MOCK_RIGHTS} />}
-           {activeTab === 'callsheet' && (
-              <ProductionCallSheet 
-                callSheet={callSheet} 
-                hasIntervention={hasIntervention}
-                onApplyStrategy={handleApplyStrategy}
-                onIgnore={() => setHasIntervention(false)}
-              />
-           )}
+           <div className="min-h-[500px]">
+              {activeTab === 'samples' && (
+                <InventoryLedger 
+                  samples={samples} 
+                  onUpdateStatus={updateSampleStatus} 
+                  onOpenScanner={() => setIsScannerOpen(true)}
+                />
+              )}
+              {activeTab === 'rights' && <UsageRightsTracker rights={MOCK_RIGHTS} />}
+              {activeTab === 'callsheet' && (
+                  <ProductionCallSheet 
+                    callSheet={callSheet} 
+                    hasIntervention={hasIntervention}
+                    onApplyStrategy={handleApplyStrategy}
+                    onIgnore={() => setHasIntervention(false)}
+                  />
+              )}
+           </div>
         </section>
       </main>
     </div>

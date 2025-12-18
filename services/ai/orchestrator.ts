@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 
 // System Tools for the OS - verified schemas for Gemini 3

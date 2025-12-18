@@ -14,13 +14,11 @@ export interface WholesaleOrder {
 const STORAGE_KEY = 'fashionos_wholesale_orders';
 
 export const OrderService = {
-  // Get all orders associated with the brand user
   getAll: async (): Promise<WholesaleOrder[]> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session && import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        // Fetch from 'shoots' table filtered by wholesale type markers in brief_data
         const { data, error } = await supabase
           .from('shoots')
           .select('*')
@@ -41,15 +39,29 @@ export const OrderService = {
         }
       }
     } catch (e) {
-      console.warn("Order fetch failed, using local storage");
+      console.warn("Order fetch fallback active");
     }
 
     const local = localStorage.getItem(STORAGE_KEY);
     return local ? JSON.parse(local) : [];
   },
 
-  // Create a new order (called by Buyer)
   create: async (cart: CartItem[], total: number, buyerName: string = "Showroom Buyer"): Promise<WholesaleOrder> => {
+    // BUSINESS LOGIC: Enforce $2k Floor
+    if (total < 2000) {
+        throw new Error("Wholesale minimum order value ($2,000) not met.");
+    }
+
+    // BUSINESS LOGIC: Validate MOQs and Case Packs
+    for (const item of cart) {
+        if (item.quantity < item.moq) {
+            throw new Error(`Minimum Order Quantity not met for SKU: ${item.sku}. Required: ${item.moq}`);
+        }
+        if (item.quantity % item.casePack !== 0) {
+            throw new Error(`Invalid quantity for SKU: ${item.sku}. Must be in multiples of ${item.casePack} (Case Pack).`);
+        }
+    }
+
     const newOrder: WholesaleOrder = {
       id: `PO-${Date.now().toString().slice(-6)}`,
       buyerName,
@@ -59,7 +71,6 @@ export const OrderService = {
       date: new Date().toISOString()
     };
 
-    // 1. DB Sync (Primary)
     try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && import.meta.env.VITE_SUPABASE_ANON_KEY) {
@@ -78,10 +89,9 @@ export const OrderService = {
             });
         }
     } catch(e) {
-        console.warn('Sync failed. Using local persistence.');
+        console.warn('Sync failed. Persistent local recovery active.');
     }
 
-    // 2. Local Persistence (Optimistic)
     const existing = await OrderService.getAll();
     localStorage.setItem(STORAGE_KEY, JSON.stringify([newOrder, ...existing]));
     window.dispatchEvent(new Event('ordersUpdated'));

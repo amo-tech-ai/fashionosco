@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, Send, ChevronRight, Search, Bot, Loader2, Maximize2, Minimize2, Activity, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';

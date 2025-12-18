@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useShootWizard } from '../../contexts/ShootWizardContext';
 import { ShootTypeStep } from './steps/ShootTypeStep';

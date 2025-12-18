@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useShootWizard } from '../../contexts/ShootWizardContext';
 import { Sparkles, TrendingUp, Info, ChevronRight } from 'lucide-react';
@@ -7,7 +6,8 @@ export const AIRecommendationSidebar: React.FC = () => {
   const { state } = useShootWizard();
   
   const getRecommendation = () => {
-    switch (state.step) {
+    const step = typeof state.step === 'number' ? state.step : 1;
+    switch (step) {
       case 1:
         return {
           title: "Strategic Start",

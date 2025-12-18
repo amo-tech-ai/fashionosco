@@ -1,10 +1,9 @@
-
 import React from 'react';
 
 interface DeliverablesControlsProps {
   finalImagesCount: number;
   resolution: 'web' | 'print';
-  onUpdate: (field: string, value: any) => void;
+  onUpdate: (field: any, value: any) => void;
 }
 
 export const DeliverablesControls: React.FC<DeliverablesControlsProps> = ({
@@ -13,7 +12,7 @@ export const DeliverablesControls: React.FC<DeliverablesControlsProps> = ({
   onUpdate,
 }) => {
   return (
-    <>
+    <div className="space-y-4">
       <div className="bg-white p-6 rounded-xl border border-gray-200">
         <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">
           Final Retouched Images
@@ -42,7 +41,7 @@ export const DeliverablesControls: React.FC<DeliverablesControlsProps> = ({
           <button
             onClick={() => onUpdate('resolution', 'web')}
             className={`p-3 rounded-lg border text-sm font-medium transition-all ${
-              resolution === 'web' ? 'border-black bg-gray-50' : 'border-gray-200'
+              resolution === 'web' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             Web (72 DPI)
@@ -50,13 +49,13 @@ export const DeliverablesControls: React.FC<DeliverablesControlsProps> = ({
           <button
             onClick={() => onUpdate('resolution', 'print')}
             className={`p-3 rounded-lg border text-sm font-medium transition-all ${
-              resolution === 'print' ? 'border-black bg-gray-50' : 'border-gray-200'
+              resolution === 'print' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             Print (300 DPI)
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
