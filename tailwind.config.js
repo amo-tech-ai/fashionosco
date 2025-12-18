@@ -9,6 +9,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         serif: ['Playfair Display', 'serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
       },
       colors: {
         primary: '#000000',
