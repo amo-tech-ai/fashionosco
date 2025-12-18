@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ProductionMitigation {
@@ -56,10 +57,13 @@ export const getSetMitigation = async (
       }
     });
 
-    return JSON.parse(response.text || '{}');
+    const text = response.text;
+    if (!text) throw new Error("Agent failed to respond.");
+    
+    return JSON.parse(text);
   } catch (e) {
     console.error("Showrunner logic failure:", e);
-    // Sophisticated fallback based on production heuristics
+    // Sophisticated fallback based on standard production heuristics
     return {
       strategy: "Consolidate lighting rigs and execute high-priority Hero looks only.",
       rationale: "Current velocity is unsustainable for the full shot list. Prioritizing brand equity over detail volume.",

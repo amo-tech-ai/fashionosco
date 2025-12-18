@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useShootWizard } from '../../contexts/ShootWizardContext';
 import { ShootTypeStep } from './steps/ShootTypeStep';
@@ -11,6 +10,8 @@ import { ReviewConfirmStep } from './steps/ReviewConfirmStep';
 import { SidebarSummary } from './SidebarSummary';
 import { ProgressBar } from './ProgressBar';
 import { OnboardingOverlay } from './OnboardingOverlay';
+import { WizardLayout } from './WizardLayout';
+import { AIRecommendationSidebar } from './AIRecommendationSidebar';
 
 export const ShootWizard: React.FC = () => {
   const { state } = useShootWizard();
@@ -28,29 +29,29 @@ export const ShootWizard: React.FC = () => {
     }
   };
 
+  const currentStepNum = typeof state.step === 'number' ? state.step : 1;
+
+  // Choose the most relevant sidebar content based on current step
+  const sidebarContent = currentStepNum < 7 ? (
+    <div className="space-y-6">
+      {currentStepNum > 1 && <SidebarSummary />}
+      <AIRecommendationSidebar />
+    </div>
+  ) : null;
+
   return (
-    <div className="min-h-screen bg-white pt-32 pb-20">
+    <div className="bg-[#FCFBFA]">
       <OnboardingOverlay />
       <ProgressBar />
       
-      <main className="max-w-[1440px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 pt-12">
-        {/* Main Content Area */}
-        <div className="lg:col-span-8 lg:col-start-2 xl:col-span-7 xl:col-start-2">
-           <div className="mb-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
-              <span>Step {state.step} of 7</span>
-              <span className="text-gray-300">/</span>
-              <span>FashionOS Production</span>
-           </div>
-           
-           {renderStep()}
-        </div>
-
-        {/* Sidebar Summary (Hidden on mobile/tablet step 1) */}
-        <div className="hidden lg:block lg:col-span-3 xl:col-span-3 xl:col-start-10">
-           {/* Fix: Use a type check to resolve the error where '>' cannot be used on 'string | number' */}
-           {typeof state.step === 'number' && state.step > 1 && <SidebarSummary />}
-        </div>
-      </main>
+      <WizardLayout 
+        currentStep={currentStepNum}
+        totalSteps={7}
+        title="FashionOS Production"
+        sidebar={sidebarContent}
+      >
+        {renderStep()}
+      </WizardLayout>
     </div>
   );
 };

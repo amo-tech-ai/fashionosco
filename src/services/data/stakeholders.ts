@@ -1,4 +1,3 @@
-
 import { supabase } from '../../lib/supabase';
 
 export interface Stakeholder {
@@ -31,14 +30,12 @@ export const StakeholderService = {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If we have a real backend connection and session, try fetching
       if (session && import.meta.env.VITE_SUPABASE_ANON_KEY) {
         const { data, error } = await supabase
           .from('stakeholders')
           .select('*');
 
         if (!error && data && data.length > 0) {
-          // Map DB schema to Frontend Interface
           return data.map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -59,12 +56,30 @@ export const StakeholderService = {
       console.warn("Using mock stakeholder data");
     }
     
-    // Check local storage for newly added demo stakeholders
     const local = localStorage.getItem('demo_stakeholders');
     const localData = local ? JSON.parse(local) : [];
 
-    // Return Mock Data + Local Demo Data
     return [...localData, ...MOCK_STAKEHOLDERS];
+  },
+
+  /**
+   * Checks if a talent is available on a specific date.
+   * Currently uses a deterministic mock for demo purposes.
+   */
+  checkAvailability: async (talentId: string, date: Date | null): Promise<boolean> => {
+    if (!date) return true;
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Deterministic mock: Talent with even IDs are busy on even days of the month
+    const day = date.getDate();
+    const idNum = parseInt(talentId.replace(/\D/g, '')) || 0;
+    
+    if (idNum % 2 === 0 && day % 2 === 0) return false;
+    if (idNum % 2 !== 0 && day % 3 === 0) return false;
+    
+    return true;
   },
 
   create: async (stakeholder: Partial<Stakeholder>): Promise<Stakeholder> => {
@@ -87,7 +102,6 @@ export const StakeholderService = {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && import.meta.env.VITE_SUPABASE_ANON_KEY) {
-            // Attempt DB Insert (assuming table structure matches)
             const { data, error } = await supabase
                 .from('stakeholders')
                 .insert([{
@@ -111,7 +125,6 @@ export const StakeholderService = {
         console.warn("Failed to save to DB, falling back to local storage");
     }
 
-    // Fallback: Save to LocalStorage for Demo
     const existing = JSON.parse(localStorage.getItem('demo_stakeholders') || '[]');
     localStorage.setItem('demo_stakeholders', JSON.stringify([newStakeholder, ...existing]));
     

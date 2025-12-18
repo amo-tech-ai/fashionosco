@@ -63,12 +63,11 @@ export const ProductionMode: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans selection:bg-purple-200">
+    <div className="min-h-screen bg-[#FCFBFA] flex flex-col font-sans selection:bg-purple-100">
       <ProductionHeader signals={signals} />
 
       <main className="flex-1 max-w-[1440px] mx-auto w-full px-6 md:px-12 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* Left Col: Intel & Nav */}
         <div className="lg:col-span-3 space-y-6">
            <ProductionSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
            <SetIntelligence 
@@ -81,12 +80,11 @@ export const ProductionMode: React.FC = () => {
            />
         </div>
 
-        {/* Right Col: Operations */}
         <section className="lg:col-span-9 animate-in fade-in slide-in-from-right-4 duration-500">
            <div className="mb-12 flex justify-between items-end gap-4">
               <div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 block mb-3">Master Production Sequence</span>
-                 <h2 className="font-serif text-5xl text-[#1A1A1A]">
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 block mb-3">Live Session Console</span>
+                 <h2 className="font-serif text-5xl text-[#0A0A0A]">
                     {activeTab === 'samples' && 'Inventory Ledger'}
                     {activeTab === 'rights' && 'Licensing Guardian'}
                     {activeTab === 'callsheet' && 'Set Timeline'}
@@ -107,7 +105,7 @@ export const ProductionMode: React.FC = () => {
                 <InventoryLedger 
                   samples={samples} 
                   onUpdateStatus={updateSampleStatus} 
-                  onOpenScanner={() => {}}
+                  onOpenScanner={() => {}} 
                 />
               )}
               {activeTab === 'rights' && <UsageRightsTracker rights={MOCK_RIGHTS} />}

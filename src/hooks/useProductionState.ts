@@ -25,27 +25,23 @@ export const useProductionState = <T extends TimelineItem>(initialSamples: Produ
     return false;
   }, [activeBlockIndex, callSheet.length]);
 
-  const confirmTimelineItem = useCallback((id: string) => {
-    setCallSheet(prev => prev.map(item => 
-      item.id === id ? { ...item, status: 'confirmed' as any } : item
-    ));
-  }, []);
-
   const stats = useMemo(() => {
     const totalBlocks = callSheet.length;
     const completedBlocks = activeBlockIndex;
     const progress = totalBlocks > 0 ? (completedBlocks / totalBlocks) * 100 : 0;
     
-    // Logic: Calculate Temporal Drift
+    // TEMPORAL DELTA LOGIC
+    // Calculate how far we have drifted from the ideal "45m per look" benchmark
     const startTime = new Date();
-    startTime.setHours(9, 0, 0);
+    startTime.setHours(9, 0, 0); // 09:00 Crew Call
     
     const elapsedMinutes = Math.floor((currentTime.getTime() - startTime.getTime()) / 60000);
-    const expectedMinutes = completedBlocks * 45; // Assume 45m per look
+    const expectedMinutes = completedBlocks * 45; 
     const latency = Math.max(0, elapsedMinutes - expectedMinutes);
 
+    // Calculate required speed to hit sunset wrap (18:00)
     const wrapTime = new Date();
-    wrapTime.setHours(18, 0, 0); // Sunset wrap
+    wrapTime.setHours(18, 0, 0); 
     const minutesToWrap = Math.max(0, Math.floor((wrapTime.getTime() - currentTime.getTime()) / 60000));
     const remainingBlocks = totalBlocks - completedBlocks;
     const requiredMinutesPerLook = remainingBlocks > 0 ? minutesToWrap / remainingBlocks : 45;
@@ -68,12 +64,11 @@ export const useProductionState = <T extends TimelineItem>(initialSamples: Produ
     samples,
     callSheet,
     activeBlockIndex,
+    setActiveBlockIndex,
     currentTime,
     stats,
     updateSampleStatus,
     advanceBlock,
-    setCallSheet,
-    setActiveBlockIndex,
-    confirmTimelineItem
+    setCallSheet
   };
 };
