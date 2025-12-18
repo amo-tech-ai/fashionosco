@@ -13,7 +13,8 @@ export type RetouchingLevel = "basic" | "advanced" | "high-end";
 export type UsageRights = "editorial" | "commercial" | "unlimited";
 
 export interface ShootWizardState {
-  step: number;
+  // Fix: Allowed step to be a string to support named steps in AI-powered sub-flows
+  step: number | string;
   shootType: ShootType | null;
   numberOfItems: number;
   selectedProducts: Product[]; // New field for inventory linking
@@ -40,6 +41,9 @@ export interface ShootWizardState {
   // Context Fields (New)
   preferredTalent?: string; // Name of specific talent booked from directory
   brandVibeContext?: string; // Aesthetic context passed from Brand Audit
+  // Fix: Added missing strategic refinement fields used in the summary steps
+  isAdjustMode: boolean;
+  wizardMode: 'ai' | 'manual' | null;
   // AI Generated Data
   shotList: Shot[];
   aiAnalysis: MoodBoardAnalysis | null;

@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
-// Added ButtonVariant import to fix naming error
+// Fix: Added missing import for ButtonVariant to resolve the error on line 184
 import { ButtonVariant } from '../../../types';
 import { Sparkles, Layers, Loader2, AlertCircle, FileText, Wand2 } from 'lucide-react';
 import { generateShotList } from '../../../services/ai/shotList';
@@ -20,11 +21,11 @@ export const DeliverablesStep: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [refinementText, setRefinementText] = useState('');
 
-  // Derived Prop List - Fixed type safety issues by adding explicit types to flatMap and filter
-  const uniqueProps = useMemo<string[]>(() => {
-    const all = (state.shotList || [])
-      .flatMap((s: Shot) => (s.props ? s.props.split(',').map((p: string) => p.trim()) : []))
-      .filter((p: string): p is string => !!p && p.toLowerCase() !== 'none' && p.toLowerCase() !== 'n/a');
+  // Derived Prop List
+  const uniqueProps = useMemo(() => {
+    const all = state.shotList
+      .flatMap((s) => (s.props ? s.props.split(',').map((p) => p.trim()) : []))
+      .filter((p) => p && p.toLowerCase() !== 'none' && p.toLowerCase() !== 'n/a');
     return Array.from(new Set(all));
   }, [state.shotList]);
 

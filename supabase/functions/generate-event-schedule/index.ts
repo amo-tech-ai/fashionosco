@@ -15,51 +15,70 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { eventType, guestCount, startTime } = await req.json();
+    const { eventType, guestCount, startTime, refinement, currentTimeline } = await req.json();
     const apiKey = Deno.env.get('API_KEY');
     if (!apiKey) throw new Error('Missing API Key');
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `
-      ROLE: You are a Show Producer for Paris Fashion Week.
-      
-      TASK: Create a detailed "Run of Show" timeline for a ${eventType} with ${guestCount} guests starting at ${startTime}.
-      
-      REQUIREMENTS:
-      - Include logistics (Load-in, Sound check).
-      - Include Front of House (Door open, Seating).
-      - Include the Show/Event flow (Music cue, Finale).
-      - Include Post-event (Load-out).
-      
-      OUTPUT JSON FORMAT (Array):
-      [
-        {
-          "time": "HH:MM",
-          "duration": "string (e.g. 15m)",
-          "title": "string",
-          "description": "string",
-          "category": "logistics" | "runway" | "hospitality" | "media",
-          "status": "pending"
-        }
-      ]
-    `;
+    let prompt = "";
+    if (refinement && currentTimeline) {
+      prompt = `
+        ROLE: You are an Elite Show Producer.
+        TASK: Refine the current "Run of Show" based on this feedback: "${refinement}"
+        
+        CURRENT TIMELINE:
+        ${JSON.stringify(currentTimeline)}
+        
+        RULES:
+        - Maintain the flow logic.
+        - Ensure times are sequential and realistic for a ${eventType}.
+        - Return the FULL updated list.
+      `;
+    } else {
+      prompt = `
+        ROLE: You are an Elite Show Producer for High Fashion Events.
+        TASK: Create a detailed "Run of Show" timeline for a ${eventType} with ${guestCount} guests starting at ${startTime}.
+        
+        REQUIREMENTS:
+        - Include Logistics (Load-in, Sound check, Rigging).
+        - Include Front of House (Door open, VIP arrival, Seating).
+        - Include Show Segments (Opening Look, Main Sequence, Finale, Bow).
+        - Include Post-Event (Media interviews, Load-out).
+      `;
+    }
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 1024 }
+        responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 1024 },
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            timeline: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  time: { type: "STRING" },
+                  duration: { type: "STRING" },
+                  title: { type: "STRING" },
+                  description: { type: "STRING" },
+                  category: { type: "STRING", enum: ["logistics", "runway", "hospitality", "media"] },
+                  status: { type: "STRING", enum: ["pending", "confirmed"] }
+                },
+                required: ["time", "duration", "title", "description", "category", "status"]
+              }
+            }
+          },
+          required: ["timeline"]
+        }
       }
     });
 
-    let text = response.text;
-    if (!text) throw new Error("No response from AI");
-    
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const timeline = JSON.parse(text);
-
-    return new Response(JSON.stringify({ timeline }), {
+    return new Response(response.text, {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

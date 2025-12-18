@@ -1,5 +1,9 @@
 {
-  "name": "FashionOSco",
-  "description": "Premium AI-powered fashion editorial platform and marketplace.",
-  "requestFramePermissions": []
+  "name": "FashionOS",
+  "description": "Premium AI Operating System for the Fashion Industry",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation",
+    "camera"
+  ]
 }

@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenAI } from "https://esm.sh/@google/genai@0.5.0";
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai@0.5.0";
 
 declare const Deno: any;
 
@@ -22,9 +22,9 @@ serve(async (req: Request) => {
       throw new Error('Missing API Key');
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
 
-    // Limit image inputs to avoid payload limits
+    // Construct vision input parts
     const imageParts = images.slice(0, 4).map((base64Data: string) => ({
       inlineData: {
         mimeType: 'image/jpeg',
@@ -32,23 +32,22 @@ serve(async (req: Request) => {
       }
     }));
 
-    // Prompt uses Google Search Tool for Grounding (finding real brands)
     const prompt = `
-      Analyze these moodboard images to extract the aesthetic direction.
-      Identify dominant colors (hex codes), style keywords, lighting, and composition.
+      ROLE: You are an Elite Fashion Creative Director and Lighting Technician.
       
-      Use Google Search to identify 3 *real* existing fashion brands that share this specific visual aesthetic.
-      
-      Return a VALID JSON object with this exact structure (no markdown):
-      {
-        "colors": ["#hex", ...],
-        "keywords": ["string", ...],
-        "lightingStyle": "string",
-        "compositionStyle": "string",
-        "suggestion": "string (one sentence summary)",
-        "similarBrands": ["string", ...],
-        "recommendedProps": ["string", ...]
-      }
+      TASK: Conduct a forensic aesthetic analysis of these moodboard images. 
+      Identify the core visual DNA to guide a high-end fashion production.
+
+      OBJECTIVES:
+      1. **Color Palette**: Extract 5 dominant hex codes that capture the primary and accent tones.
+      2. **Keywords**: Identify 5 fashion-industry specific keywords (e.g., Avant-Garde, Quiet Luxury, Gorpcore, Brutalist).
+      3. **Lighting Style**: Describe the specific lighting setup (e.g., 'Soft Rembrandt with 2-stop fill', 'Hard Direct Flash with high contrast', 'Diffused North-facing window light').
+      4. **Composition**: Define the framing and movement (e.g., 'Dynamic Dutch angle with central weighting').
+      5. **Strategic Suggestion**: Provide one actionable piece of advice for the production team.
+      6. **Brand Adjacency**: Use Google Search to find 3 real luxury brands that occupy this visual space.
+
+      OUTPUT FORMAT:
+      Return a clean JSON object following the provided schema.
     `;
 
     const response = await ai.models.generateContent({
@@ -57,24 +56,55 @@ serve(async (req: Request) => {
         parts: [...imageParts, { text: prompt }]
       },
       config: {
-        tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            colors: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "5 dominant hex codes"
+            },
+            keywords: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "5 aesthetic keywords"
+            },
+            lightingStyle: {
+              type: Type.STRING,
+              description: "Detailed description of the lighting setup"
+            },
+            compositionStyle: {
+              type: Type.STRING,
+              description: "Analysis of framing and subject placement"
+            },
+            suggestion: {
+              type: Type.STRING,
+              description: "Strategic production advice"
+            },
+            similarBrands: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "3 real brand references"
+            },
+            recommendedProps: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Material/Prop suggestions to match the vibe"
+            }
+          },
+          required: ["colors", "keywords", "lightingStyle", "compositionStyle", "suggestion", "similarBrands"]
+        }
       }
     });
 
-    let text = response.text;
-    if (!text) throw new Error("No response from AI");
-
-    // Clean up markdown if present (Common issue with tool-use models returning markdown block)
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const analysis = JSON.parse(text);
-
-    return new Response(JSON.stringify(analysis), {
+    return new Response(response.text, {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {
-    console.error("Error analyzing mood board:", error);
+    console.error("Vision Analysis Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { EventOverview } from './EventOverview';
 import { EventTimeline } from './EventTimeline';
 import { GuestList } from './GuestList';
-import { ArrowRight, Grid, Users, Clock, Info, Monitor } from 'lucide-react';
+import { ArrowRight, Grid, Users, Clock, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ProductionDesk } from './ProductionDesk';
 
 interface EventDashboardProps {
   campaign: any;
@@ -12,13 +11,10 @@ interface EventDashboardProps {
 
 export const EventDashboard: React.FC<EventDashboardProps> = ({ campaign }) => {
   const navigate = useNavigate();
-  const [showDesk, setShowDesk] = useState(false);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       
-      {showDesk && <ProductionDesk onClose={() => setShowDesk(false)} />}
-
       {/* Visual Header / Alert */}
       <div className="bg-[#111111] text-white rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
          <div className="relative z-10 space-y-2">
@@ -27,7 +23,7 @@ export const EventDashboard: React.FC<EventDashboardProps> = ({ campaign }) => {
                Live Production Mode Ready
             </div>
             <h2 className="font-serif text-3xl md:text-4xl">Ready to execute?</h2>
-            <p className="text-gray-400 max-w-md font-light">Your {campaign?.title} is scheduled for 19:00. All departments are checked in.</p>
+            <p className="text-gray-400 max-w-md font-light">Your SS25 Runway show is scheduled for 19:00 today. All departments are checked in.</p>
          </div>
          
          <div className="relative z-10 flex gap-4">
@@ -38,10 +34,10 @@ export const EventDashboard: React.FC<EventDashboardProps> = ({ campaign }) => {
                <Grid size={16} /> Seating Chart
             </button>
             <button 
-               onClick={() => setShowDesk(true)}
-               className="bg-white text-black px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-100 transition-all shadow-xl flex items-center gap-2"
+               onClick={() => navigate('/dashboard/timeline')}
+               className="bg-white text-black px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-100 transition-all shadow-xl"
             >
-               <Monitor size={16} /> Open Production Desk
+               Enter Live Mode <ArrowRight size={16} className="ml-2 inline" />
             </button>
          </div>
 
@@ -61,9 +57,7 @@ export const EventDashboard: React.FC<EventDashboardProps> = ({ campaign }) => {
                  </div>
                  <button onClick={() => navigate('/dashboard/timeline')} className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors">Expand Full Timeline</button>
               </div>
-              <div className="max-h-[600px] overflow-y-auto hide-scrollbar">
-                <EventTimeline />
-              </div>
+              <EventTimeline />
            </div>
         </div>
 
@@ -75,9 +69,7 @@ export const EventDashboard: React.FC<EventDashboardProps> = ({ campaign }) => {
                     <h3 className="font-serif text-xl font-bold">Guest Management</h3>
                  </div>
               </div>
-              <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
-                <GuestList />
-              </div>
+              <GuestList />
            </div>
 
            {/* AI Logistics Alert */}

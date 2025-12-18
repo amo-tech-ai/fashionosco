@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrandPulse } from '../components/brand/BrandPulse';
 import { MarketIntel } from '../components/brand/MarketIntel';
@@ -6,12 +5,13 @@ import { PricingCalculator } from '../components/brand/PricingCalculator';
 import { Products } from './Products';
 import { StrategyCopilot } from '../components/brand/StrategyCopilot';
 import { RetailerCRM } from '../components/brand/RetailerCRM';
-import { LayoutDashboard, Globe, DollarSign, Package, ShoppingCart, Users, AlertCircle } from 'lucide-react';
+import { PipelineHealth } from '../components/dashboard/sales/PipelineHealth';
+import { LayoutDashboard, Globe, DollarSign, Package, ShoppingCart, Users, AlertCircle, TrendingUp } from 'lucide-react';
 import { BrandService } from '../services/data/brands';
 import { useNavigate } from 'react-router-dom';
 
 export const BrandDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'pulse' | 'inventory' | 'market' | 'pricing' | 'retailers'>('pulse');
+  const [activeTab, setActiveTab] = useState<'pulse' | 'inventory' | 'market' | 'pricing' | 'retailers' | 'sales'>('pulse');
   const [hasProfile, setHasProfile] = useState(true);
   const navigate = useNavigate();
 
@@ -58,6 +58,7 @@ export const BrandDashboard: React.FC = () => {
                {[
                   { id: 'pulse', label: 'Overview', icon: LayoutDashboard },
                   { id: 'inventory', label: 'Inventory', icon: Package },
+                  { id: 'sales', label: 'Pipeline', icon: TrendingUp },
                   { id: 'retailers', label: 'Retailers', icon: Users },
                   { id: 'market', label: 'Market Intel', icon: Globe },
                   { id: 'pricing', label: 'Pricing', icon: DollarSign }
@@ -84,6 +85,7 @@ export const BrandDashboard: React.FC = () => {
             {activeTab === 'retailers' && <RetailerCRM />}
             {activeTab === 'market' && <MarketIntel />}
             {activeTab === 'pricing' && <PricingCalculator />}
+            {activeTab === 'sales' && <PipelineHealth />}
          </div>
 
       </div>

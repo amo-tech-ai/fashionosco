@@ -1,208 +1,166 @@
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ShootWizardState, PRICING, SHOOT_TYPES } from '../types/wizard';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import { ShootWizardState, PRICING } from '../types/wizard';
 
-const STORAGE_KEY = 'fashionos_wizard_state';
-const STORAGE_VERSION = '1.0';
-
-// Initial State
+// Initial state matching the comprehensive ShootWizardState interface from src/types/wizard.ts
 const initialState: ShootWizardState = {
   step: 1,
   shootType: null,
   numberOfItems: 10,
   selectedProducts: [],
-  estimatedDuration: "Half Day",
-  location: "studio",
+  estimatedDuration: 'Half Day (4h)',
+  location: 'studio',
   date: null,
-  timeSlot: null,
+  timeSlot: '09:00 AM',
   moodBoardImages: [],
   vibe: null,
-  referenceBrands: "",
+  referenceBrands: '',
   modelNeeded: false,
   modelSelection: null,
   stylingNeeded: null,
   hairMakeup: false,
-  finalImagesCount: 10,
-  formats: ["JPEG"],
-  resolution: "web",
-  turnaround: "standard",
-  retouchingLevel: "basic",
+  finalImagesCount: 15,
+  formats: ['JPG', 'PNG'],
+  resolution: 'web',
+  turnaround: 'standard',
+  retouchingLevel: 'basic',
   videoAddOn: false,
-  usageRights: "editorial",
-  totalPrice: 0,
-  deposit: 0,
+  usageRights: 'editorial',
+  totalPrice: 1500,
+  deposit: 750,
+  // Fix: Added missing initial values for strategic flow
+  isAdjustMode: false,
+  wizardMode: null,
   shotList: [],
-  aiAnalysis: null,
-  preferredTalent: undefined,
-  brandVibeContext: undefined
+  aiAnalysis: null
 };
 
-// Actions
-type Action = 
+// Fix: Exported Action type for use in other components and added AI flow actions
+export type ShootWizardAction = 
   | { type: 'SET_FIELD'; field: keyof ShootWizardState; value: any }
   | { type: 'NEXT_STEP' }
   | { type: 'PREV_STEP' }
-  | { type: 'SET_TOTAL'; price: number; deposit: number }
-  | { type: 'RESET_WIZARD' }
-  | { type: 'LOAD_PRESET'; payload: Partial<ShootWizardState> };
+  | { type: 'RESET' }
+  | { type: 'CALCULATE_PRICE' }
+  | { type: 'SET_MODE'; mode: 'ai' | 'manual' }
+  | { type: 'SET_STEP'; step: number | string }
+  | { type: 'SET_STRATEGY'; strategy: any }
+  | { type: 'TOGGLE_ADJUST' };
 
-// Reducer
-const reducer = (state: ShootWizardState, action: Action): ShootWizardState => {
+function reducer(state: ShootWizardState, action: ShootWizardAction): ShootWizardState {
   switch (action.type) {
     case 'SET_FIELD':
       return { ...state, [action.field]: action.value };
     case 'NEXT_STEP':
-      return { ...state, step: Math.min(state.step + 1, 7) };
+      // Fix: check type before incrementing for step resilience
+      return { ...state, step: typeof state.step === 'number' ? state.step + 1 : state.step };
     case 'PREV_STEP':
-      return { ...state, step: Math.max(state.step - 1, 1) };
-    case 'SET_TOTAL':
-      return { ...state, totalPrice: action.price, deposit: action.deposit };
-    case 'RESET_WIZARD':
+      return { ...state, step: typeof state.step === 'number' ? Math.max(1, state.step - 1) : state.step };
+    case 'RESET':
+      localStorage.removeItem('wizard_state');
       return initialState;
-    case 'LOAD_PRESET':
-      return { ...state, ...action.payload, step: 2 }; // Jump to step 2 after preset load
+    // Fix: Added handlers for sub-wizard actions
+    case 'SET_MODE':
+      return { ...state, wizardMode: action.mode, step: action.mode === 'ai' ? 'signals' : 1 };
+    case 'SET_STEP':
+      return { ...state, step: action.step };
+    case 'SET_STRATEGY':
+      return { ...state, step: 'summary' };
+    case 'TOGGLE_ADJUST':
+      return { ...state, isAdjustMode: !state.isAdjustMode };
+    case 'CALCULATE_PRICE': {
+      // Pricing Logic based on ShootWizard rules defined in PRICING constant
+      let total = state.numberOfItems > 20 ? PRICING.baseRates.fullDay : PRICING.baseRates.halfDay;
+      
+      if (state.modelNeeded) total += PRICING.addOns.model;
+      if (state.stylingNeeded === 'stylist') total += PRICING.addOns.stylist;
+      if (state.hairMakeup) total += PRICING.addOns.hairMakeup;
+      if (state.videoAddOn) total += PRICING.addOns.videoAddOn;
+      
+      // Retouching per image calculation
+      const retouchRate = PRICING.addOns.retouching[state.retouchingLevel || 'basic'];
+      total += (retouchRate * state.finalImagesCount);
+      
+      // Usage Rights licensing multiplier
+      const rightsMultiplier = state.usageRights === 'unlimited' ? 2 : state.usageRights === 'commercial' ? 1.5 : 1;
+      total *= rightsMultiplier;
+      
+      // Turnaround time markup/discount
+      const turnaroundMultiplier = PRICING.turnaround[state.turnaround];
+      total *= turnaroundMultiplier;
+      
+      const finalTotal = Math.round(total);
+      return { 
+        ...state, 
+        totalPrice: finalTotal, 
+        deposit: Math.round(finalTotal * 0.5),
+        estimatedDuration: state.numberOfItems > 20 ? 'Full Day (8h)' : 'Half Day (4h)'
+      };
+    }
     default:
       return state;
   }
-};
+}
 
-// Pricing Logic
-const calculatePrice = (state: ShootWizardState) => {
-  let total = 0;
-
-  // 1. Base Rate (based on items/duration estimate)
-  // Logic: If products selected, use that count. Else use slider count.
-  const itemCount = state.selectedProducts.length > 0 ? state.selectedProducts.length : state.numberOfItems;
-  const isFullDay = itemCount > 20;
-  total += isFullDay ? PRICING.baseRates.fullDay : PRICING.baseRates.halfDay;
-
-  // 2. Shoot Type Base Adjustment
-  const typeConfig = SHOOT_TYPES.find(t => t.id === state.shootType);
-  if (typeConfig) {
-      // Just an example adjustment
-      if (state.shootType === 'video') total += 500;
-  }
-
-  // 3. Add-ons
-  if (state.modelNeeded) total += PRICING.addOns.model;
-  if (state.stylingNeeded === 'stylist') total += PRICING.addOns.stylist;
-  if (state.hairMakeup) total += PRICING.addOns.hairMakeup;
-  if (state.videoAddOn) total += PRICING.addOns.videoAddOn;
-
-  // 4. Per-Image Costs (Retouching)
-  let retouchingCost = 0;
-  if (state.retouchingLevel === 'advanced') retouchingCost = state.finalImagesCount * PRICING.addOns.retouching.advanced;
-  if (state.retouchingLevel === 'high-end') retouchingCost = state.finalImagesCount * PRICING.addOns.retouching.highEnd;
-  total += retouchingCost;
-
-  // 5. Multipliers (Turnaround)
-  if (state.turnaround === 'rush') total *= PRICING.turnaround.rush;
-  if (state.turnaround === 'extended') total *= PRICING.turnaround.extended;
-
-  // 6. Usage Rights (Multiplier Example)
-  if (state.usageRights === 'commercial') total *= 1.5;
-  if (state.usageRights === 'unlimited') total *= 2.0;
-
-  return Math.round(total);
-};
-
-// Helper: Load state from localStorage with version check
-const loadState = (): ShootWizardState => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      
-      // Version check to prevent schema conflicts
-      if (parsed._version !== STORAGE_VERSION) {
-        return initialState;
-      }
-
-      // Restore Date objects if they were stringified
-      if (parsed.date) parsed.date = new Date(parsed.date);
-      
-      // Reset File objects (moodBoardImages) as they cannot be persisted in localStorage
-      // We keep the array structure but empty it to avoid type errors
-      parsed.moodBoardImages = [];
-      
-      // Merge with initialState to ensure any new fields are present
-      return { ...initialState, ...parsed };
-    }
-  } catch(e) {
-    console.warn("Failed to load wizard state", e);
-  }
-  return initialState;
-};
-
-// Context Creation
+// Fix: Expose dispatch to context consumers
 const ShootWizardContext = createContext<{
   state: ShootWizardState;
-  dispatch: React.Dispatch<Action>;
   updateField: (field: keyof ShootWizardState, value: any) => void;
   nextStep: () => void;
   prevStep: () => void;
   resetWizard: () => void;
+  dispatch: React.Dispatch<ShootWizardAction>;
 } | undefined>(undefined);
 
 export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize with loadState to check for persisted data
-  const [state, dispatch] = useReducer(reducer, initialState, loadState);
-  const location = useLocation();
-
-  // Handle incoming presets from Marketplace, Directory, or Brand Audit
-  useEffect(() => {
-    if (location.state && location.state.prefill) {
-        dispatch({ type: 'LOAD_PRESET', payload: location.state.prefill });
-        // Clear history state to avoid reload issues
-        window.history.replaceState({}, document.title);
+  const [state, dispatch] = useReducer(reducer, initialState, (initial) => {
+    // Persistent state recovery from localStorage for multi-session support
+    const saved = localStorage.getItem('wizard_state');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Date objects need to be reconstructed after JSON parsing
+        if (parsed.date) parsed.date = new Date(parsed.date);
+        return { ...initial, ...parsed };
+      } catch (e) {
+        return initial;
+      }
     }
-  }, [location.state]);
+    return initial;
+  });
 
-  // Persistence Effect
+  // State Persistence sync
   useEffect(() => {
-    // Separate out fields that shouldn't or can't be persisted (like File objects)
-    const { moodBoardImages, ...persistableState } = state;
-    // Add version info
-    const storageData = { ...persistableState, _version: STORAGE_VERSION };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData));
+    localStorage.setItem('wizard_state', JSON.stringify(state));
   }, [state]);
 
-  // Auto-recalculate price on state change
+  // Reactive price calculation triggered by parameter changes
   useEffect(() => {
-    const price = calculatePrice(state);
-    const deposit = Math.round(price * 0.5); // 50% deposit
-    if (price !== state.totalPrice) {
-        dispatch({ type: 'SET_TOTAL', price, deposit });
-    }
+    dispatch({ type: 'CALCULATE_PRICE' });
   }, [
     state.shootType, 
-    state.numberOfItems,
-    state.selectedProducts,
+    state.numberOfItems, 
     state.modelNeeded, 
     state.stylingNeeded, 
-    state.hairMakeup, 
-    state.videoAddOn, 
-    state.retouchingLevel, 
     state.finalImagesCount, 
+    state.usageRights, 
     state.turnaround,
-    state.usageRights
+    state.retouchingLevel,
+    state.hairMakeup,
+    state.videoAddOn
   ]);
 
-  const updateField = (field: keyof ShootWizardState, value: any) => {
+  const updateField = useCallback((field: keyof ShootWizardState, value: any) => {
     dispatch({ type: 'SET_FIELD', field, value });
-  };
+  }, []);
 
-  const nextStep = () => dispatch({ type: 'NEXT_STEP' });
-  const prevStep = () => dispatch({ type: 'PREV_STEP' });
-  
-  const resetWizard = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    dispatch({ type: 'RESET_WIZARD' });
-  };
+  const nextStep = useCallback(() => dispatch({ type: 'NEXT_STEP' }), []);
+  const prevStep = useCallback(() => dispatch({ type: 'PREV_STEP' }), []);
+  const resetWizard = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return (
-    <ShootWizardContext.Provider value={{ state, dispatch, updateField, nextStep, prevStep, resetWizard }}>
+    // Fix: Provider now passes dispatch down
+    <ShootWizardContext.Provider value={{ state, updateField, nextStep, prevStep, resetWizard, dispatch }}>
       {children}
     </ShootWizardContext.Provider>
   );
@@ -210,8 +168,6 @@ export const ShootWizardProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 export const useShootWizard = () => {
   const context = useContext(ShootWizardContext);
-  if (!context) {
-    throw new Error("useShootWizard must be used within a ShootWizardProvider");
-  }
+  if (!context) throw new Error('useShootWizard must be used within provider');
   return context;
 };

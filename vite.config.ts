@@ -6,21 +6,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Map @ to the src directory where code resides
-      '@': path.resolve(__dirname, './src'),
+      // Correcting alias to map to root directory
+      '@': path.resolve(__dirname, './'),
     },
   },
   server: {
     port: 3000,
-    historyApiFallback: true, // Ensure SPA routing works
+    // Enable SPA routing support on refresh
+    historyApiFallback: true,
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    target: 'esnext'
   }
 });

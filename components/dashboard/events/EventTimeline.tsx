@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Clock, MoreHorizontal, GripVertical, CheckCircle2, Play, Sparkles, Loader2, FileText, Trash2, Send } from 'lucide-react';
 import { TimelineItem } from '../../../types/event-tools';
@@ -17,7 +16,6 @@ export const EventTimeline: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [refinement, setRefinement] = useState('');
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (activeCampaign?.data?.timeline) {
@@ -25,9 +23,10 @@ export const EventTimeline: React.FC = () => {
     } else {
       setItems([]);
     }
-  }, [activeCampaign?.id]);
+  }, [activeCampaign?.id, activeCampaign?.data?.timeline]);
 
   const saveTimeline = async (newItems: TimelineItem[]) => {
+    // Optimistic Update
     setItems(newItems);
     if (activeCampaign) {
       try {
@@ -35,6 +34,7 @@ export const EventTimeline: React.FC = () => {
         await CampaignService.update(activeCampaign.id, { data: updatedData });
       } catch (e) {
         console.error("Failed to save timeline", e);
+        addToast("Sync error. Please refresh.", "error");
       }
     }
   };
@@ -50,8 +50,7 @@ export const EventTimeline: React.FC = () => {
       category: 'logistics',
       status: 'pending'
     };
-    const updated = [...items, newItem];
-    saveTimeline(updated);
+    saveTimeline([...items, newItem]);
     addToast("Segment added", "info");
   };
 
@@ -61,7 +60,7 @@ export const EventTimeline: React.FC = () => {
     try {
         const generated = await generateEventSchedule(
             activeCampaign.title || 'Fashion Event',
-            activeCampaign.data.guestCount || 100,
+            activeCampaign.data?.guestCount || 100,
             '19:00',
             isRefinement ? refinement : undefined,
             isRefinement ? items : undefined
@@ -69,7 +68,7 @@ export const EventTimeline: React.FC = () => {
         saveTimeline(generated);
         if (isRefinement) {
           setRefinement('');
-          addToast("Timeline refined by Gemini", "success");
+          addToast("AI Refinement applied", "success");
         } else {
           addToast("Run of Show generated", "success");
         }
@@ -80,25 +79,6 @@ export const EventTimeline: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (items.length === 0) {
-      addToast("No timeline items to export", "error");
-      return;
-    }
-    const title = activeCampaign?.title || "FashionOS Event";
-    const date = activeCampaign?.date ? new Date(activeCampaign.date).toLocaleDateString() : "TBD";
-    generateEventSchedulePDF(items, title, date);
-    addToast("Exporting PDF...", "success");
-  };
-
-  const handleStatusToggle = (id: string) => {
-    const updated = items.map(item => 
-      item.id === id ? { ...item, status: item.status === 'confirmed' ? 'pending' : 'confirmed' } : item
-    ) as TimelineItem[];
-    saveTimeline(updated);
-  };
-
-  // --- Drag and Drop ---
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -118,6 +98,13 @@ export const EventTimeline: React.FC = () => {
     
     saveTimeline(newItems);
     setDraggedIndex(null);
+  };
+
+  const handleStatusToggle = (id: string) => {
+    const updated = items.map(item => 
+      item.id === id ? { ...item, status: item.status === 'confirmed' ? 'pending' : 'confirmed' } : item
+    ) as TimelineItem[];
+    saveTimeline(updated);
   };
 
   const getCategoryColor = (cat: string) => {
@@ -145,7 +132,7 @@ export const EventTimeline: React.FC = () => {
         </div>
         <div className="flex gap-2 flex-wrap">
            <button 
-             onClick={handleDownloadPDF}
+             onClick={() => generateEventSchedulePDF(items, activeCampaign?.title || 'Event', 'TBD')}
              className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:border-black hover:text-black transition-all"
            >
              <FileText size={14} /> Export PDF
@@ -154,7 +141,7 @@ export const EventTimeline: React.FC = () => {
            <button 
              onClick={() => setIsLiveMode(true)}
              disabled={items.length === 0}
-             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
            >
              <Play size={14} fill="currentColor" /> Go Live
            </button>
@@ -168,7 +155,6 @@ export const EventTimeline: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Refinement Bar */}
       {items.length > 0 && (
         <div className="bg-white border border-purple-100 rounded-xl p-3 flex gap-3 shadow-sm items-center transition-all focus-within:ring-2 focus-within:ring-purple-200">
           <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
@@ -179,7 +165,7 @@ export const EventTimeline: React.FC = () => {
             value={refinement}
             onChange={(e) => setRefinement(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && refinement && handleGenerateAI(true)}
-            placeholder="Ask AI: 'Add a 15m buffer for the finale' or 'Reschedule to start at 8PM'..."
+            placeholder="Ask AI to adjust timings or add segments..."
             className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
           />
           <button 
@@ -192,29 +178,20 @@ export const EventTimeline: React.FC = () => {
         </div>
       )}
 
-      <div 
-        ref={scrollContainerRef}
-        className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px] transition-all"
-      >
+      <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
         {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-300">
-                   <Clock size={32} />
-                </div>
+                <Clock size={32} className="text-gray-200 mb-4" />
                 <h3 className="font-serif text-xl mb-2 text-gray-900">Your schedule is empty</h3>
-                <p className="text-sm text-gray-500 max-w-xs mb-8">
-                   Use AI to generate a detailed production schedule for your event.
-                </p>
-                <div className="flex gap-4">
-                   <button 
-                    onClick={() => handleGenerateAI(false)} 
-                    disabled={isGenerating}
-                    className="bg-purple-600 text-white px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-purple-700 transition-all flex items-center gap-2"
-                   >
-                      {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-                      Generate Schedule
-                   </button>
-                </div>
+                <p className="text-sm text-gray-500 max-w-xs mb-8">Use AI to generate a detailed production schedule for your event.</p>
+                <button 
+                  onClick={() => handleGenerateAI(false)} 
+                  disabled={isGenerating}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-purple-700 transition-all flex items-center gap-2"
+                >
+                  {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
+                  Generate Schedule
+                </button>
             </div>
         ) : (
             <div className="divide-y divide-gray-50">
@@ -224,91 +201,34 @@ export const EventTimeline: React.FC = () => {
                     draggable
                     onDragStart={(e) => handleDragStart(e, index)}
                     onDragOver={handleDragOver}
-                    /* Fixed botched onDrop handler syntax */
                     onDrop={(e) => handleDrop(e, index)}
                     className={`group flex items-start gap-4 p-5 hover:bg-[#F7F7F5] transition-all relative ${draggedIndex === index ? 'opacity-30 border-2 border-dashed border-purple-200' : ''}`}
                   >
-                     {/* Time Column */}
                      <div className="w-20 shrink-0">
-                        <input 
-                           type="text" 
-                           value={item.time} 
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], time: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="font-mono text-base font-bold text-[#1A1A1A] bg-transparent border-none focus:outline-none w-full"
-                        />
-                        <input 
-                           type="text" 
-                           value={item.duration} 
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], duration: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-transparent border-none focus:outline-none w-full mt-1"
-                        />
+                        <div className="font-mono text-base font-bold text-[#1A1A1A]">{item.time}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{item.duration}</div>
                      </div>
 
-                     {/* Visual Connector Thread */}
                      <div className="flex flex-col items-center self-stretch w-4 pt-1">
                         <div 
                           onClick={() => handleStatusToggle(item.id)}
                           className={`w-3.5 h-3.5 rounded-full border-2 cursor-pointer z-10 transition-all ${
-                            item.status === 'confirmed' ? 'bg-green-500 border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-white border-gray-200'
+                            item.status === 'confirmed' ? 'bg-green-500 border-green-500 shadow-sm' : 'bg-white border-gray-200 hover:border-black'
                           }`}
                         ></div>
                         {index !== items.length - 1 && <div className="w-px bg-gray-100 flex-1 my-1"></div>}
                      </div>
 
-                     {/* Content Column */}
                      <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-1">
-                           <div className="flex-1">
-                              <input 
-                                 type="text" 
-                                 value={item.title}
-                                 onChange={(e) => {
-                                    const newItems = [...items];
-                                    newItems[index] = { ...newItems[index], title: e.target.value };
-                                    saveTimeline(newItems);
-                                 }}
-                                 className="w-full font-bold text-[#1A1A1A] bg-transparent border-none focus:outline-none placeholder:text-gray-300"
-                                 placeholder="Segment Title"
-                              />
-                           </div>
-                           <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${getCategoryColor(item.category)}`}>
-                                {item.category}
-                              </span>
-                              <button 
-                                 onClick={() => {
-                                    const newItems = items.filter(i => i.id !== item.id);
-                                    saveTimeline(newItems);
-                                    addToast("Segment removed", "info");
-                                 }}
-                                 className="text-gray-300 hover:text-red-500"
-                              >
-                                 <Trash2 size={16} />
-                              </button>
-                           </div>
+                           <h4 className="font-bold text-[#1A1A1A] truncate">{item.title}</h4>
+                           <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border shrink-0 ${getCategoryColor(item.category)}`}>
+                             {item.category}
+                           </span>
                         </div>
-                        <textarea 
-                           value={item.description}
-                           onChange={(e) => {
-                              const newItems = [...items];
-                              newItems[index] = { ...newItems[index], description: e.target.value };
-                              saveTimeline(newItems);
-                           }}
-                           className="w-full text-sm text-gray-500 bg-transparent border-none focus:outline-none resize-none overflow-hidden h-6 hover:h-auto focus:h-auto transition-all"
-                           rows={1}
-                           placeholder="Segment description and department cues..."
-                        />
+                        <p className="text-sm text-gray-500 leading-relaxed font-light">{item.description}</p>
                      </div>
 
-                     {/* Drag Handle */}
                      <div className="self-center text-gray-200 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 p-2">
                         <GripVertical size={16} />
                      </div>

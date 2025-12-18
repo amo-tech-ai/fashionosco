@@ -47,7 +47,8 @@ export const ShootWizard: React.FC = () => {
 
         {/* Sidebar Summary (Hidden on mobile/tablet step 1) */}
         <div className="hidden lg:block lg:col-span-3 xl:col-span-3 xl:col-start-10">
-           {state.step > 1 && <SidebarSummary />}
+           {/* Fix: Use a type check to resolve the error where '>' cannot be used on 'string | number' */}
+           {typeof state.step === 'number' && state.step > 1 && <SidebarSummary />}
         </div>
       </main>
     </div>

@@ -1,7 +1,8 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// Import App from src directory
-import App from './src/App';
+// Import App from root as per flat root architecture
+import App from './App';
 import './index.css'; 
 
 const rootElement = document.getElementById('root');
