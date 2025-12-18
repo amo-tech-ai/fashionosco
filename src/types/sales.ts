@@ -13,6 +13,19 @@ export interface Deal {
   lastTouch: string;
 }
 
+export type SalesEventType = 'email_received' | 'contract_signed' | 'meeting_scheduled' | 'proposal_viewed' | 'ai_alert';
+
+export interface SalesActivityEvent {
+  id: string;
+  dealId: string;
+  clientName: string;
+  type: SalesEventType;
+  title: string;
+  description: string;
+  timestamp: string;
+  isHighPriority: boolean;
+}
+
 export interface PipelineSummary {
   likelyToClose: Deal[];
   atRisk: Deal[];

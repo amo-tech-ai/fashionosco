@@ -1,6 +1,8 @@
-import React from 'react';
-import { TrendingUp, AlertCircle, Clock, ArrowRight, Sparkles } from 'lucide-react';
-import { Deal, DealHealth } from '../../../types/sales';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, AlertCircle, Clock, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { Deal, DealHealth, SalesActivityEvent } from '../../../types/sales';
+import { SalesActivityFeed } from './SalesActivityFeed';
+import { getSalesActivity } from '../../../services/ai/salesActivity';
 
 const MOCK_DEALS: Deal[] = [
   {
@@ -112,15 +114,24 @@ const DealCard = ({ deal }: { deal: Deal }) => (
 );
 
 export const PipelineHealth: React.FC = () => {
+  const [events, setEvents] = useState<SalesActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getSalesActivity().then(data => {
+      setEvents(data);
+      setLoading(false);
+    });
+  }, []);
+
   const categories = [
     { title: "Likely to Close", icon: TrendingUp, color: "text-purple-600", deals: MOCK_DEALS.filter(d => d.health === 'high') },
-    { title: "At Risk", icon: AlertCircle, color: "text-red-500", deals: MOCK_DEALS.filter(d => d.health === 'at-risk') },
-    { title: "Developing", icon: Clock, color: "text-gray-400", deals: MOCK_DEALS.filter(d => d.health === 'medium') }
+    { title: "At Risk", icon: AlertCircle, color: "text-red-500", deals: MOCK_DEALS.filter(d => d.health === 'at-risk') }
   ];
 
   return (
     <div className="space-y-12 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <span className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 mb-2 block">Revenue Velocity</span>
           <h2 className="font-serif text-5xl text-black">Pipeline Health.</h2>
@@ -138,30 +149,44 @@ export const PipelineHealth: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-        {categories.map((cat, i) => (
-          <div key={i} className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <cat.icon className={cat.color} size={18} />
-                <h3 className="text-xs font-black uppercase tracking-widest text-black">{cat.title}</h3>
-              </div>
-              <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
-                {cat.deals.length}
-              </span>
-            </div>
-            
-            <div className="space-y-6">
-              {cat.deals.length > 0 ? (
-                cat.deals.map(deal => <DealCard key={deal.id} deal={deal} />)
-              ) : (
-                <div className="p-12 text-center border-2 border-dashed border-gray-50 rounded-3xl">
-                   <p className="text-xs text-gray-300 font-medium">No deals in this cluster</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        {/* Deal Clusters */}
+        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {categories.map((cat, i) => (
+            <div key={i} className="space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <cat.icon className={cat.color} size={18} />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-black">{cat.title}</h3>
                 </div>
-              )}
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
+                  {cat.deals.length}
+                </span>
+              </div>
+              
+              <div className="space-y-6">
+                {cat.deals.length > 0 ? (
+                  cat.deals.map(deal => <DealCard key={deal.id} deal={deal} />)
+                ) : (
+                  <div className="p-12 text-center border-2 border-dashed border-gray-50 rounded-3xl">
+                    <p className="text-xs text-gray-300 font-medium">No deals in this cluster</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* Intelligence Feed */}
+        <div className="lg:col-span-4 h-full min-h-[600px]">
+           {loading ? (
+             <div className="h-full flex items-center justify-center bg-white border border-gray-100 rounded-3xl shadow-sm">
+                <Loader2 className="animate-spin text-gray-200" />
+             </div>
+           ) : (
+             <SalesActivityFeed events={events} />
+           )}
+        </div>
       </div>
     </div>
   );
