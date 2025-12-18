@@ -15,7 +15,9 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
   const [activeCueIndex, setActiveCueIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   
-  // Mock Production Data
+  // Real Data mapping from Timeline
+  const [cues, setCues] = useState<ProductionCue[]>([]);
+  
   const [talent, setTalent] = useState<TalentStatus[]>([
     { id: '1', name: 'Sarah Jenkins', role: 'Model', status: 'ready', assignment: 'Look 01, 12' },
     { id: '2', name: 'Bella Hadid', role: 'Model', status: 'dressed', assignment: 'Look 02, 15' },
@@ -23,30 +25,45 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
     { id: '4', name: 'Amara Diop', role: 'MUA', status: 'arrived' },
   ]);
 
-  const [cues, setCues] = useState<ProductionCue[]>([
-    { id: '1', time: '19:00', duration: '5m', title: 'HOUSE DIM / INTRO VIDEO', description: 'Fade house to 10%. Trigger loop B.', category: 'logistics', status: 'confirmed', isComplete: false, audioCue: 'Track 01: Ambient Noir', lightingCue: 'Blue Wash 20%', stageCue: 'Close Main Curtains' },
-    { id: '2', time: '19:05', duration: '2m', title: 'OPENING LOOK: SILK SERIES', description: 'Model 1 enters from Stage Left.', category: 'runway', status: 'confirmed', isComplete: false, audioCue: 'Bass Drop Sync', lightingCue: 'Pin Spot Center', stageCue: 'Model 1 Release' },
-    { id: '3', time: '19:07', duration: '15m', title: 'MAIN CATWALK SEQUENCE', description: 'Interval release every 25s.', category: 'runway', status: 'confirmed', isComplete: false, audioCue: 'Show Mix Loop', lightingCue: 'Full Runway White', stageCue: 'Sequential Release' },
-  ]);
+  useEffect(() => {
+    if (activeCampaign?.data?.timeline) {
+      setCues(activeCampaign.data.timeline.map((item: any) => ({
+        ...item,
+        audioCue: item.audioCue || 'Standby Audio',
+        lightingCue: item.lightingCue || 'General Wash',
+        stageCue: item.stageCue || 'Ready Models',
+        isComplete: false
+      })));
+    } else {
+        // Fallback for demo
+        setCues([
+            { id: '1', time: '19:00', duration: '5m', title: 'HOUSE DIM / INTRO VIDEO', description: 'Fade house to 10%. Trigger loop B.', category: 'logistics', status: 'confirmed', isComplete: false, audioCue: 'Track 01: Ambient Noir', lightingCue: 'Blue Wash 20%', stageCue: 'Close Main Curtains' },
+        ]);
+    }
+  }, [activeCampaign]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const nextCue = () => {
+  const handleNextCue = () => {
     if (activeCueIndex < cues.length - 1) {
       setActiveCueIndex(prev => prev + 1);
-      addToast(`Advancing to Cue: ${cues[activeCueIndex + 1].title}`, "info");
+      addToast(`Advancing to: ${cues[activeCueIndex + 1].title}`, "info");
+    } else {
+      addToast("End of show flow reached.", "success");
     }
   };
 
   const toggleShow = () => {
     setIsRunning(!isRunning);
-    addToast(isRunning ? "Show Paused" : "Show Started", isRunning ? "info" : "success");
+    addToast(isRunning ? "Production Standby" : "Production Live", isRunning ? "info" : "success");
   };
 
   const currentCue = cues[activeCueIndex];
+
+  if (!currentCue) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#050505] text-white flex flex-col font-mono selection:bg-red-600">
@@ -61,7 +78,7 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
           <div className="h-4 w-px bg-white/10"></div>
           <div className="flex items-center gap-3 text-gray-500">
             <Radio size={16} />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{activeCampaign?.title} // CONSOLE 01</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{activeCampaign?.title || 'ACTIVE SHOW'} // CONSOLE 01</span>
           </div>
         </div>
         
@@ -116,27 +133,27 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
                     <span className="bg-red-600 text-white text-[9px] font-black tracking-[0.4em] uppercase px-3 py-1 rounded shadow-lg shadow-red-900/40">ACTIVE CUE</span>
                     <span className="text-gray-600 text-[10px] font-bold tracking-[0.2em]">SEQ_00{activeCueIndex + 1} // MASTER</span>
                  </div>
-                 <h1 className="text-8xl lg:text-[10rem] font-serif font-bold leading-none tracking-tighter mb-12">
+                 <h1 className="text-6xl lg:text-[8rem] font-serif font-bold leading-none tracking-tighter mb-12">
                     {currentCue.title}
                  </h1>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-blue-500/50 transition-all">
+                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-blue-500/50 transition-all hover:-translate-y-1">
                     <div className="flex items-center gap-2 text-blue-400 mb-4">
                        <Volume2 size={16} />
                        <span className="text-[10px] font-black uppercase tracking-widest">Audio Feed</span>
                     </div>
                     <p className="text-xl font-light text-gray-300">{currentCue.audioCue}</p>
                  </div>
-                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-yellow-500/50 transition-all">
+                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-yellow-500/50 transition-all hover:-translate-y-1">
                     <div className="flex items-center gap-2 text-yellow-400 mb-4">
                        <Zap size={16} />
                        <span className="text-[10px] font-black uppercase tracking-widest">Lighting Rig</span>
                     </div>
                     <p className="text-xl font-light text-gray-300">{currentCue.lightingCue}</p>
                  </div>
-                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-purple-500/50 transition-all">
+                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:border-purple-500/50 transition-all hover:-translate-y-1">
                     <div className="flex items-center gap-2 text-purple-400 mb-4">
                        <Radio size={16} />
                        <span className="text-[10px] font-black uppercase tracking-widest">Stage Command</span>
@@ -157,7 +174,7 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
                     {isRunning ? <><Pause size={20} fill="currentColor" /> PAUSE SESSION</> : <><Play size={20} fill="currentColor" /> START PRODUCTION</>}
                  </button>
                  <button 
-                  onClick={nextCue}
+                  onClick={handleNextCue}
                   className="flex items-center gap-4 px-12 py-6 bg-white text-black rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-gray-200 hover:scale-105 transition-all active:scale-95"
                  >
                     ADVANCE CUE <SkipForward size={20} fill="currentColor" />
@@ -181,7 +198,7 @@ export const ProductionDesk: React.FC<{ onClose: () => void }> = ({ onClose }) =
             {cues.map((cue, idx) => (
               <div 
                 key={cue.id}
-                className={`p-6 border-b border-white/5 transition-all duration-500 ${
+                className={`p-8 border-b border-white/5 transition-all duration-500 ${
                   idx === activeCueIndex ? 'bg-purple-600/10 border-l-4 border-l-purple-600 opacity-100' : 
                   idx < activeCueIndex ? 'opacity-20 grayscale' : 'opacity-40 hover:opacity-100'
                 }`}

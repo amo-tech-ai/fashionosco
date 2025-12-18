@@ -7,6 +7,11 @@ export interface TimelineItem {
   description: string;
   category: 'logistics' | 'runway' | 'hospitality' | 'media';
   status: 'pending' | 'confirmed' | 'live';
+  // Technical Cues for Production Desk
+  audioCue?: string;
+  lightingCue?: string;
+  stageCue?: string;
+  departmentNotes?: string;
 }
 
 export interface Guest {
@@ -23,5 +28,5 @@ export interface Guest {
 export interface EventData {
   timeline: TimelineItem[];
   guests: Guest[];
-  seatingChart?: any; // Placeholder for future
+  seatingChart?: any;
 }
