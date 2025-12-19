@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ProductionMitigation {
@@ -63,16 +62,15 @@ export const getSetMitigation = async (
     return JSON.parse(text);
   } catch (e) {
     console.error("Showrunner logic failure:", e);
-    // Sophisticated fallback based on standard production heuristics
     return {
       strategy: "Consolidate lighting rigs and execute high-priority Hero looks only.",
-      rationale: "Current velocity is unsustainable for the full shot list. Prioritizing brand equity over detail volume.",
+      rationale: "Current velocity is unsustainable for the full shot list.",
       impactOnBudget: "Neutral",
       riskLevel: 'Medium',
       steps: [
-        "Identify and lock Top 3 Hero Looks for immediate capture",
-        "Merge lighting setups for next two scenes into a single high-key rig",
-        "Pre-prep talent styling in parallel to current shot to reduce turnover lag"
+        "Identify Top 3 Hero Looks for immediate capture",
+        "Merge lighting setups for next two scenes",
+        "Pre-prep talent styling in parallel"
       ]
     };
   }

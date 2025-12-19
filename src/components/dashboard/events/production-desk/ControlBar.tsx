@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Play, Pause, SkipForward, Activity } from 'lucide-react';
+import { Play, Pause, SkipForward } from 'lucide-react';
 
 interface ControlBarProps {
   isRunning: boolean;
@@ -32,16 +31,9 @@ export const ControlBar: React.FC<ControlBarProps> = ({ isRunning, onToggle, onN
       </div>
       
       <div className="flex items-center gap-10">
-        <div className="hidden xl:block">
-           <div className="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-2">Atmospheric Context</div>
-           <div className="text-sm font-bold text-gray-400 flex items-center gap-2">
-              <Activity size={14} className="text-blue-500" /> Golden Hour: 17:42
-           </div>
-        </div>
-        <div className="h-10 w-px bg-white/10 hidden xl:block"></div>
         <div className="text-center md:text-right">
           <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-2">Telemetry Health</div>
-          <div className="text-2xl font-bold text-green-500 flex items-center gap-3 justify-center md:justify-end">
+          <div className="text-2xl font-bold text-green-500 flex items-center gap-3 justify-center md:justify-end font-mono">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> 14MS // NOMINAL
           </div>
         </div>

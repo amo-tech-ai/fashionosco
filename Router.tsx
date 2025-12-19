@@ -29,10 +29,12 @@ const WholesaleShowroom = React.lazy(() => import('./pages/wholesale/WholesaleSh
 const Login = React.lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const NotFound = React.lazy(() => import('./pages/NotFound').then(module => ({ default: module.NotFound })));
 const BrandAuditPage = React.lazy(() => import('./pages/BrandAuditPage').then(module => ({ default: module.BrandAuditPage })));
+const Architecture = React.lazy(() => import('./pages/Architecture').then(module => ({ default: module.Architecture })));
 
 // Dashboard Pages
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const BrandDashboard = React.lazy(() => import('./pages/BrandDashboard').then(module => ({ default: module.BrandDashboard })));
+const IntelligenceLab = React.lazy(() => import('./pages/IntelligenceLab').then(module => ({ default: module.IntelligenceLab })));
 const ShotList = React.lazy(() => import('./pages/ShotList').then(module => ({ default: module.ShotList })));
 const Products = React.lazy(() => import('./pages/Products').then(module => ({ default: module.Products })));
 const ClientGallery = React.lazy(() => import('./pages/ClientGallery').then(module => ({ default: module.ClientGallery })));
@@ -42,6 +44,7 @@ const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ d
 const SeatingChart = React.lazy(() => import('./components/dashboard/events/SeatingChart').then(module => ({ default: module.SeatingChart })));
 const EventTimeline = React.lazy(() => import('./components/dashboard/events/EventTimeline').then(module => ({ default: module.EventTimeline })));
 const GuestList = React.lazy(() => import('./components/dashboard/events/GuestList').then(module => ({ default: module.GuestList })));
+const ProductionMode = React.lazy(() => import('./pages/ProductionMode').then(module => ({ default: module.ProductionMode })));
 
 export const Router: React.FC = () => {
   return (
@@ -70,10 +73,16 @@ export const Router: React.FC = () => {
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/bts" element={<BTS />} />
           <Route path="/wholesale/apply" element={<BuyerApplicationPage />} />
+          <Route path="/architecture" element={<Architecture />} />
         </Route>
 
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
+
+        {/* Special App Routes */}
+        <Route element={<ProtectedRoute />}>
+           <Route path="/production" element={<ProductionMode />} />
+        </Route>
 
         {/* Wholesale Protected (Simulated) */}
         <Route path="/wholesale/showroom" element={<WholesaleShowroom />} />
@@ -83,6 +92,7 @@ export const Router: React.FC = () => {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="brand" element={<BrandDashboard />} />
+            <Route path="intel" element={<IntelligenceLab />} />
             <Route path="shotlist" element={<ShotList />} />
             <Route path="products" element={<Products />} />
             <Route path="gallery" element={<ClientGallery />} />

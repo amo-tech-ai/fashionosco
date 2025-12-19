@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useShootWizard } from '../../../contexts/ShootWizardContext';
 import { Button } from '../../Button';
 import { User, Scissors, CheckCircle, Star, Sparkles, Loader2, ExternalLink, ArrowRight, Calendar, AlertCircle } from 'lucide-react';
@@ -10,12 +10,13 @@ export const TalentStylingStep: React.FC = () => {
   const { state, updateField, nextStep, prevStep } = useShootWizard();
   const { addToast } = useToast();
   
-  const [recommendations, setRecommendations] = useState<(Stakeholder & CastingFit & { isAvailable?: boolean })[]>([]);
+  const [recommendations, setRecommendations] = useState<(Stakeholder & CastingFit & { isAvailable: boolean })[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(true);
 
   useEffect(() => {
     const loadAndMatchTalent = async () => {
+      // Requirements: Need vibe context to calculate fit
       if (!state.vibe && !state.aiAnalysis) return;
       
       setIsAnalyzing(true);
@@ -24,26 +25,24 @@ export const TalentStylingStep: React.FC = () => {
         const vibeContext = state.brandVibeContext || state.vibe || 'minimalist';
         const fits = await analyzeCastingFit(vibeContext, talentList);
         
-        // Merge data and check availability
+        // Merge data and perform availability check
         const merged = await Promise.all(
           fits.map(async (fit) => {
             const details = talentList.find(t => t.id === fit.id);
             if (!details) return null;
 
-            // Performance check: Only verify availability if a date is set
-            const isAvailable = state.date 
-              ? await StakeholderService.checkAvailability(details.id, state.date)
-              : true;
+            // Check if available on the specific campaign date
+            const isAvailable = await StakeholderService.checkAvailability(details.id, state.date);
 
             return { ...details, ...fit, isAvailable };
           })
         );
           
-        const filtered = merged
+        const validResults = merged
           .filter((t): t is (Stakeholder & CastingFit & { isAvailable: boolean }) => t !== null)
           .sort((a, b) => b.fitScore - a.fitScore);
           
-        setRecommendations(filtered);
+        setRecommendations(validResults);
       } catch (e) {
         console.error("Casting error:", e);
         addToast("Error syncing with talent network.", "error");
@@ -55,30 +54,39 @@ export const TalentStylingStep: React.FC = () => {
     loadAndMatchTalent();
   }, [state.vibe, state.brandVibeContext, state.date, addToast]);
 
-  const handleSelectTalent = (talent: Stakeholder) => {
-    if (state.date && talent.id) {
-       // Optional: Re-verify on selection
-       StakeholderService.checkAvailability(talent.id, state.date).then(avail => {
-          if (!avail) {
-             addToast(`${talent.name} has a calendar conflict on this date.`, "error");
-             return;
-          }
-          updateField('preferredTalent', talent.name);
-          if (talent.role === 'Model') updateField('modelNeeded', true);
-          if (talent.role === 'Stylist') updateField('stylingNeeded', 'stylist');
-          addToast(`${talent.name} added to production brief.`, "success");
-       });
-    } else {
-       updateField('preferredTalent', talent.name);
-       if (talent.role === 'Model') updateField('modelNeeded', true);
-       if (talent.role === 'Stylist') updateField('stylingNeeded', 'stylist');
-       addToast(`${talent.name} added to production brief.`, "success");
+  // Filter logic based on user preferences and role requirements
+  const filteredTalent = useMemo(() => {
+    let list = [...recommendations];
+    
+    if (showOnlyAvailable) {
+      list = list.filter(t => t.isAvailable);
     }
-  };
 
-  const displayTalent = showOnlyAvailable 
-    ? recommendations.filter(r => r.isAvailable) 
-    : recommendations;
+    // Sort: Preferred roles (Models/Stylists) based on wizard selections
+    return list.sort((a, b) => {
+      const aIsRequired = (state.modelNeeded && a.role === 'Model') || (state.stylingNeeded === 'stylist' && a.role === 'Stylist');
+      const bIsRequired = (state.modelNeeded && b.role === 'Model') || (state.stylingNeeded === 'stylist' && b.role === 'Stylist');
+      
+      if (aIsRequired && !bIsRequired) return -1;
+      if (!aIsRequired && bIsRequired) return 1;
+      return b.fitScore - a.fitScore;
+    });
+  }, [recommendations, showOnlyAvailable, state.modelNeeded, state.stylingNeeded]);
+
+  const handleSelectTalent = (talent: Stakeholder & { isAvailable: boolean }) => {
+    if (!talent.isAvailable && state.date) {
+       addToast(`${talent.name} is not available on your selected date.`, "error");
+       return;
+    }
+    
+    updateField('preferredTalent', talent.name);
+    
+    // Auto-enable requirements if they select specific talent
+    if (talent.role === 'Model') updateField('modelNeeded', true);
+    if (talent.role === 'Stylist') updateField('stylingNeeded', 'stylist');
+    
+    addToast(`${talent.name} added to production brief.`, "success");
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -87,8 +95,8 @@ export const TalentStylingStep: React.FC = () => {
           <h2 className="font-serif text-3xl md:text-4xl text-gray-900 mb-2">Talent & Styling.</h2>
           <p className="text-gray-500 font-light">
             {state.date 
-              ? `Checking availability for ${new Date(state.date).toLocaleDateString()}...` 
-              : "Who and what do you need on set? Our AI suggests talent matching your vibe."}
+              ? `Scanning availability for ${new Date(state.date).toLocaleDateString()}...` 
+              : "Select professionals to join your production crew."}
           </p>
         </div>
 
@@ -103,12 +111,12 @@ export const TalentStylingStep: React.FC = () => {
              onClick={() => setShowOnlyAvailable(false)}
              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!showOnlyAvailable ? 'bg-black text-white shadow-md' : 'text-gray-400 hover:text-black'}`}
            >
-             All
+             Show All
            </button>
         </div>
       </div>
       
-      {/* Preferred Talent Banner */}
+      {/* Selection Summary Banner */}
       {state.preferredTalent && (
          <div className="bg-purple-50 border border-purple-100 p-5 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-2 shadow-sm">
             <div className="flex items-center gap-4">
@@ -129,7 +137,7 @@ export const TalentStylingStep: React.FC = () => {
          </div>
       )}
 
-      {/* AI Recommendations Section */}
+      {/* Recommended Professionals Grid */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
            <div className="flex items-center gap-2">
@@ -137,26 +145,26 @@ export const TalentStylingStep: React.FC = () => {
                  <Sparkles size={14} className="text-purple-300" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#111111]">
-                 Aesthetic & Calendar Match
+                 Aesthetic & Schedule Match
               </span>
            </div>
            {isAnalyzing && (
               <div className="flex items-center gap-2">
                 <Loader2 size={14} className="animate-spin text-purple-600" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Scanning Calendars...</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Checking Calendars...</span>
               </div>
            )}
         </div>
 
         {isAnalyzing ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2].map(i => (
-              <div key={i} className="h-36 bg-white rounded-2xl border border-gray-100 animate-pulse"></div>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-40 bg-white rounded-2xl border border-gray-100 animate-pulse"></div>
             ))}
           </div>
-        ) : displayTalent.length > 0 ? (
+        ) : filteredTalent.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {displayTalent.slice(0, 6).map((talent) => (
+            {filteredTalent.slice(0, 6).map((talent) => (
               <div 
                 key={talent.id} 
                 className={`p-4 bg-white border rounded-2xl transition-all duration-300 group hover:shadow-xl relative overflow-hidden flex gap-4 items-center ${state.preferredTalent === talent.name ? 'border-purple-600 ring-1 ring-purple-600' : 'border-gray-100'}`}
@@ -185,7 +193,6 @@ export const TalentStylingStep: React.FC = () => {
                   
                   <p className="text-[10px] text-gray-500 italic line-clamp-2 leading-relaxed mb-3">"{talent.reasoning}"</p>
                   
-                  {/* Availability Indicator */}
                   <div className="mb-3">
                      {talent.isAvailable ? (
                         <div className="flex items-center gap-1.5 text-[9px] font-bold text-green-600 uppercase tracking-widest">
@@ -193,7 +200,7 @@ export const TalentStylingStep: React.FC = () => {
                         </div>
                      ) : (
                         <div className="flex items-center gap-1.5 text-[9px] font-bold text-red-500 uppercase tracking-widest">
-                           <Calendar size={10} /> Booked on this date
+                           <Calendar size={10} /> Conflicting Event
                         </div>
                      )}
                   </div>
@@ -203,11 +210,14 @@ export const TalentStylingStep: React.FC = () => {
                       onClick={() => handleSelectTalent(talent)}
                       disabled={!talent.isAvailable && !!state.date}
                       className={`text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1 ${
-                        !talent.isAvailable && !!state.date ? 'text-gray-300 cursor-not-allowed' :
-                        state.preferredTalent === talent.name ? 'text-purple-600' : 'text-black hover:text-purple-600'
+                        !talent.isAvailable && !!state.date 
+                          ? 'text-gray-300 cursor-not-allowed' 
+                          : state.preferredTalent === talent.name 
+                            ? 'text-purple-600' 
+                            : 'text-black hover:text-purple-600'
                       }`}
                     >
-                      {state.preferredTalent === talent.name ? 'Confirmed ✓' : 'Select'}
+                      {state.preferredTalent === talent.name ? 'Confirmed ✓' : 'Select Professional'}
                     </button>
                     <a 
                       href={talent.website || `https://instagram.com/${talent.instagram?.replace('@','')}`} 
@@ -223,9 +233,9 @@ export const TalentStylingStep: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center bg-gray-50 rounded-2xl border border-gray-100">
-             <p className="text-sm text-gray-400 italic">No matching talent found for this criteria.</p>
-             <button onClick={() => setShowOnlyAvailable(false)} className="text-xs font-bold text-black uppercase tracking-widest mt-4 border-b border-black">View All Professionals</button>
+          <div className="p-16 text-center bg-gray-50 rounded-[2rem] border border-gray-100">
+             <p className="text-sm text-gray-400 italic">No professionals found matching the current search criteria.</p>
+             <button onClick={() => setShowOnlyAvailable(false)} className="text-xs font-bold text-black uppercase tracking-widest mt-4 border-b border-black">Search All Talent</button>
           </div>
         )}
       </div>
@@ -258,12 +268,12 @@ export const TalentStylingStep: React.FC = () => {
                </div>
             </div>
             
-            <p className="text-sm text-gray-500 font-light mb-8 leading-relaxed">Access our directory of agency-signed models. We handle all logistics and usage rights.</p>
+            <p className="text-sm text-gray-500 font-light mb-8 leading-relaxed">Access our directory of agency-signed models. Full logistics and rights handling included.</p>
             
             {state.modelNeeded && (
                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                   <div className="p-4 bg-white border border-gray-100 rounded-xl flex items-center justify-between cursor-pointer hover:border-black transition-all" onClick={() => updateField('modelSelection', 'portfolio')}>
-                     <span className="text-xs font-bold uppercase tracking-widest">Select Portfolio</span>
+                     <span className="text-xs font-bold uppercase tracking-widest">Select Category</span>
                      <ArrowRight size={14} className="text-gray-300" />
                   </div>
                </div>
@@ -296,11 +306,11 @@ export const TalentStylingStep: React.FC = () => {
                </div>
             </div>
             
-            <p className="text-sm text-gray-500 font-light mb-8 leading-relaxed">Expert steaming, pinning, and outfit coordination on set for a polished collection finish.</p>
+            <p className="text-sm text-gray-500 font-light mb-8 leading-relaxed">Professional steaming, pinning, and layout coordination for a polished seasonal finish.</p>
             
             {state.stylingNeeded === 'stylist' && (
                <div className="p-4 bg-purple-50 text-purple-700 text-xs rounded-xl animate-in fade-in flex items-center gap-3 border border-purple-100">
-                  <CheckCircle size={16} /> <span className="font-bold uppercase tracking-widest">Added to Production (+$700)</span>
+                  <CheckCircle size={16} /> <span className="font-bold uppercase tracking-widest">Consultant Added (+$700)</span>
                </div>
             )}
          </div>
